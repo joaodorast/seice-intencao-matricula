@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ClipboardList,
   Download,
@@ -15,16 +15,18 @@ import PreMatriculaTable from "../components/admin/PreMatriculaTable";
 import OverviewTab from "../components/admin/OverviewTab";
 import TurmasTab from "../components/admin/TurmasTab";
 import RelatoriosTab from "../components/admin/RelatoriosTab";
-import { Button, Card, Spinner } from "../components/ui";
+import { Button, Spinner } from "../components/ui";
 import logoIcon from "../assets/seice-icon.png";
 import { UNIDADES } from "../config";
 import { atualizarStatus, buscarPreMatriculas, verificarToken } from "../lib/adminApi";
 import { listarTurmas } from "../lib/adminTurmasApi";
+import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { unidadeCurta } from "../lib/labels";
-import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow } from "../types";
+import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow, Unidade } from "../types";
 
 const TOKEN_KEY = "seice_admin_token";
-// atualiza os números sozinho enquanto a aba está aberta e em foco
+// atualiza os números sozinho de tempos em tempos, mesmo se o aviso em tempo
+// real (Supabase Realtime) falhar por algum motivo — é só uma rede de segurança
 const AUTO_REFRESH_MS = 45_000;
 
 type AbaAdmin = "visao" | "prematriculas" | "turmas" | "relatorios";
@@ -36,16 +38,19 @@ const ABAS: { key: AbaAdmin; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "relatorios", label: "Relatórios", icon: FileBarChart2 },
 ];
 
-/** Os três painéis: o geral (as duas unidades) e um para cada unidade. */
+/** Rota de cada painel de unidade — dois dashboards próprios, fora do /admin. */
+const ROTA_PAINEL_UNIDADE: Record<string, string> = {
+  "campos-eliseos": "/seice-ce",
+  "jardim-primavera": "/seice-jp",
+};
+
+/** Os três painéis: o geral (as duas unidades) e um dashboard só de cada unidade. */
 const PAINEIS = [
   { rota: "/admin", slug: null as string | null, nome: "Todas" },
-  ...UNIDADES.map((u) => ({ rota: `/admin/${u.slug}`, slug: u.slug, nome: unidadeCurta(u.slug) })),
+  ...UNIDADES.map((u) => ({ rota: ROTA_PAINEL_UNIDADE[u.slug], slug: u.slug, nome: unidadeCurta(u.slug) })),
 ];
 
-export default function AdminPage() {
-  const { unidadeSlug } = useParams();
-  const unidadeFixa = unidadeSlug ? UNIDADES.find((u) => u.slug === unidadeSlug) : undefined;
-  const escopoInvalido = Boolean(unidadeSlug) && !unidadeFixa;
+export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade }) {
   const escopoSlug = unidadeFixa?.slug;
 
   const [token, setToken] = useState<string | null>(() => sessionStorage.getItem(TOKEN_KEY));
@@ -80,6 +85,15 @@ export default function AdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, escopoSlug]);
 
+  // aviso em tempo real: uma intenção nova, um cancelamento ou um ajuste de
+  // turma (neste painel ou em outro) recarrega os números sozinho, sem F5
+  useEffect(() => {
+    if (!token) return;
+    return ouvirMudancaDeVagas(() => carregar(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, escopoSlug]);
+
+  // rede de segurança: se o aviso em tempo real falhar, ainda assim atualiza
   useEffect(() => {
     if (!token) return;
     const id = setInterval(() => {
@@ -145,32 +159,6 @@ export default function AdminPage() {
     );
   });
 
-  if (escopoInvalido) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-5">
-        <Card className="w-full max-w-md text-center">
-          <h1 className="font-display mb-2 text-[22.5px] font-semibold text-seice-ink">
-            Painel não encontrado
-          </h1>
-          <p className="mb-5 text-[15.5px] text-seice-muted">
-            Não existe um painel para "{unidadeSlug}". Escolha um dos painéis disponíveis:
-          </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {PAINEIS.map((p) => (
-              <Link
-                key={p.rota}
-                to={p.rota}
-                className="raised-surface rounded-xl border border-seice-border-strong px-4 py-2.5 text-[15px] font-semibold text-seice-ink transition hover:border-seice-gold/40"
-              >
-                {p.nome}
-              </Link>
-            ))}
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
   if (checkingSession) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -194,13 +182,15 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <img src={logoIcon} alt="SEICE" className="h-10 w-auto" />
             <div>
-              <div className="font-display text-[20px] font-semibold text-white">Painel da Secretaria</div>
+              <div className="font-display text-[20px] font-semibold text-white">
+                {unidadeFixa ? `Painel ${unidadeCurta(unidadeFixa.slug)}` : "Painel da Secretaria"}
+              </div>
               <div className="text-[14px] text-white/55">{escopoLabel} · Ano letivo 2027</div>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* troca entre o painel geral e o de cada unidade */}
+            {/* troca entre o painel geral e o dashboard de cada unidade */}
             <nav className="flex items-center gap-1 rounded-xl border border-white/12 bg-white/5 p-1">
               {PAINEIS.map((p) => {
                 const ativo = (p.slug ?? null) === (escopoSlug ?? null);
@@ -246,7 +236,7 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* Filtro por unidade — só no painel geral; nos painéis de unidade o escopo é fixo */}
+        {/* Filtro por unidade — só no painel geral; nos dashboards de unidade o escopo é fixo */}
         {!unidadeFixa && (aba === "prematriculas" || aba === "turmas") && (
           <div className="mb-4 flex flex-wrap gap-2">
             {unidadeTabs.map((t) => (
