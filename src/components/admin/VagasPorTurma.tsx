@@ -60,19 +60,18 @@ export default function VagasPorTurma({ turmas }: { turmas: TurmaAdminRow[] }) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* filtros: nível de ensino + esconder turmas sem oferta */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
-          <FiltroChip ativo={nivel === "todos"} onClick={() => setNivel("todos")}>
-            Todos os níveis
+      {/* filtros: nível de ensino + esconder turmas sem oferta — tudo numa
+          linha só, que rola pro lado se não couber, nunca quebra pra baixo */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <FiltroChip ativo={nivel === "todos"} onClick={() => setNivel("todos")}>
+          Todos os níveis
+        </FiltroChip>
+        {niveisPresentes.map((n) => (
+          <FiltroChip key={n.key} ativo={nivel === n.key} onClick={() => setNivel(n.key)}>
+            {n.label}
           </FiltroChip>
-          {niveisPresentes.map((n) => (
-            <FiltroChip key={n.key} ativo={nivel === n.key} onClick={() => setNivel(n.key)}>
-              {n.label}
-            </FiltroChip>
-          ))}
-        </div>
-        <label className="ml-auto inline-flex shrink-0 cursor-pointer items-center gap-2.5 text-[15px] font-semibold text-seice-soft">
+        ))}
+        <label className="ml-1 flex shrink-0 cursor-pointer items-center gap-2.5 whitespace-nowrap text-[15px] font-semibold text-seice-soft">
           <input
             type="checkbox"
             checked={somenteComOferta}
