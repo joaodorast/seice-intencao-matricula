@@ -72,12 +72,12 @@ export default function VagasPorTurma({ turmas }: { turmas: TurmaAdminRow[] }) {
             </FiltroChip>
           ))}
         </div>
-        <label className="ml-auto inline-flex shrink-0 cursor-pointer items-center gap-2 text-[14px] font-semibold text-seice-soft">
+        <label className="ml-auto inline-flex shrink-0 cursor-pointer items-center gap-2.5 text-[15px] font-semibold text-seice-soft">
           <input
             type="checkbox"
             checked={somenteComOferta}
             onChange={(e) => setSomenteComOferta(e.target.checked)}
-            className="h-4 w-4 accent-seice-gold"
+            className="h-6 w-6 shrink-0 cursor-pointer accent-seice-gold"
           />
           Só turmas com vaga ofertada
         </label>
