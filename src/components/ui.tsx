@@ -136,3 +136,23 @@ export function Spinner({ label }: { label?: string }) {
 export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded-lg bg-seice-chip ${className}`} />;
 }
+
+/** Numerozinho num bloco rebaixado — usado nos cartões do painel (celular/tablet). */
+export function StatMini({
+  label,
+  value,
+  destaque = false,
+}: {
+  label: string;
+  value: ReactNode;
+  destaque?: boolean;
+}) {
+  return (
+    <div className="inset-surface rounded-xl px-3 py-2.5 text-center">
+      <div className={`text-[21px] font-extrabold tabular-nums ${destaque ? "text-seice-gold" : "text-seice-ink"}`}>
+        {value}
+      </div>
+      <div className="text-[13px] font-semibold uppercase tracking-wide text-seice-muted">{label}</div>
+    </div>
+  );
+}

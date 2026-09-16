@@ -6,7 +6,7 @@ import { unidadeNome } from "../../lib/labels";
 import { vagaStatus } from "../../lib/vagas";
 import { atualizarTurma, criarTurma, excluirTurma } from "../../lib/adminTurmasApi";
 import type { TurmaAdminRow, TurmaFormValues } from "../../types";
-import { Badge, Button, EmptyState } from "../ui";
+import { Badge, Button, EmptyState, StatMini } from "../ui";
 import Modal from "./Modal";
 import TurmaForm from "./TurmaForm";
 
@@ -173,9 +173,9 @@ export default function TurmasTab({
                   </div>
 
                   <div className="mt-3.5 grid grid-cols-3 gap-2">
-                    <Mini label="Ofertadas" value={t.vagas_planilha} />
-                    <Mini label="Recebidas" value={t.pre_matriculas_recebidas} />
-                    <Mini label="Restantes" value={t.vagas_restantes} destaque />
+                    <StatMini label="Ofertadas" value={t.vagas_planilha} />
+                    <StatMini label="Recebidas" value={t.pre_matriculas_recebidas} />
+                    <StatMini label="Restantes" value={t.vagas_restantes} destaque />
                   </div>
 
                   <div className="mt-3.5 flex gap-2 border-t border-seice-border pt-3.5">
@@ -293,17 +293,6 @@ export default function TurmasTab({
           erro={erroForm}
         />
       </Modal>
-    </div>
-  );
-}
-
-function Mini({ label, value, destaque = false }: { label: string; value: number; destaque?: boolean }) {
-  return (
-    <div className="inset-surface rounded-xl px-3 py-2.5 text-center">
-      <div className={`text-[19px] font-extrabold tabular-nums ${destaque ? "text-seice-gold" : "text-seice-ink"}`}>
-        {value}
-      </div>
-      <div className="text-[12.5px] font-semibold uppercase tracking-wide text-seice-muted">{label}</div>
     </div>
   );
 }
