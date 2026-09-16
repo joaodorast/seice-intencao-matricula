@@ -12,6 +12,7 @@ import TurmaStep from "../components/steps/TurmaStep";
 import UnidadeStep from "../components/steps/UnidadeStep";
 import { Card, Spinner } from "../components/ui";
 import { turnoLabel } from "../lib/format";
+import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { supabase } from "../lib/supabaseClient";
 import { UNIDADES } from "../config";
 import type {
@@ -85,6 +86,34 @@ export default function PreMatriculaPage() {
     turmasRef.current = buscarTurmasComVaga();
     return turmasRef.current;
   }
+
+  // aplica uma lista nova de turmas sem perder o que a pessoa já escolheu:
+  // atualiza os números de vaga da turma/série selecionadas em vez de trocá-las
+  function sincronizarTurmas(lista: TurmaDisponivel[]) {
+    const slug = unidade?.slug;
+    if (!slug) return;
+    const daUnidade = lista.filter((t) => t.unidade_id === slug);
+    setTurmasDisponiveis(daUnidade);
+    setTurma((atual) => (atual ? daUnidade.find((t) => t.id === atual.id) ?? atual : atual));
+    setSerieGroup((atual) =>
+      atual
+        ? { ...atual, turmas: atual.turmas.map((t) => daUnidade.find((n) => n.id === t.id) ?? t) }
+        : atual
+    );
+  }
+
+  // enquanto a pessoa está escolhendo, as vagas se atualizam sozinhas assim
+  // que outra intenção (de qualquer visitante) é enviada ou cancelada — sem
+  // precisar recarregar a página para ver o número certo
+  useEffect(() => {
+    if (!unidade) return;
+    return ouvirMudancaDeVagas(() => {
+      recarregarTurmas().then((lista) => {
+        if (lista) sincronizarTurmas(lista);
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unidade?.slug]);
 
   const dirRef = useRef(1);
   function go(next: Passo) {
