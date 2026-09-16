@@ -33,10 +33,14 @@ Propositalmente não foi implementado envio de e-mail/SMS automático, porque (a
 |---|---|---|
 | `/` | Formulário público de intenção de matrícula (unidade → nível → série → turma → dados → confirmação) | Pais e responsáveis |
 | `/admin` | Painel geral da secretaria — vê as **duas unidades** juntas | Direção do SEICE |
-| `/admin/campos-eliseos` | Painel da **SEICE CE** — só turmas e intenções de Campos Elíseos | Secretaria de Campos Elíseos |
-| `/admin/jardim-primavera` | Painel da **SEICE JP** — só turmas e intenções de Jardim Primavera | Secretaria de Jardim Primavera |
+| `/seice-ce` | Dashboard próprio da **SEICE CE** — só turmas e intenções de Campos Elíseos | Secretaria de Campos Elíseos |
+| `/seice-jp` | Dashboard próprio da **SEICE JP** — só turmas e intenções de Jardim Primavera | Secretaria de Jardim Primavera |
 
-Os três painéis usam o mesmo login. Dentro de qualquer um deles há um seletor no topo ("Todas · SEICE CE · SEICE JP") para trocar de painel, e os relatórios em PDF/Excel saem com os dados do painel aberto.
+São três dashboards de verdade, cada um na sua rota (`/seice-ce` e `/seice-jp` não vivem "dentro" de `/admin`), todos com o mesmo login. Dentro de qualquer um há um seletor no topo ("Todas · SEICE CE · SEICE JP") para trocar de painel, e os relatórios em PDF/Excel saem com os dados do painel aberto.
+
+### Atualização em tempo real
+
+O painel e o site público ficam de olho em qualquer mudança nas vagas — uma intenção nova, um cancelamento, uma reserva ou um ajuste de turma — através do Supabase Realtime (Broadcast). Quando algo muda, quem está com a tela aberta recebe o aviso e recarrega os números sozinho, sem precisar apertar F5. A mensagem não carrega nenhum dado pessoal, só um sinal de "algo mudou"; cada lado busca os próprios dados pelos caminhos já seguros (a Edge Function no painel, a função `get_turmas_disponiveis` no site). Como rede de segurança, o painel também confere os dados a cada 45 segundos por conta própria, caso o aviso em tempo real falhe por algum motivo.
 
 ### Reserva temporária de vaga
 
