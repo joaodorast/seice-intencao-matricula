@@ -190,23 +190,27 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* troca entre o painel geral e o dashboard de cada unidade */}
-            <nav className="flex items-center gap-1 rounded-xl border border-white/12 bg-white/5 p-1">
-              {PAINEIS.map((p) => {
-                const ativo = (p.slug ?? null) === (escopoSlug ?? null);
-                return (
-                  <Link
-                    key={p.rota}
-                    to={p.rota}
-                    className={`rounded-lg px-3 py-1.5 text-[14px] font-bold transition ${
-                      ativo ? "bg-seice-gold text-seice-gold-ink" : "text-white/70 hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    {p.nome}
-                  </Link>
-                );
-              })}
-            </nav>
+            {/* troca entre painéis — só existe no painel geral (/admin); os
+                dashboards de unidade (/seice-ce, /seice-jp) são fechados na
+                própria unidade, sem link pra ver o da outra secretaria */}
+            {!unidadeFixa && (
+              <nav className="flex items-center gap-1 rounded-xl border border-white/12 bg-white/5 p-1">
+                {PAINEIS.map((p) => {
+                  const ativo = (p.slug ?? null) === (escopoSlug ?? null);
+                  return (
+                    <Link
+                      key={p.rota}
+                      to={p.rota}
+                      className={`rounded-lg px-3 py-1.5 text-[14px] font-bold transition ${
+                        ativo ? "bg-seice-gold text-seice-gold-ink" : "text-white/70 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {p.nome}
+                    </Link>
+                  );
+                })}
+              </nav>
+            )}
             <button
               onClick={logout}
               className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-2.5 text-[15px] font-bold text-white transition hover:border-white/35 hover:bg-white/5"
