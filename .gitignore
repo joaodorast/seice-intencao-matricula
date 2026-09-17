@@ -25,3 +25,6 @@ dist-ssr
 
 # Vercel
 .vercel
+
+# Supabase CLI (estado local do link com o projeto, não é código)
+supabase/.temp
