@@ -117,7 +117,7 @@ export default function OverviewTab({
         <SectionDesc>
           Cada turma com as vagas ofertadas, preenchidas e livres. Use os filtros para ver um nível de ensino por vez.
         </SectionDesc>
-        <VagasPorTurma turmas={turmas} preMatriculas={preMatriculas} />
+        <VagasPorTurma turmas={turmas} />
       </Card>
     </div>
   );
