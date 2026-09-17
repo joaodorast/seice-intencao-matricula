@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import { NIVEL_LABELS } from "../config";
-import { formatarSenha, maskCPF, maskPhone, turnoLabel } from "./format";
+import { formatarSenha, maskPhone, turnoLabel } from "./format";
 import { ordenarTurmas, unidadeNome } from "./labels";
 import { vagaStatus } from "./vagas";
 import type { PreMatriculaAdminRow, TurmaAdminRow } from "../types";
@@ -23,7 +23,6 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
     Turno: turnoLabel(r.turmas?.turno ?? ""),
     Curso: r.turmas?.curso ?? "",
     Responsável: r.responsavel_nome,
-    CPF: maskCPF(r.responsavel_cpf),
     "Telefone 1": maskPhone(r.telefone1),
     "Telefone 2": r.telefone2 ? maskPhone(r.telefone2) : "",
     "E-mail": r.email ?? "",
