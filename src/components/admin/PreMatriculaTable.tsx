@@ -28,7 +28,7 @@ export default function PreMatriculaTable({
           <article key={r.id} className="card-surface rounded-2xl border border-seice-border p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
-                <div className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-seice-gold px-2.5 py-0.5 font-mono text-[12.5px] font-bold text-seice-gold-ink">
+                <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-seice-gold px-3 py-1 font-mono text-[16px] font-extrabold text-seice-gold-ink">
                   Senha {formatarSenha(r.numero_senha)}
                 </div>
                 <h3 className="text-[17px] font-bold leading-tight text-seice-ink">{r.aluno_nome}</h3>
@@ -88,7 +88,7 @@ export default function PreMatriculaTable({
             {registros.map((r) => (
               <tr key={r.id} className="transition-colors hover:bg-seice-chip/40">
                 <td className="border-b border-seice-border px-3.5 py-3 align-top">
-                  <span className="inline-flex items-center rounded-full bg-seice-gold px-2.5 py-1 font-mono text-[13px] font-bold text-seice-gold-ink">
+                  <span className="inline-flex items-center rounded-full bg-seice-gold px-3 py-1.5 font-mono text-[16px] font-extrabold text-seice-gold-ink">
                     {formatarSenha(r.numero_senha)}
                   </span>
                 </td>
