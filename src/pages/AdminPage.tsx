@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ClipboardList,
@@ -117,27 +117,38 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
     setToken(null);
   }
 
+  // várias coisas disparam carregar() (broadcast em tempo real, o poll de
+  // segurança, e a troca de status) e podem responder fora de ordem — sem
+  // essa trava, uma resposta antiga que chega depois de uma mais nova pisava
+  // por cima dela, fazendo o status "voltar" sozinho na tela.
+  const cargaSeq = useRef(0);
+
   async function carregar(silencioso = false) {
     if (!token) return;
     if (!silencioso) setLoading(true);
     setErro(null);
+    const minhaSeq = ++cargaSeq.current;
     try {
       const [pm, tm] = await Promise.all([
         buscarPreMatriculas(token, escopoSlug),
         listarTurmas(token, escopoSlug),
       ]);
+      if (minhaSeq !== cargaSeq.current) return; // já saiu uma carga mais nova, ignora esta
       setRegistros(pm);
       setTurmas(tm);
     } catch (e) {
-      if (!silencioso) setErro(e instanceof Error ? e.message : "Erro ao carregar dados");
+      if (minhaSeq === cargaSeq.current && !silencioso) {
+        setErro(e instanceof Error ? e.message : "Erro ao carregar dados");
+      }
     } finally {
-      if (!silencioso) setLoading(false);
+      if (minhaSeq === cargaSeq.current && !silencioso) setLoading(false);
     }
   }
 
   async function handleStatusChange(id: string, status: StatusPreMatricula) {
     if (!token) return;
     const anterior = registros;
+    cargaSeq.current++; // invalida qualquer carga em andamento: a otimista abaixo manda agora
     setRegistros((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)));
     try {
       await atualizarStatus(token, id, status);
@@ -280,12 +291,12 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
             <Button
               variant="ghost"
               onClick={async () => {
-                const { exportarCSV } = await import("../lib/csv");
-                exportarCSV(registrosFiltrados, sufixoExport);
+                const { exportarIntencoesExcel } = await import("../lib/excel");
+                exportarIntencoesExcel(registrosFiltrados, sufixoExport);
               }}
               className="!px-4 !py-2.5"
             >
-              <Download size={14} /> CSV
+              <Download size={14} /> Excel
             </Button>
           </div>
         )}
