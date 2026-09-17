@@ -11,6 +11,7 @@ import SerieStep from "../components/steps/SerieStep";
 import TurmaStep from "../components/steps/TurmaStep";
 import UnidadeStep from "../components/steps/UnidadeStep";
 import { Card, Spinner } from "../components/ui";
+import { enviarComprovantePorEmail } from "../lib/emailComprovante";
 import { turnoLabel } from "../lib/format";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { supabase } from "../lib/supabaseClient";
@@ -202,6 +203,7 @@ export default function PreMatriculaPage() {
         turma!.curso ? " — " + turma!.curso : ""
       }`,
     });
+    if (payload.email) enviarComprovantePorEmail(payload.unidade_id, numeroSenha);
     recarregarTurmas();
     go("confirmacao");
   }
