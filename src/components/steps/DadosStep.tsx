@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   CircleAlert,
-  IdCard,
   LoaderCircle,
   Mail,
   Phone,
@@ -13,14 +12,13 @@ import {
   Timer,
   User,
 } from "lucide-react";
-import { maskCPF, maskPhone, onlyDigits, turnoLabel, validCPF, validEmail } from "../../lib/format";
+import { maskPhone, onlyDigits, turnoLabel, validEmail } from "../../lib/format";
 import { RESERVA_MINUTOS, liberarReserva, renovarReserva, reservarVaga } from "../../lib/reservas";
 import type { SerieGroup, TurmaDisponivel, Unidade } from "../../types";
 import { Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
 
 export interface DadosFormValues {
   respNome: string;
-  respCpfDigits: string;
   respTel1Digits: string;
   respTel2Digits: string;
   respEmail: string;
@@ -29,7 +27,6 @@ export interface DadosFormValues {
 
 const emptyForm: DadosFormValues = {
   respNome: "",
-  respCpfDigits: "",
   respTel1Digits: "",
   respTel2Digits: "",
   respEmail: "",
@@ -109,10 +106,9 @@ export default function DadosStep({
   ).padStart(2, "0")}`;
 
   const nomeOk = values.respNome.trim().length >= 3;
-  const cpfOk = validCPF(values.respCpfDigits);
   const tel1Ok = values.respTel1Digits.length >= 10;
   const tel2Ok = values.respTel2Digits.length >= 10;
-  const emailOk = validEmail(values.respEmail.trim());
+  const emailOk = values.respEmail.trim().length > 0 && validEmail(values.respEmail.trim());
   const alunoOk = values.alunoNome.trim().length >= 3;
 
   function set<K extends keyof DadosFormValues>(key: K, val: string) {
@@ -127,13 +123,12 @@ export default function DadosStep({
 
     setErrors({
       respNome: !nomeOk,
-      respCpfDigits: !cpfOk,
       respTel1Digits: !tel1Ok,
       respEmail: !emailOk,
       alunoNome: !alunoOk,
     });
 
-    if (!(nomeOk && cpfOk && tel1Ok && emailOk && alunoOk)) return;
+    if (!(nomeOk && tel1Ok && emailOk && alunoOk)) return;
     onSubmit(values);
   }
 
@@ -202,18 +197,6 @@ export default function DadosStep({
               icon={<User size={17} />}
             />
             <Field
-              label="CPF"
-              value={maskCPF(values.respCpfDigits)}
-              onChange={(v) => set("respCpfDigits", onlyDigits(v))}
-              valid={cpfOk}
-              error={errors.respCpfDigits}
-              errorMsg="Informe um CPF válido."
-              inputMode="numeric"
-              maxLength={14}
-              placeholder="000.000.000-00"
-              icon={<IdCard size={17} />}
-            />
-            <Field
               label="Telefone principal"
               type="tel"
               value={maskPhone(values.respTel1Digits)}
@@ -240,12 +223,12 @@ export default function DadosStep({
               icon={<Phone size={17} />}
             />
             <Field
+              className="sm:col-span-2"
               label="E-mail"
-              optionalLabel
               type="email"
               value={values.respEmail}
               onChange={(v) => set("respEmail", v)}
-              valid={values.respEmail.trim().length > 0 && emailOk}
+              valid={emailOk}
               error={errors.respEmail}
               errorMsg="Informe um e-mail válido."
               autoComplete="email"
