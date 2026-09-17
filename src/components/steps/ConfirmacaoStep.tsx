@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, MessageCircle, Printer, RotateCcw } from "lucide-react";
-import { maskCPF, maskPhone } from "../../lib/format";
+import { CheckCircle2, Printer, RotateCcw } from "lucide-react";
+import { formatarSenha, maskPhone } from "../../lib/format";
 import type { PreMatriculaSubmetida, Unidade } from "../../types";
 import logoIcon from "../../assets/seice-icon.png";
 import { Button, Card } from "../ui";
@@ -33,19 +33,7 @@ export default function ConfirmacaoStep({
     };
   }, []);
 
-  const protocolo = submetida.id.slice(0, 8).toUpperCase();
-
-  const texto =
-    `Olá! Acabei de enviar uma intenção de matrícula para a unidade *${unidade.nome}*.\n\n` +
-    `Protocolo: #${protocolo}\n` +
-    `Aluno(a): ${submetida.aluno_nome}\n` +
-    `Turma: ${submetida.resumoTurma}\n\n` +
-    `Responsável: ${submetida.responsavel_nome}\n` +
-    `CPF: ${maskCPF(submetida.responsavel_cpf)}\n` +
-    `Telefone: ${maskPhone(submetida.telefone1)}\n` +
-    (submetida.email ? `E-mail: ${submetida.email}\n` : "");
-
-  const whatsappHref = `https://wa.me/${unidade.whatsapp}?text=${encodeURIComponent(texto)}`;
+  const senha = formatarSenha(submetida.numeroSenha);
 
   return (
     <div className="flex flex-col items-center gap-5">
@@ -64,8 +52,8 @@ export default function ConfirmacaoStep({
         </h2>
         <p className="mx-auto mt-2 max-w-md text-[17px] leading-relaxed text-seice-muted">
           Recebemos os dados de <strong className="font-semibold text-seice-ink">{submetida.aluno_nome}</strong>{" "}
-          para a unidade <strong className="font-semibold text-seice-ink">{unidade.nome}</strong>. Para agilizar o
-          atendimento, confirme pelo WhatsApp com a secretaria.
+          para a unidade <strong className="font-semibold text-seice-ink">{unidade.nome}</strong>. Guarde sua
+          senha de atendimento — a secretaria vai entrar em contato para dar continuidade.
         </p>
       </div>
 
@@ -74,8 +62,8 @@ export default function ConfirmacaoStep({
         <div className="relative flex items-center justify-between gap-3 bg-seice-deep px-5 py-4">
           <img src={logoIcon} alt="SEICE" className="h-9 w-auto" />
           <div className="text-right">
-            <div className="text-[12.5px] font-semibold uppercase tracking-wide text-white/60">Protocolo</div>
-            <div className="font-mono text-[15.5px] font-bold text-seice-gold">#{protocolo}</div>
+            <div className="text-[12.5px] font-semibold uppercase tracking-wide text-white/60">Senha</div>
+            <div className="font-mono text-[22px] font-bold leading-none text-seice-gold">{senha}</div>
           </div>
           <div className="gold-hairline absolute inset-x-0 bottom-0 h-px opacity-80" />
         </div>
@@ -95,24 +83,13 @@ export default function ConfirmacaoStep({
         </div>
       </Card>
 
-      <div className="flex w-full max-w-md flex-col gap-2.5">
-        <a
-          href={whatsappHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-seice-success px-5 py-3.5 text-[17px] font-semibold text-white shadow-[0_10px_24px_-10px_rgba(21,128,61,0.6)] transition hover:brightness-110 active:scale-[0.99]"
-        >
-          <MessageCircle size={18} />
-          Confirmar pelo WhatsApp
-        </a>
-        <div className="flex flex-col gap-2.5 sm:flex-row">
-          <Button variant="ghost" className="flex-1" onClick={() => window.print()}>
-            <Printer size={16} /> Imprimir comprovante
-          </Button>
-          <Button variant="ghost" className="flex-1" onClick={onRestart}>
-            <RotateCcw size={16} /> Nova intenção
-          </Button>
-        </div>
+      <div className="flex w-full max-w-md flex-col gap-2.5 sm:flex-row">
+        <Button variant="ghost" className="flex-1" onClick={() => window.print()}>
+          <Printer size={16} /> Imprimir comprovante
+        </Button>
+        <Button variant="ghost" className="flex-1" onClick={onRestart}>
+          <RotateCcw size={16} /> Nova intenção
+        </Button>
       </div>
     </div>
   );
