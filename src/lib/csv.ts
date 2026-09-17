@@ -1,4 +1,4 @@
-import { maskCPF, maskPhone, turnoLabel } from "./format";
+import { maskPhone, turnoLabel } from "./format";
 import { unidadeNome } from "./labels";
 import type { PreMatriculaAdminRow } from "../types";
 
@@ -12,7 +12,6 @@ export function exportarCSV(registros: PreMatriculaAdminRow[], sufixo: string) {
     "Turno",
     "Curso",
     "Responsável",
-    "CPF",
     "Telefone 1",
     "Telefone 2",
     "E-mail",
@@ -32,7 +31,6 @@ export function exportarCSV(registros: PreMatriculaAdminRow[], sufixo: string) {
         turnoLabel(t?.turno ?? ""),
         t?.curso ?? "",
         r.responsavel_nome,
-        maskCPF(r.responsavel_cpf),
         maskPhone(r.telefone1),
         r.telefone2 ? maskPhone(r.telefone2) : "",
         r.email ?? "",
