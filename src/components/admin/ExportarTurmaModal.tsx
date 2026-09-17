@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Check, FileSpreadsheet, FileText, LoaderCircle } from "lucide-react";
-import type { PreMatriculaAdminRow, TurmaAdminRow } from "../../types";
+import type { TurmaAdminRow } from "../../types";
 import Modal from "./Modal";
 
 type Formato = "xlsx" | "pdf";
@@ -20,11 +20,9 @@ export interface SelecaoExportacao {
  */
 export default function ExportarTurmaModal({
   selecao,
-  preMatriculas,
   onClose,
 }: {
   selecao: SelecaoExportacao | null;
-  preMatriculas: PreMatriculaAdminRow[];
   onClose: () => void;
 }) {
   const [gerando, setGerando] = useState<Formato | null>(null);
@@ -33,16 +31,14 @@ export default function ExportarTurmaModal({
   async function exportar(formato: Formato) {
     if (!selecao) return;
     setGerando(formato);
-    const ids = new Set(selecao.turmas.map((t) => t.id));
-    const intencoesDaSelecao = preMatriculas.filter((p) => ids.has(p.turma_id));
     const escopo = `${selecao.titulo} · ${selecao.subtitulo}`;
     try {
       if (formato === "xlsx") {
         const { exportarRelatorioCompletoExcel } = await import("../../lib/excel");
-        exportarRelatorioCompletoExcel(selecao.turmas, intencoesDaSelecao);
+        exportarRelatorioCompletoExcel(selecao.turmas);
       } else {
         const { exportarRelatorioCompletoPDF } = await import("../../lib/pdf");
-        await exportarRelatorioCompletoPDF(selecao.turmas, intencoesDaSelecao, escopo);
+        await exportarRelatorioCompletoPDF(selecao.turmas, escopo);
       }
       setBaixado(formato);
       setTimeout(() => {
