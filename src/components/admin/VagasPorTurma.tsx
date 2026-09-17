@@ -5,7 +5,7 @@ import { NIVEIS } from "../../config";
 import { turnoLabel } from "../../lib/format";
 import { ordenarTurmas, percentual, preenchidasDaTurma, unidadeCurta, unidadeNome } from "../../lib/labels";
 import { TIER_COLORS, vagaStatus } from "../../lib/vagas";
-import type { Nivel, PreMatriculaAdminRow, TurmaAdminRow } from "../../types";
+import type { Nivel, TurmaAdminRow } from "../../types";
 import { Badge, StatMini } from "../ui";
 import ExportarTurmaModal, { type SelecaoExportacao } from "./ExportarTurmaModal";
 
@@ -25,13 +25,7 @@ const CURSO_ICON: Record<string, ReactNode> = {
  * pra escondê-las de vez com o filtro. Cada turma tem seu próprio botão de
  * exportar (PDF/Excel só daquela turma).
  */
-export default function VagasPorTurma({
-  turmas,
-  preMatriculas,
-}: {
-  turmas: TurmaAdminRow[];
-  preMatriculas: PreMatriculaAdminRow[];
-}) {
+export default function VagasPorTurma({ turmas }: { turmas: TurmaAdminRow[] }) {
   const niveisPresentes = NIVEIS.filter((n) => turmas.some((t) => t.nivel === n.key));
   const [nivel, setNivel] = useState<"todos" | Nivel>("todos");
   const [somenteComOferta, setSomenteComOferta] = useState(false);
@@ -180,11 +174,7 @@ export default function VagasPorTurma({
         </section>
       ))}
 
-      <ExportarTurmaModal
-        selecao={selecaoParaExportar}
-        preMatriculas={preMatriculas}
-        onClose={() => setSelecaoParaExportar(null)}
-      />
+      <ExportarTurmaModal selecao={selecaoParaExportar} onClose={() => setSelecaoParaExportar(null)} />
     </div>
   );
 }
