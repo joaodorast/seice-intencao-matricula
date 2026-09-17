@@ -1,4 +1,4 @@
-import { formatarSenha, maskCPF, maskPhone } from "./format";
+import { formatarSenha, maskPhone } from "./format";
 import type { PreMatriculaSubmetida, Unidade } from "../types";
 
 /**
@@ -17,7 +17,6 @@ export function montarConfirmacaoWhatsApp(
     `Aluno(a): ${submetida.aluno_nome}\n` +
     `Turma: ${submetida.resumoTurma}\n\n` +
     `Responsável: ${submetida.responsavel_nome}\n` +
-    `CPF: ${maskCPF(submetida.responsavel_cpf)}\n` +
     `Telefone: ${maskPhone(submetida.telefone1)}\n` +
     (submetida.email ? `E-mail: ${submetida.email}\n` : "");
 
