@@ -178,11 +178,7 @@ export async function exportarIntencoesPDF(
   doc.save(`intencoes-matricula-seice-${sufixo}-${Date.now()}.pdf`);
 }
 
-export async function exportarRelatorioCompletoPDF(
-  turmas: TurmaAdminRow[],
-  preMatriculas: PreMatriculaAdminRow[],
-  escopo = "Todas as unidades"
-) {
+export async function exportarRelatorioCompletoPDF(turmas: TurmaAdminRow[], escopo = "Todas as unidades") {
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
 
@@ -198,7 +194,6 @@ export async function exportarRelatorioCompletoPDF(
     { rotulo: "Preenchidas", valor: String(preenchidas) },
     { rotulo: "Livres", valor: String(livres) },
     { rotulo: "Ocupação", valor: `${ocupacao}%` },
-    { rotulo: "Intenções", valor: String(preMatriculas.length) },
   ]);
 
   // uma linha por turma, com uma faixa de título a cada troca de unidade/nível
@@ -244,15 +239,6 @@ export async function exportarRelatorioCompletoPDF(
     },
   });
 
-  doc.addPage();
-  cabecalho(doc, logo, "Intenções de matrícula - detalhado", escopo, `${preMatriculas.length} registro(s)`);
-  autoTable(doc, {
-    ...estiloTabela(),
-    startY: 38,
-    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "Telefone", "Status"]],
-    body: linhasIntencoes(preMatriculas),
-  });
-
   rodape(doc, escopo);
-  doc.save(`relatorio-seice-completo-${Date.now()}.pdf`);
+  doc.save(`vagas-por-turma-seice-${Date.now()}.pdf`);
 }
