@@ -90,7 +90,7 @@ Exportação em **Excel** (`.xlsx` de verdade, com múltiplas abas) e em **PDF**
 
 - **Relatório completo**: Resumo por unidade/nível, Turmas (detalhado) e Intenções de matrícula (todos os registros) — em uma única planilha com três abas ou em um PDF com uma página por seção.
 - **Somente intenções de matrícula**: planilha ou PDF só com a lista de famílias que enviaram intenção.
-- **Filtro por segmento e por turma**: dá pra restringir tanto a prévia na tela quanto os arquivos exportados a um nível de ensino (Educação Infantil, Fundamental I/II, Médio) ou a uma turma específica — útil pra mandar pra direção só o pedaço que interessa, sem precisar abrir o arquivo completo e procurar.
+- **Modal de exportação** (botão "Exportar relatório"): escolhe entre "Turmas + intenções" ou "Só intenções", e o recorte — todas as turmas, uma específica ou várias de uma vez (seleção múltipla, com busca e "Marcar visíveis") — antes de baixar em PDF ou Excel. O resumo (turmas, vagas ofertadas, livres, intenções) atualiza junto com a seleção, e o arquivo sai exatamente com o que está marcado.
 - Resumo visual de ocupação por unidade, nível de ensino e no geral.
 
 As bibliotecas de Excel e PDF só são baixadas pelo navegador no momento em que alguém clica em exportar — mantém o painel rápido para quem só está consultando números.
