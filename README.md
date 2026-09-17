@@ -8,18 +8,22 @@ Sistema completo de intenção de matrícula online para as unidades **Campos El
 
 Esta é a pergunta mais importante, então a resposta direta primeiro:
 
-**Toda intenção de matrícula enviada pelo site é salva imediatamente no banco de dados (Supabase) e aparece em tempo real no painel da secretaria em `/admin`.** Além disso, o sistema abre automaticamente o WhatsApp do responsável já com uma mensagem pronta para a secretaria da unidade escolhida, para que o contato humano também aconteça na hora.
+**Toda intenção de matrícula enviada pelo site é salva imediatamente no banco de dados (Supabase) e aparece em tempo real no painel da secretaria** — em `/admin`, `/seice-ce` ou `/seice-jp`, sem precisar dar F5.
 
 Passo a passo do que acontece quando um responsável preenche o formulário:
 
-1. **Responsável acessa `/`** e escolhe, em sequência: unidade → nível de ensino → série → turma com vaga disponível → preenche os dados do responsável e do aluno.
-2. **Ao confirmar**, o app faz uma chamada direta ao banco de dados no Supabase (tabela `pre_matriculas` — nome interno mantido no banco por compatibilidade), usando a chave pública (`anon key`) — essa chave só tem permissão de **inserir** um novo registro, nunca de ler os dados de outras famílias (ver seção de segurança abaixo).
+1. **Responsável acessa `/`** e escolhe, em sequência: unidade → nível de ensino → série → turma com vaga disponível → preenche os dados do responsável e do aluno. Ao começar a digitar, a vaga escolhida já fica reservada por 10 minutos (ver seção "Reserva temporária de vaga").
+2. **Ao confirmar**, o app chama a função `enviar_intencao` no banco (Supabase), que insere o registro e devolve só a senha de atendimento gerada — nunca os dados de outras famílias (ver seção de segurança abaixo).
 3. **O banco valida na hora** (com uma trava automática — um *trigger* SQL) se a turma escolhida ainda tem vaga. Se alguém preencheu ao mesmo tempo e a vaga acabou, o envio é rejeitado e o app avisa o responsável para escolher outra turma. Isso evita turmas "estourarem" por duas famílias preenchendo no mesmo segundo.
-4. **O registro fica salvo permanentemente** no banco, com status inicial `pendente`, pronto para a secretaria ver, filtrar e exportar.
-5. **Em paralelo**, o app monta uma mensagem de WhatsApp com o resumo da intenção (aluno, turma, responsável) e abre um link `wa.me` direto para o número da secretaria daquela unidade — o responsável só precisa apertar "enviar" no WhatsApp dele.
-6. **A secretaria acompanha tudo em `/admin`**: vê a lista completa de intenções recebidas, filtra por unidade, busca por nome, muda o status (`pendente` → `contatado` → `matriculado`/`cancelado`) com um clique — inclusive um botão dedicado de cancelar — e exporta em CSV, Excel ou PDF quando quiser.
+4. **O registro fica salvo permanentemente** no banco, com status inicial `pendente` e uma senha sequencial (01, 02, 03...), pronto para a secretaria ver, filtrar e exportar.
+5. **A família vê a senha na tela de confirmação** (e pode imprimir o comprovante) — a secretaria entra em contato a partir daí.
+6. **A secretaria acompanha tudo no painel**: vê a lista completa de intenções recebidas, filtra por unidade, busca por nome, muda o status (`pendente` → `contatado` → `matriculado`/`cancelado`) com um clique — inclusive um botão dedicado de cancelar — e exporta em CSV, Excel ou PDF quando quiser, com filtro por segmento ou turma.
 
-Ou seja: **o destino final de cada envio é o banco de dados do Supabase**, e a secretaria o acessa através do painel `/admin` — o WhatsApp é um reforço de contato imediato, não o único lugar onde o dado fica guardado.
+Ou seja: **o destino final de cada envio é o banco de dados do Supabase**, e a secretaria o acessa através do painel — em tempo real, sem precisar de nenhum outro canal.
+
+### Sobre o WhatsApp
+
+O fluxo tinha um botão "Confirmar pelo WhatsApp" na tela de confirmação, que abria uma mensagem pronta para a secretaria. Esse botão foi retirado da tela a pedido do cliente, mas a lógica que monta a mensagem e o link `wa.me` continua no código, em `src/lib/whatsapp.ts` (função `montarConfirmacaoWhatsApp`), pronta para ser religada num botão (ou em outro lugar) quando for necessário — sem precisar remontar nada.
 
 ### Por que não existe um "e-mail de notificação" tradicional
 
@@ -86,9 +90,14 @@ Exportação em **Excel** (`.xlsx` de verdade, com múltiplas abas) e em **PDF**
 
 - **Relatório completo**: Resumo por unidade/nível, Turmas (detalhado) e Intenções de matrícula (todos os registros) — em uma única planilha com três abas ou em um PDF com uma página por seção.
 - **Somente intenções de matrícula**: planilha ou PDF só com a lista de famílias que enviaram intenção.
+- **Filtro por segmento e por turma**: dá pra restringir tanto a prévia na tela quanto os arquivos exportados a um nível de ensino (Educação Infantil, Fundamental I/II, Médio) ou a uma turma específica — útil pra mandar pra direção só o pedaço que interessa, sem precisar abrir o arquivo completo e procurar.
 - Resumo visual de ocupação por unidade, nível de ensino e no geral.
 
 As bibliotecas de Excel e PDF só são baixadas pelo navegador no momento em que alguém clica em exportar — mantém o painel rápido para quem só está consultando números.
+
+### Senha de atendimento
+
+Em vez de um protocolo em hexadecimal, cada intenção recebe uma **senha sequencial** (01, 02, 03...), como uma senha de balcão — mostrada na tela de confirmação da família e em toda a lista do painel, pra facilitar quando alguém liga dizendo "minha senha é 05". É gerada pelo próprio banco (coluna `numero_senha`, identity) através de uma função (`enviar_intencao`), já que o site não tem permissão de leitura na tabela para buscar esse número de volta de outro jeito.
 
 ---
 
