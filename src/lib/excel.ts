@@ -56,13 +56,10 @@ export function exportarIntencoesExcel(registros: PreMatriculaAdminRow[], sufixo
   baixarWorkbook(wb, `intencoes-matricula-seice-${sufixo}-${Date.now()}.xlsx`);
 }
 
-export function exportarRelatorioCompletoExcel(
-  turmas: TurmaAdminRow[],
-  preMatriculas: PreMatriculaAdminRow[]
-) {
+export function exportarRelatorioCompletoExcel(turmas: TurmaAdminRow[]) {
   const wb = XLSX.utils.book_new();
 
-  // Aba 1: vagas turma a turma (na ordem unidade → nível → série → turno)
+  // vagas turma a turma (na ordem unidade → nível → série → turno)
   const turmasLinhas = ordenarTurmas(turmas).map((t) => {
     const preenchidas = Math.max(t.vagas_planilha - t.vagas_restantes, 0);
     return {
@@ -95,10 +92,5 @@ export function exportarRelatorioCompletoExcel(
   ];
   XLSX.utils.book_append_sheet(wb, wsTurmas, "Vagas por turma");
 
-  // Aba 2: intenções de matrícula detalhado
-  const wsPm = XLSX.utils.json_to_sheet(linhasIntencoes(preMatriculas));
-  wsPm["!cols"] = LARGURAS_INTENCOES;
-  XLSX.utils.book_append_sheet(wb, wsPm, "Intenções de matrícula");
-
-  baixarWorkbook(wb, `relatorio-seice-completo-${Date.now()}.xlsx`);
+  baixarWorkbook(wb, `vagas-por-turma-seice-${Date.now()}.xlsx`);
 }
