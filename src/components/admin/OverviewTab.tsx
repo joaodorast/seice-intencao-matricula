@@ -1,4 +1,5 @@
 import { CheckCircle2, ClipboardList, DoorOpen, Layers } from "lucide-react";
+import { formatarSenha } from "../../lib/format";
 import { STATUS_INFO, STATUS_ORDER, descricaoTurma } from "../../lib/labels";
 import VagasPorTurma from "./VagasPorTurma";
 import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow } from "../../types";
@@ -95,9 +96,14 @@ export default function OverviewTab({
           <div className="flex flex-col divide-y divide-seice-border">
             {pendentesRecentes.map((r) => (
               <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                <div className="min-w-0">
-                  <div className="truncate text-[15.5px] font-bold text-seice-ink">{r.aluno_nome}</div>
-                  <div className="truncate text-[14px] text-seice-muted">{descricaoTurma(r.turmas)}</div>
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="shrink-0 rounded-full bg-seice-gold px-2 py-0.5 font-mono text-[12px] font-bold text-seice-gold-ink">
+                    {formatarSenha(r.numero_senha)}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate text-[15.5px] font-bold text-seice-ink">{r.aluno_nome}</div>
+                    <div className="truncate text-[14px] text-seice-muted">{descricaoTurma(r.turmas)}</div>
+                  </div>
                 </div>
                 <StatusControl status={r.status} onChange={(status) => onStatusChange(r.id, status)} />
               </div>
