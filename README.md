@@ -75,7 +75,17 @@ Por dentro, o sistema não usa um sistema de contas de usuário (não há cadast
 Dashboard com os números principais: turmas ofertadas, vagas ofertadas, vagas já ocupadas, total de intenções recebidas, distribuição por status e barras de ocupação por unidade e por nível de ensino — tudo atualizado em tempo real a partir do banco, com atualização automática em segundo plano a cada ~45s enquanto a aba está aberta. Traz também um painel de **intenções pendentes recentes**, com botão de mudar status (ou cancelar direto) sem precisar abrir a aba de intenções.
 
 ### Intenções de matrícula
-Lista completa de todas as famílias que enviaram intenção: data/hora, unidade, aluno, turma, responsável, CPF, telefones, e-mail e status. É possível filtrar por unidade, buscar por nome e mudar o status de cada intenção (pendente, contatado, matriculado, cancelado) direto na lista, com um botão dedicado para cancelar — a mudança é salva no banco instantaneamente e a vaga liberada some do formulário público na hora. Também é possível exportar a lista filtrada em CSV.
+Lista completa de todas as famílias que enviaram intenção: data/hora, senha, unidade, aluno, turma, responsável, CPF, telefones, e-mail e status. É possível filtrar por unidade e buscar por nome. Também é possível exportar a lista filtrada em CSV.
+
+### Fazendo o status progredir — "recebi a intenção, e agora?"
+Cada intenção começa como **Pendente** e tem um caminho claro até o fim, com um botão pra cada passo (não é um menu de escolher — é uma ação):
+
+1. **Pendente** → botão **"Contatado →"**: a secretaria já ligou/mandou mensagem.
+2. **Contatado** → botão **"Matriculado →"**: a matrícula foi concluída. Vira um selo verde com ✓.
+3. Em qualquer um dos dois primeiros passos, um botão de **cancelar** (ícone 🚫) está sempre ao lado — cancela a intenção e libera a vaga na hora.
+4. Se **Matriculado** ou **Cancelado** foi marcado por engano, um link **"↺ Reabrir"** volta a intenção para Pendente.
+
+Esse controle aparece em todo lugar que uma intenção é listada: a tabela de Intenções (linha a linha), os cartões no celular, e a lista de pendentes recentes na Visão geral — sempre a mesma ação, em um clique.
 
 ### Turmas
 Controle total sobre as turmas oferecidas:
