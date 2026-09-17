@@ -4,33 +4,22 @@ import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow } from "..
 
 export const STATUS_ORDER: StatusPreMatricula[] = ["pendente", "contatado", "matriculado", "cancelado"];
 
-export const STATUS_INFO: Record<
-  StatusPreMatricula,
-  { label: string; badge: string; ativo: string; barra: string }
-> = {
+export const STATUS_INFO: Record<StatusPreMatricula, { label: string; badge: string }> = {
   pendente: {
     label: "Pendente",
     badge: "bg-seice-chip text-seice-soft",
-    ativo: "bg-seice-panel text-seice-ink shadow-sm ring-1 ring-seice-border-strong",
-    barra: "bg-seice-chip",
   },
   contatado: {
     label: "Contatado",
     badge: "bg-seice-info-soft text-seice-info",
-    ativo: "bg-seice-info text-white",
-    barra: "bg-seice-info",
   },
   matriculado: {
     label: "Matriculado",
     badge: "bg-seice-success-soft text-seice-success",
-    ativo: "bg-seice-success text-white",
-    barra: "bg-seice-success",
   },
   cancelado: {
     label: "Cancelado",
     badge: "bg-seice-danger-soft text-seice-danger",
-    ativo: "bg-seice-danger text-white",
-    barra: "bg-seice-danger",
   },
 };
 
