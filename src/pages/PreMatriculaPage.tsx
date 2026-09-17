@@ -157,20 +157,21 @@ export default function PreMatriculaPage() {
       unidade_id: unidade!.slug,
       turma_id: turma!.id,
       responsavel_nome: values.respNome.trim(),
-      responsavel_cpf: values.respCpfDigits,
       telefone1: values.respTel1Digits,
       telefone2: values.respTel2Digits || null,
-      email: values.respEmail.trim() || null,
+      email: values.respEmail.trim(),
       aluno_nome: values.alunoNome.trim(),
     };
 
     // RPC em vez de INSERT direto: é a única forma de receber a senha
-    // sequencial de volta sem dar permissão de leitura (SELECT) na tabela
+    // sequencial de volta sem dar permissão de leitura (SELECT) na tabela.
+    // p_responsavel_cpf vai vazio: o campo de CPF foi retirado do formulário
+    // a pedido da direção, mas a coluna no banco ainda exige o parâmetro.
     const { data: numeroSenha, error } = await supabase.rpc("enviar_intencao", {
       p_unidade_id: payload.unidade_id,
       p_turma_id: payload.turma_id,
       p_responsavel_nome: payload.responsavel_nome,
-      p_responsavel_cpf: payload.responsavel_cpf,
+      p_responsavel_cpf: "",
       p_telefone1: payload.telefone1,
       p_telefone2: payload.telefone2,
       p_email: payload.email,
