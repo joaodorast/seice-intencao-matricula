@@ -43,42 +43,48 @@ export default function LoginForm({
   return (
     <div className="flex min-h-screen">
       {/* painel de marca — só em telas grandes, é onde mora o "efeito" */}
-      <aside className="relative hidden w-[42%] max-w-md shrink-0 flex-col overflow-hidden bg-seice-deep p-10 lg:flex xl:max-w-lg xl:p-14">
-        <img src={logo} alt="Colégio SEICE" className="h-11 w-auto shrink-0 self-start xl:h-12" />
+      <aside className="relative hidden w-[42%] max-w-md shrink-0 overflow-hidden bg-seice-deep lg:flex xl:max-w-lg">
+        {/* a foto de fundo, escurecida por um degradê — mais escuro em cima,
+            onde fica o texto, revelando mais da imagem perto do rodapé.
+            object-contain (não cover) porque a foto é pequena: esticar pra
+            cobrir o painel inteiro deixava ela borrada. */}
+        <img
+          src={mockupApp}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-72 w-full object-contain object-bottom [image-rendering:-webkit-optimize-contrast] xl:h-80"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-seice-deep from-15% via-seice-deep/80 via-50% to-seice-deep/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-seice-deep/85 via-transparent to-transparent" />
 
-        <div className="mt-10 shrink-0">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-seice-gold/30 bg-seice-gold/10 px-3 py-1 text-[12px] font-bold uppercase tracking-[0.08em] text-seice-gold">
-            Painel da secretaria
-          </span>
-          <h1 className="font-display mt-4 text-[28px] font-semibold leading-[1.2] text-white xl:text-[32px]">
-            Toda intenção de matrícula, em um só painel.
-          </h1>
-          <p className="mt-3 max-w-sm text-[14.5px] leading-relaxed text-white/55">
-            Acompanhe intenções, gerencie turmas e exporte relatórios das unidades Campos Elíseos e Jardim
-            Primavera — tudo atualizado em tempo real.
+        <div className="relative z-10 flex h-full w-full flex-col p-10 xl:p-14">
+          <img src={logo} alt="Colégio SEICE" className="h-11 w-auto shrink-0 self-start xl:h-12" />
+
+          <div className="mt-10 shrink-0">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-seice-gold/30 bg-seice-gold/10 px-3 py-1 text-[13.5px] font-bold uppercase tracking-[0.08em] text-seice-gold">
+              Painel da secretaria
+            </span>
+            <h1 className="font-display mt-4 text-[31px] font-semibold leading-[1.2] text-white xl:text-[36px]">
+              Toda intenção de matrícula, em um só painel.
+            </h1>
+            <p className="mt-3 max-w-sm text-[16px] leading-relaxed text-white/70">
+              Acompanhe intenções, gerencie turmas e exporte relatórios das unidades Campos Elíseos e Jardim
+              Primavera — tudo atualizado em tempo real.
+            </p>
+
+            <ul className="mt-7 flex flex-col gap-3">
+              <ItemMarca icon={<ShieldCheck size={16} />}>Dados protegidos com hash e RLS</ItemMarca>
+              <ItemMarca icon={<Zap size={16} />}>Números atualizados em tempo real</ItemMarca>
+              <ItemMarca icon={<Sparkles size={16} />}>Relatórios em PDF e Excel, por turma</ItemMarca>
+            </ul>
+          </div>
+
+          <p className="mt-auto shrink-0 text-[13px] text-white/50">
+            © {new Date().getFullYear()} Colégio SEICE
           </p>
-
-          <ul className="mt-7 flex flex-col gap-3">
-            <ItemMarca icon={<ShieldCheck size={16} />}>Dados protegidos com hash e RLS</ItemMarca>
-            <ItemMarca icon={<Zap size={16} />}>Números atualizados em tempo real</ItemMarca>
-            <ItemMarca icon={<Sparkles size={16} />}>Relatórios em PDF e Excel, por turma</ItemMarca>
-          </ul>
         </div>
 
-        {/* a foto ocupa o espaço que sobra, encostada embaixo, sem cortar
-            nem disputar espaço com o texto ou o rodapé */}
-        <div className="my-4 flex min-h-0 flex-1 items-end justify-center overflow-hidden">
-          <img
-            src={mockupApp}
-            alt=""
-            aria-hidden="true"
-            className="max-h-full max-w-[80%] object-contain drop-shadow-[0_30px_45px_rgba(0,0,0,0.6)]"
-          />
-        </div>
-
-        <p className="shrink-0 text-[12px] text-white/35">© {new Date().getFullYear()} Colégio SEICE</p>
-
-        <div className="gold-hairline absolute inset-y-0 right-0 w-px opacity-70" />
+        <div className="gold-hairline absolute inset-y-0 right-0 z-10 w-px opacity-70" />
       </aside>
 
       {/* formulário */}
@@ -95,11 +101,11 @@ export default function LoginForm({
             <div className="icon-tile mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
               <KeyRound size={21} />
             </div>
-            <h2 className="font-display text-[21px] font-semibold text-seice-ink">Entrar no painel</h2>
-            <p className="mt-1.5 text-[14px] leading-relaxed text-seice-muted">{subtitulo}</p>
+            <h2 className="font-display text-[24px] font-semibold text-seice-ink">Entrar no painel</h2>
+            <p className="mt-1.5 text-[15.5px] leading-relaxed text-seice-muted">{subtitulo}</p>
 
             {erro && (
-              <div className="mt-5 rounded-xl border border-seice-danger/30 bg-seice-danger-soft px-4 py-3 text-[13.5px] font-medium text-seice-danger">
+              <div className="mt-5 rounded-xl border border-seice-danger/30 bg-seice-danger-soft px-4 py-3 text-[15px] font-medium text-seice-danger">
                 E-mail ou senha inválidos.
               </div>
             )}
@@ -112,7 +118,7 @@ export default function LoginForm({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@seice.com.br"
                   autoComplete="username"
-                  className="inset-surface w-full rounded-xl border border-seice-border-strong py-3 pl-10 pr-3.5 text-[15px] text-seice-ink outline-none placeholder:text-seice-muted focus:border-seice-gold focus:ring-4 focus:ring-seice-gold/15"
+                  className="inset-surface w-full rounded-xl border border-seice-border-strong py-3 pl-10 pr-3.5 text-[16.5px] text-seice-ink outline-none placeholder:text-seice-muted focus:border-seice-gold focus:ring-4 focus:ring-seice-gold/15"
                 />
               </Campo>
 
@@ -123,7 +129,7 @@ export default function LoginForm({
                   onChange={(e) => setSenha(e.target.value)}
                   placeholder="Digite a senha de acesso"
                   autoComplete="current-password"
-                  className="inset-surface w-full rounded-xl border border-seice-border-strong py-3 pl-10 pr-3.5 text-[15px] text-seice-ink outline-none placeholder:text-seice-muted focus:border-seice-gold focus:ring-4 focus:ring-seice-gold/15"
+                  className="inset-surface w-full rounded-xl border border-seice-border-strong py-3 pl-10 pr-3.5 text-[16.5px] text-seice-ink outline-none placeholder:text-seice-muted focus:border-seice-gold focus:ring-4 focus:ring-seice-gold/15"
                 />
               </Campo>
             </div>
@@ -132,15 +138,15 @@ export default function LoginForm({
               {checking ? "Verificando..." : "Entrar"}
             </Button>
 
-            <p className="mt-4 flex items-center justify-center gap-1.5 text-[12px] text-seice-muted">
-              <Lock size={12} className="shrink-0 text-seice-success" />
+            <p className="mt-4 flex items-center justify-center gap-1.5 text-[13.5px] text-seice-muted">
+              <Lock size={13} className="shrink-0 text-seice-success" />
               Conexão segura — seus dados não são compartilhados.
             </p>
           </form>
 
           <Link
             to="/"
-            className="mt-6 block text-center text-[13.5px] font-semibold text-seice-muted transition hover:text-seice-ink"
+            className="mt-6 block text-center text-[15px] font-semibold text-seice-muted transition hover:text-seice-ink"
           >
             ← Voltar para o site
           </Link>
@@ -152,7 +158,7 @@ export default function LoginForm({
 
 function ItemMarca({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <li className="flex items-center gap-2.5 text-[13.5px] text-white/75">
+    <li className="flex items-center gap-2.5 text-[15px] text-white/75">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/5 text-seice-gold">
         {icon}
       </span>
@@ -164,7 +170,7 @@ function ItemMarca({ icon, children }: { icon: React.ReactNode; children: React.
 function Campo({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <label className="block text-left">
-      <span className="mb-1.5 block text-[13px] font-bold text-seice-ink">{label}</span>
+      <span className="mb-1.5 block text-[14.5px] font-bold text-seice-ink">{label}</span>
       <div className="relative">
         <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-seice-muted">{icon}</span>
         {children}
