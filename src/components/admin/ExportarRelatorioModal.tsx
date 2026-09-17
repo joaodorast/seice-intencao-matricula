@@ -147,10 +147,10 @@ export default function ExportarRelatorioModal({
       if (tipo === "completo") {
         if (formato === "xlsx") {
           const { exportarRelatorioCompletoExcel } = await import("../../lib/excel");
-          exportarRelatorioCompletoExcel(turmasFiltradas, preMatriculasFiltradas);
+          exportarRelatorioCompletoExcel(turmasFiltradas);
         } else {
           const { exportarRelatorioCompletoPDF } = await import("../../lib/pdf");
-          await exportarRelatorioCompletoPDF(turmasFiltradas, preMatriculasFiltradas, escopo);
+          await exportarRelatorioCompletoPDF(turmasFiltradas, escopo);
         }
       } else {
         if (formato === "xlsx") {
@@ -171,13 +171,13 @@ export default function ExportarRelatorioModal({
   return (
     <Modal open={open} onClose={fecharEReiniciar} title="Exportar relatório" width="max-w-5xl">
       <div className="flex flex-col gap-5">
-        {/* o que exportar: turmas + intenções, ou só a lista de intenções */}
+        {/* o que exportar: vagas por turma, ou a lista de intenções */}
         <div className="inset-surface flex rounded-xl border border-seice-border p-1.5">
           <TipoTab ativo={tipo === "completo"} onClick={() => setTipo("completo")} icon={<Layers size={16} />}>
-            Turmas + intenções
+            Turmas
           </TipoTab>
           <TipoTab ativo={tipo === "intencoes"} onClick={() => setTipo("intencoes")} icon={<FileText size={16} />}>
-            Só intenções
+            Intenções
           </TipoTab>
         </div>
 
