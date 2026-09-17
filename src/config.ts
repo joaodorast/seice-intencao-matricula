@@ -17,6 +17,11 @@ export const EDGE_FUNCTION_URL =
 export const ADMIN_TURMAS_URL =
   "https://sosdutufoexofznjzrxw.supabase.co/functions/v1/admin-turmas";
 
+// Envia o comprovante da intenção de matrícula por e-mail (reforço caso a
+// família esqueça de imprimir/salvar a tela de confirmação).
+export const EMAIL_COMPROVANTE_URL =
+  "https://sosdutufoexofznjzrxw.supabase.co/functions/v1/enviar-comprovante-email";
+
 // ---------------------------------------------------------------------------
 // >>> TROQUE AQUI OS NÚMEROS DE WHATSAPP DE CADA SECRETARIA <<<
 // Formato: código do país (55) + DDD + número, só dígitos.
