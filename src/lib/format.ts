@@ -41,3 +41,8 @@ export function turnoLabel(t: string): string {
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
+
+/** Senha de atendimento: 1 → "01", 2 → "02", ..., 100 → "100". */
+export function formatarSenha(numero: number): string {
+  return String(numero).padStart(2, "0");
+}

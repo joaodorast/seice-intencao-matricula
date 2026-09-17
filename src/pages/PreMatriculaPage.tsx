@@ -37,17 +37,6 @@ function agruparPorSerie(turmas: TurmaDisponivel[], nivel: string): SerieGroup[]
   return Array.from(map.values()).sort((a, b) => a.ordem - b.ordem);
 }
 
-// id gerado no navegador: o site só tem permissão de INSERT em pre_matriculas
-// (sem SELECT, pra não expor dados das famílias), então não dá pra pedir a linha de volta
-function novoId(): string {
-  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
-  const b = crypto.getRandomValues(new Uint8Array(16));
-  b[6] = (b[6] & 0x0f) | 0x40;
-  b[8] = (b[8] & 0x3f) | 0x80;
-  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
-}
-
 // Turmas com vaga de todas as unidades numa única chamada — feita assim que a
 // página abre, para a escolha da unidade já encontrar os dados prontos.
 async function buscarTurmasComVaga(): Promise<TurmaDisponivel[] | null> {
@@ -164,7 +153,6 @@ export default function PreMatriculaPage() {
     setSubmitting(true);
     setSubmitErro(null);
 
-    const id = novoId();
     const payload = {
       unidade_id: unidade!.slug,
       turma_id: turma!.id,
@@ -176,11 +164,22 @@ export default function PreMatriculaPage() {
       aluno_nome: values.alunoNome.trim(),
     };
 
-    const { error } = await supabase.from("pre_matriculas").insert({ id, ...payload });
+    // RPC em vez de INSERT direto: é a única forma de receber a senha
+    // sequencial de volta sem dar permissão de leitura (SELECT) na tabela
+    const { data: numeroSenha, error } = await supabase.rpc("enviar_intencao", {
+      p_unidade_id: payload.unidade_id,
+      p_turma_id: payload.turma_id,
+      p_responsavel_nome: payload.responsavel_nome,
+      p_responsavel_cpf: payload.responsavel_cpf,
+      p_telefone1: payload.telefone1,
+      p_telefone2: payload.telefone2,
+      p_email: payload.email,
+      p_aluno_nome: payload.aluno_nome,
+    });
     setSubmitting(false);
 
-    if (error) {
-      const vagasEsgotadas = /vagas dispon/i.test(error.message || "");
+    if (error || numeroSenha == null) {
+      const vagasEsgotadas = /vagas dispon/i.test(error?.message || "");
       setSubmitErro(
         vagasEsgotadas
           ? "Que pena! As vagas dessa turma acabaram de se esgotar. Volte e escolha outra turma disponível."
@@ -197,7 +196,7 @@ export default function PreMatriculaPage() {
 
     setSubmetida({
       ...payload,
-      id,
+      numeroSenha,
       resumoTurma: `${serieGroup!.serie} — Turma ${turma!.codigo} (${turnoLabel(turma!.turno)})${
         turma!.curso ? " — " + turma!.curso : ""
       }`,

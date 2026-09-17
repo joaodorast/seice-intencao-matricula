@@ -50,7 +50,8 @@ export interface PreMatriculaPayload {
 }
 
 export interface PreMatriculaSubmetida extends PreMatriculaPayload {
-  id: string;
+  /** Senha de atendimento sequencial (01, 02, 03...), gerada pelo banco. */
+  numeroSenha: number;
   resumoTurma: string;
 }
 
@@ -90,8 +91,10 @@ export interface TurmaFormValues {
 
 export interface PreMatriculaAdminRow {
   id: string;
+  numero_senha: number;
   criado_em: string;
   unidade_id: string;
+  turma_id: string;
   responsavel_nome: string;
   responsavel_cpf: string;
   telefone1: string;
