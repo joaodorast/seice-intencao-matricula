@@ -42,10 +42,9 @@ export interface PreMatriculaPayload {
   unidade_id: string;
   turma_id: string;
   responsavel_nome: string;
-  responsavel_cpf: string;
   telefone1: string;
   telefone2: string | null;
-  email: string | null;
+  email: string;
   aluno_nome: string;
 }
 
