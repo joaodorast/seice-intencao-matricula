@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import { NIVEL_LABELS } from "../config";
-import { maskCPF, maskPhone, turnoLabel } from "./format";
+import { formatarSenha, maskCPF, maskPhone, turnoLabel } from "./format";
 import { ordenarTurmas, unidadeNome } from "./labels";
 import { vagaStatus } from "./vagas";
 import type { PreMatriculaAdminRow, TurmaAdminRow } from "../types";
@@ -14,6 +14,7 @@ function baixarWorkbook(wb: XLSX.WorkBook, nomeArquivo: string) {
 
 function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
   return registros.map((r) => ({
+    Senha: formatarSenha(r.numero_senha),
     "Recebido em": new Date(r.criado_em).toLocaleString("pt-BR"),
     Unidade: unidadeNome(r.unidade_id),
     Aluno: r.aluno_nome,
@@ -31,6 +32,7 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
 }
 
 const LARGURAS_INTENCOES = [
+  { wch: 8 },
   { wch: 16 },
   { wch: 16 },
   { wch: 24 },

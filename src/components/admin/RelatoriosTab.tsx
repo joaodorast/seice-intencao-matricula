@@ -1,9 +1,20 @@
-import { useState } from "react";
-import { FileSpreadsheet, FileText, LoaderCircle, TrendingUp } from "lucide-react";
-import { resumoTurmas } from "../../lib/labels";
-import type { PreMatriculaAdminRow, TurmaAdminRow } from "../../types";
+import { useMemo, useState } from "react";
+import { FileSpreadsheet, FileText, Filter, LoaderCircle, TrendingUp } from "lucide-react";
+import { NIVEIS } from "../../config";
+import { ordenarTurmas, resumoTurmas, unidadeCurta } from "../../lib/labels";
+import { turnoLabel } from "../../lib/format";
+import type { Nivel, PreMatriculaAdminRow, TurmaAdminRow } from "../../types";
 import { Button, Card, SectionDesc, SectionTitle } from "../ui";
 import VagasPorTurma from "./VagasPorTurma";
+
+function slugificar(txt: string): string {
+  return txt
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 export default function RelatoriosTab({
   turmas,
@@ -16,14 +27,45 @@ export default function RelatoriosTab({
   escopo?: string;
 }) {
   const [gerando, setGerando] = useState<string | null>(null);
-  const sufixo = escopo
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+  const [segmento, setSegmento] = useState<"todos" | Nivel>("todos");
+  const [turmaId, setTurmaId] = useState<string>("todas");
 
-  const resumo = resumoTurmas(turmas);
+  const niveisPresentes = NIVEIS.filter((n) => turmas.some((t) => t.nivel === n.key));
+
+  // opções de turma: só as do segmento escolhido, e reseta se a turma
+  // selecionada some da lista ao trocar de segmento
+  const turmasDoSegmento = useMemo(
+    () => ordenarTurmas(turmas.filter((t) => segmento === "todos" || t.nivel === segmento)),
+    [turmas, segmento]
+  );
+  const turmaSelecionada = turmasDoSegmento.find((t) => t.id === turmaId);
+
+  function mudarSegmento(novo: "todos" | Nivel) {
+    setSegmento(novo);
+    setTurmaId("todas");
+  }
+
+  // o que vai pra tela e pro PDF/Excel é sempre a mesma lista filtrada — sem
+  // surpresa entre o que a secretaria vê e o que sai no arquivo
+  const turmasFiltradas = turmaSelecionada
+    ? [turmaSelecionada]
+    : turmasDoSegmento;
+  const turmasFiltradasIds = new Set(turmasFiltradas.map((t) => t.id));
+  const preMatriculasFiltradas =
+    segmento === "todos" && !turmaSelecionada
+      ? preMatriculas
+      : preMatriculas.filter((p) => turmasFiltradasIds.has(p.turma_id));
+
+  const filtroAtivo = segmento !== "todos" || Boolean(turmaSelecionada);
+  const filtroLabel = turmaSelecionada
+    ? `${turmaSelecionada.serie} · Turma ${turmaSelecionada.codigo} · ${turnoLabel(turmaSelecionada.turno)}`
+    : segmento !== "todos"
+    ? NIVEIS.find((n) => n.key === segmento)?.label
+    : null;
+
+  const sufixo = [escopo, filtroLabel].filter((v): v is string => Boolean(v)).map(slugificar).join("-") || "todas";
+
+  const resumo = resumoTurmas(turmasFiltradas);
   const totalOfertadas = resumo.reduce((acc, r) => acc + r.ofertadas, 0);
   const totalPreenchidas = resumo.reduce((acc, r) => acc + r.preenchidas, 0);
   const ocupacaoGeral = totalOfertadas > 0 ? Math.round((totalPreenchidas / totalOfertadas) * 100) : 0;
@@ -41,19 +83,19 @@ export default function RelatoriosTab({
   // mantém o painel leve para quem só está consultando os números.
   async function exportarCompletoExcel() {
     const { exportarRelatorioCompletoExcel } = await import("../../lib/excel");
-    exportarRelatorioCompletoExcel(turmas, preMatriculas);
+    exportarRelatorioCompletoExcel(turmasFiltradas, preMatriculasFiltradas);
   }
   async function exportarCompletoPDF() {
     const { exportarRelatorioCompletoPDF } = await import("../../lib/pdf");
-    await exportarRelatorioCompletoPDF(turmas, preMatriculas, escopo);
+    await exportarRelatorioCompletoPDF(turmasFiltradas, preMatriculasFiltradas, escopo);
   }
   async function exportarIntencoesExcel() {
     const { exportarIntencoesExcel: fn } = await import("../../lib/excel");
-    fn(preMatriculas, sufixo);
+    fn(preMatriculasFiltradas, sufixo);
   }
   async function exportarIntencoesPDF() {
     const { exportarIntencoesPDF: fn } = await import("../../lib/pdf");
-    await fn(preMatriculas, sufixo, escopo);
+    await fn(preMatriculasFiltradas, sufixo, escopo);
   }
 
   return (
@@ -64,9 +106,70 @@ export default function RelatoriosTab({
         </h2>
         <p className="text-[15px] text-seice-muted">
           Gere planilhas e PDFs com os dados de turmas e intenções de matrícula, prontos para compartilhar com a
-          direção. Os arquivos saem com os dados de <strong className="text-seice-ink">{escopo}</strong>.
+          direção. Os arquivos saem com os dados de <strong className="text-seice-ink">{escopo}</strong>
+          {filtroLabel && (
+            <>
+              {" "}
+              filtrados por <strong className="text-seice-ink">{filtroLabel}</strong>
+            </>
+          )}
+          .
         </p>
       </div>
+
+      {/* filtro que vale pra prévia e pra exportação: segmento (nível) e,
+          dentro dele, uma turma específica */}
+      <Card className="flex flex-col gap-3.5">
+        <div className="flex items-center gap-2 text-[15px] font-bold text-seice-ink">
+          <Filter size={16} className="text-seice-gold" />
+          Filtrar relatório
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <label className="flex-1">
+            <span className="mb-1.5 block text-[13px] font-semibold uppercase tracking-wide text-seice-muted">
+              Segmento
+            </span>
+            <select
+              value={segmento}
+              onChange={(e) => mudarSegmento(e.target.value as "todos" | Nivel)}
+              className="inset-surface w-full rounded-xl border border-seice-border-strong px-3.5 py-2.5 text-[14.5px] font-bold text-seice-ink outline-none focus:border-seice-gold"
+            >
+              <option value="todos">Todos os segmentos</option>
+              {niveisPresentes.map((n) => (
+                <option key={n.key} value={n.key}>
+                  {n.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex-1">
+            <span className="mb-1.5 block text-[13px] font-semibold uppercase tracking-wide text-seice-muted">
+              Turma
+            </span>
+            <select
+              value={turmaId}
+              onChange={(e) => setTurmaId(e.target.value)}
+              className="inset-surface w-full rounded-xl border border-seice-border-strong px-3.5 py-2.5 text-[14.5px] font-bold text-seice-ink outline-none focus:border-seice-gold"
+            >
+              <option value="todas">Todas as turmas{segmento !== "todos" ? " do segmento" : ""}</option>
+              {turmasDoSegmento.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {unidadeCurta(t.unidade_id)} · {t.serie} · Turma {t.codigo} · {turnoLabel(t.turno)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        {filtroAtivo && (
+          <button
+            type="button"
+            onClick={() => mudarSegmento("todos")}
+            className="self-start text-[13.5px] font-semibold text-seice-gold underline-offset-2 hover:underline"
+          >
+            Limpar filtro
+          </button>
+        )}
+      </Card>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="flex flex-col gap-4">
@@ -76,7 +179,7 @@ export default function RelatoriosTab({
             </span>
             <div>
               <SectionTitle>Relatório completo</SectionTitle>
-              <SectionDesc>Resumo geral, todas as turmas e todas as intenções em um único arquivo.</SectionDesc>
+              <SectionDesc>Resumo geral, turmas e intenções filtradas em um único arquivo.</SectionDesc>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2.5">
@@ -107,7 +210,7 @@ export default function RelatoriosTab({
             </span>
             <div>
               <SectionTitle>Somente intenções de matrícula</SectionTitle>
-              <SectionDesc>Lista de todos os responsáveis e alunos que enviaram intenção.</SectionDesc>
+              <SectionDesc>Lista dos responsáveis e alunos que enviaram intenção, já filtrada.</SectionDesc>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2.5">
@@ -139,20 +242,20 @@ export default function RelatoriosTab({
           <div>
             <SectionTitle>Vagas por turma</SectionTitle>
             <SectionDesc>
-              Situação de cada turma em {escopo}. No geral, {ocupacaoGeral}% das vagas ofertadas já foram
-              preenchidas.
+              {filtroLabel ? `Filtro ativo: ${filtroLabel}. ` : ""}
+              No que está sendo exibido, {ocupacaoGeral}% das vagas ofertadas já foram preenchidas.
             </SectionDesc>
           </div>
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Numero label="Turmas" value={turmas.length} />
+          <Numero label="Turmas" value={turmasFiltradas.length} />
           <Numero label="Vagas ofertadas" value={totalOfertadas} />
           <Numero label="Preenchidas" value={totalPreenchidas} />
           <Numero label="Livres" value={totalOfertadas - totalPreenchidas} destaque />
         </div>
 
-        <VagasPorTurma turmas={turmas} />
+        <VagasPorTurma turmas={turmasFiltradas} />
       </Card>
     </div>
   );
