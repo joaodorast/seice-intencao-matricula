@@ -1,12 +1,13 @@
 import { type ReactNode, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Briefcase, HeartPulse, Laptop } from "lucide-react";
+import { Briefcase, Download, HeartPulse, Laptop } from "lucide-react";
 import { NIVEIS } from "../../config";
 import { turnoLabel } from "../../lib/format";
-import { ordenarTurmas, percentual, preenchidasDaTurma, unidadeNome } from "../../lib/labels";
+import { ordenarTurmas, percentual, preenchidasDaTurma, unidadeCurta, unidadeNome } from "../../lib/labels";
 import { TIER_COLORS, vagaStatus } from "../../lib/vagas";
-import type { Nivel, TurmaAdminRow } from "../../types";
+import type { Nivel, PreMatriculaAdminRow, TurmaAdminRow } from "../../types";
 import { Badge, StatMini } from "../ui";
+import ExportarTurmaModal, { type SelecaoExportacao } from "./ExportarTurmaModal";
 
 const TIER_BADGE = { abertas: "success", poucas: "gold", ultimas: "danger" } as const;
 
@@ -21,12 +22,20 @@ const CURSO_ICON: Record<string, ReactNode> = {
  * grandes e cartões no celular, agrupadas por unidade e nível. Turmas sem
  * nenhuma vaga ofertada ao site (histórico da planilha) ficam esmaecidas ao
  * final de cada grupo — não é um problema, só não está à venda online — e dá
- * pra escondê-las de vez com o filtro.
+ * pra escondê-las de vez com o filtro. Cada turma tem seu próprio botão de
+ * exportar (PDF/Excel só daquela turma).
  */
-export default function VagasPorTurma({ turmas }: { turmas: TurmaAdminRow[] }) {
+export default function VagasPorTurma({
+  turmas,
+  preMatriculas,
+}: {
+  turmas: TurmaAdminRow[];
+  preMatriculas: PreMatriculaAdminRow[];
+}) {
   const niveisPresentes = NIVEIS.filter((n) => turmas.some((t) => t.nivel === n.key));
   const [nivel, setNivel] = useState<"todos" | Nivel>("todos");
   const [somenteComOferta, setSomenteComOferta] = useState(false);
+  const [selecaoParaExportar, setSelecaoParaExportar] = useState<SelecaoExportacao | null>(null);
 
   const grupos = useMemo(() => {
     const visiveis = ordenarTurmas(
@@ -93,36 +102,63 @@ export default function VagasPorTurma({ turmas }: { turmas: TurmaAdminRow[] }) {
           {[...porNivel.entries()].map(([nivelKey, lista]) => {
             const ofertadas = lista.reduce((acc, t) => acc + t.vagas_planilha, 0);
             const livres = lista.reduce((acc, t) => acc + t.vagas_restantes, 0);
+            const nivelLabel = NIVEIS.find((n) => n.key === nivelKey)?.label ?? nivelKey;
+
+            function exportarTurma(t: TurmaAdminRow) {
+              setSelecaoParaExportar({
+                titulo: `${t.serie} · Turma ${t.codigo}`,
+                subtitulo: `${unidadeCurta(t.unidade_id)} · ${turnoLabel(t.turno)}${t.curso ? ` · ${t.curso}` : ""}`,
+                turmas: [t],
+              });
+            }
+
+            function exportarSegmento() {
+              setSelecaoParaExportar({
+                titulo: nivelLabel,
+                subtitulo: variasUnidades
+                  ? `${unidadeNome(unidadeSlug)} · ${lista.length} turma${lista.length === 1 ? "" : "s"}`
+                  : `${lista.length} turma${lista.length === 1 ? "" : "s"}`,
+                turmas: lista,
+              });
+            }
+
             return (
               <div key={nivelKey} className="flex flex-col gap-2.5">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                  <h4 className="text-[16px] font-bold text-seice-ink">
-                    {NIVEIS.find((n) => n.key === nivelKey)?.label ?? nivelKey}
-                  </h4>
-                  <span className="text-[14px] text-seice-muted">
-                    {lista.length} turma{lista.length === 1 ? "" : "s"} ·{" "}
-                    <strong className="font-semibold text-seice-gold">{livres}</strong> de {ofertadas} vagas livres
-                  </span>
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <h4 className="text-[16px] font-bold text-seice-ink">{nivelLabel}</h4>
+                    <span className="text-[14px] text-seice-muted">
+                      {lista.length} turma{lista.length === 1 ? "" : "s"} ·{" "}
+                      <strong className="font-semibold text-seice-gold">{livres}</strong> de {ofertadas} vagas livres
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={exportarSegmento}
+                    className="raised-surface inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-seice-border-strong px-2.5 py-1.5 text-[12.5px] font-bold text-seice-ink transition hover:border-seice-gold/50 hover:text-seice-gold"
+                  >
+                    <Download size={13} /> Exportar {nivelLabel}
+                  </button>
                 </div>
 
                 {/* celular e tablet: cartões */}
                 <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 lg:hidden">
                   {lista.map((t) => (
-                    <CartaoTurma key={t.id} turma={t} />
+                    <CartaoTurma key={t.id} turma={t} onExportar={() => exportarTurma(t)} />
                   ))}
                 </div>
 
                 {/* tela grande: tabela com cabeçalho */}
                 <div className="card-surface hidden overflow-x-auto rounded-2xl border border-seice-border lg:block">
-                  <table className="w-full min-w-190 border-collapse text-[15px]">
+                  <table className="w-full min-w-205 border-collapse text-[15px]">
                     <thead>
                       <tr>
-                        {["Turma", "Turno", "Ofertadas", "Preenchidas", "Livres", "Ocupação", "Situação"].map(
+                        {["Turma", "Turno", "Ofertadas", "Preenchidas", "Livres", "Ocupação", "Situação", ""].map(
                           (h, i) => (
                             <th
-                              key={h}
+                              key={h || "acao"}
                               className={`whitespace-nowrap border-b border-seice-border bg-seice-panel px-3.5 py-2.5 text-[13px] font-bold uppercase tracking-wide text-seice-muted ${
-                                i >= 2 ? "text-right" : "text-left"
+                                i >= 2 && i <= 6 ? "text-right" : "text-left"
                               }`}
                             >
                               {h}
@@ -133,7 +169,7 @@ export default function VagasPorTurma({ turmas }: { turmas: TurmaAdminRow[] }) {
                     </thead>
                     <tbody>
                       {lista.map((t) => (
-                        <LinhaTurma key={t.id} turma={t} />
+                        <LinhaTurma key={t.id} turma={t} onExportar={() => exportarTurma(t)} />
                       ))}
                     </tbody>
                   </table>
@@ -143,11 +179,17 @@ export default function VagasPorTurma({ turmas }: { turmas: TurmaAdminRow[] }) {
           })}
         </section>
       ))}
+
+      <ExportarTurmaModal
+        selecao={selecaoParaExportar}
+        preMatriculas={preMatriculas}
+        onClose={() => setSelecaoParaExportar(null)}
+      />
     </div>
   );
 }
 
-function LinhaTurma({ turma: t }: { turma: TurmaAdminRow }) {
+function LinhaTurma({ turma: t, onExportar }: { turma: TurmaAdminRow; onExportar: () => void }) {
   const preenchidas = preenchidasDaTurma(t);
   const pct = percentual(preenchidas, t.vagas_planilha);
   const status = vagaStatus(t.vagas_restantes, t.vagas_planilha);
@@ -193,11 +235,21 @@ function LinhaTurma({ turma: t }: { turma: TurmaAdminRow }) {
       <td className="border-b border-seice-border px-3.5 py-3 text-right align-top">
         <Badge tone={semOferta ? "neutral" : TIER_BADGE[status.tier]}>{semOferta ? "Sem oferta" : status.label}</Badge>
       </td>
+      <td className="border-b border-seice-border px-3.5 py-3 align-top">
+        <button
+          type="button"
+          onClick={onExportar}
+          title="Exportar esta turma"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-seice-muted transition hover:bg-seice-chip hover:text-seice-gold"
+        >
+          <Download size={15} />
+        </button>
+      </td>
     </tr>
   );
 }
 
-function CartaoTurma({ turma: t }: { turma: TurmaAdminRow }) {
+function CartaoTurma({ turma: t, onExportar }: { turma: TurmaAdminRow; onExportar: () => void }) {
   const preenchidas = preenchidasDaTurma(t);
   const status = vagaStatus(t.vagas_restantes, t.vagas_planilha);
   const semOferta = t.vagas_planilha === 0;
@@ -218,7 +270,17 @@ function CartaoTurma({ turma: t }: { turma: TurmaAdminRow }) {
             )}
           </div>
         </div>
-        <Badge tone={semOferta ? "neutral" : TIER_BADGE[status.tier]}>{semOferta ? "Sem oferta" : status.label}</Badge>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Badge tone={semOferta ? "neutral" : TIER_BADGE[status.tier]}>{semOferta ? "Sem oferta" : status.label}</Badge>
+          <button
+            type="button"
+            onClick={onExportar}
+            title="Exportar esta turma"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-seice-muted transition hover:bg-seice-chip hover:text-seice-gold"
+          >
+            <Download size={14} />
+          </button>
+        </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2">
         <StatMini label="Ofertadas" value={t.vagas_planilha} />

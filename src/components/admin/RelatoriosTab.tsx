@@ -73,7 +73,7 @@ export default function RelatoriosTab({
           <Numero label="Livres" value={totalOfertadas - totalPreenchidas} destaque />
         </div>
 
-        <VagasPorTurma turmas={turmas} />
+        <VagasPorTurma turmas={turmas} preMatriculas={preMatriculas} />
       </Card>
 
       <ExportarRelatorioModal
