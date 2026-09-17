@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { formatarSenha, maskCPF, maskPhone, formatDateTime } from "../../lib/format";
+import { formatarSenha, maskPhone, formatDateTime } from "../../lib/format";
 import { STATUS_INFO, descricaoTurma, unidadeNome } from "../../lib/labels";
 import type { PreMatriculaAdminRow, StatusPreMatricula } from "../../types";
 import { EmptyState } from "../ui";
@@ -45,7 +45,6 @@ export default function PreMatriculaTable({
               <Info label="Unidade" value={unidadeNome(r.unidade_id)} />
               <Info label="Recebido em" value={formatDateTime(r.criado_em)} />
               <Info label="Responsável" value={r.responsavel_nome} />
-              <Info label="CPF" value={maskCPF(r.responsavel_cpf)} />
               <Info
                 label="Telefone(s)"
                 value={[r.telefone1, r.telefone2].filter(Boolean).map((t) => maskPhone(t!)).join(" · ")}
@@ -72,7 +71,6 @@ export default function PreMatriculaTable({
                 "Aluno",
                 "Turma",
                 "Responsável",
-                "CPF",
                 "Telefone(s)",
                 "E-mail",
                 "Status",
@@ -108,9 +106,6 @@ export default function PreMatriculaTable({
                 </td>
                 <td className="border-b border-seice-border px-3.5 py-3 align-top text-seice-soft">
                   {r.responsavel_nome}
-                </td>
-                <td className="border-b border-seice-border px-3.5 py-3 align-top text-seice-soft">
-                  {maskCPF(r.responsavel_cpf)}
                 </td>
                 <td className="border-b border-seice-border px-3.5 py-3 align-top text-seice-soft">
                   {maskPhone(r.telefone1)}
