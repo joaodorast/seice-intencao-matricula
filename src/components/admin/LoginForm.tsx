@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { KeyRound, Lock, Mail, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import logo from "../../assets/seice-logo.png";
-import logoIcon from "../../assets/seice-icon.png";
+import mockupApp from "../../assets/Mockup-ClassApp-min.avif";
 import { Button } from "../ui";
 
 const EMAIL_ADMIN = "admin@seice.com.br";
@@ -43,24 +43,10 @@ export default function LoginForm({
   return (
     <div className="flex min-h-screen">
       {/* painel de marca — só em telas grandes, é onde mora o "efeito" */}
-      <aside className="relative hidden w-[42%] max-w-md shrink-0 flex-col justify-between overflow-hidden bg-seice-deep p-10 lg:flex xl:max-w-lg xl:p-14">
-        <div
-          className="dot-texture pointer-events-none absolute inset-0 opacity-50"
-          style={{
-            maskImage: "radial-gradient(ellipse 90% 70% at 30% 20%, black, transparent 75%)",
-            WebkitMaskImage: "radial-gradient(ellipse 90% 70% at 30% 20%, black, transparent 75%)",
-          }}
-        />
-        <img
-          src={logoIcon}
-          alt=""
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-20 -right-24 h-96 w-96 opacity-[0.06]"
-        />
+      <aside className="relative hidden w-[42%] max-w-md shrink-0 flex-col overflow-hidden bg-seice-deep p-10 lg:flex xl:max-w-lg xl:p-14">
+        <img src={logo} alt="Colégio SEICE" className="h-11 w-auto shrink-0 self-start xl:h-12" />
 
-        <img src={logo} alt="Colégio SEICE" className="relative h-11 w-auto xl:h-12" />
-
-        <div className="relative">
+        <div className="mt-10 shrink-0">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-seice-gold/30 bg-seice-gold/10 px-3 py-1 text-[12px] font-bold uppercase tracking-[0.08em] text-seice-gold">
             Painel da secretaria
           </span>
@@ -79,21 +65,24 @@ export default function LoginForm({
           </ul>
         </div>
 
-        <p className="relative text-[12px] text-white/35">© {new Date().getFullYear()} Colégio SEICE</p>
+        {/* a foto ocupa o espaço que sobra, encostada embaixo, sem cortar
+            nem disputar espaço com o texto ou o rodapé */}
+        <div className="my-4 flex min-h-0 flex-1 items-end justify-center overflow-hidden">
+          <img
+            src={mockupApp}
+            alt=""
+            aria-hidden="true"
+            className="max-h-full max-w-[80%] object-contain drop-shadow-[0_30px_45px_rgba(0,0,0,0.6)]"
+          />
+        </div>
+
+        <p className="shrink-0 text-[12px] text-white/35">© {new Date().getFullYear()} Colégio SEICE</p>
 
         <div className="gold-hairline absolute inset-y-0 right-0 w-px opacity-70" />
       </aside>
 
       {/* formulário */}
       <div className="relative flex flex-1 items-center justify-center p-5 sm:p-10">
-        <div
-          className="dot-texture pointer-events-none absolute inset-0 opacity-25 lg:hidden"
-          style={{
-            maskImage: "linear-gradient(to bottom, black, transparent 55%)",
-            WebkitMaskImage: "linear-gradient(to bottom, black, transparent 55%)",
-          }}
-        />
-
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
