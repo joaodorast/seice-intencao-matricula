@@ -9,7 +9,7 @@ const PROXIMO: Partial<Record<StatusPreMatricula, StatusPreMatricula>> = {
 };
 
 const PROXIMO_ESTILO: Record<string, string> = {
-  contatado: "bg-seice-info text-white hover:brightness-110",
+  contatado: "bg-seice-info-soft text-seice-info ring-1 ring-seice-info/30 hover:brightness-125",
   matriculado: "bg-seice-success text-white hover:brightness-110",
 };
 
