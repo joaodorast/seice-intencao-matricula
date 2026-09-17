@@ -2,7 +2,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { NIVEL_LABELS } from "../config";
 import logoUrl from "../assets/seice-logo.png";
-import { formatarSenha, maskCPF, maskPhone, turnoLabel } from "./format";
+import { formatarSenha, maskPhone, turnoLabel } from "./format";
 import { STATUS_INFO, ordenarTurmas, unidadeNome } from "./labels";
 import { vagaStatus } from "./vagas";
 import type { PreMatriculaAdminRow, TurmaAdminRow } from "../types";
@@ -143,7 +143,6 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
     r.aluno_nome,
     r.turmas ? `${r.turmas.serie} · ${r.turmas.codigo} · ${turnoLabel(r.turmas.turno)}` : "-",
     r.responsavel_nome,
-    maskCPF(r.responsavel_cpf),
     maskPhone(r.telefone1),
     STATUS_INFO[r.status]?.label ?? r.status,
   ]);
@@ -171,7 +170,7 @@ export async function exportarIntencoesPDF(
   autoTable(doc, {
     ...estiloTabela(),
     startY: y + 6,
-    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "CPF", "Telefone", "Status"]],
+    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "Telefone", "Status"]],
     body: linhasIntencoes(registros),
   });
 
@@ -250,7 +249,7 @@ export async function exportarRelatorioCompletoPDF(
   autoTable(doc, {
     ...estiloTabela(),
     startY: 38,
-    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "CPF", "Telefone", "Status"]],
+    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "Telefone", "Status"]],
     body: linhasIntencoes(preMatriculas),
   });
 
