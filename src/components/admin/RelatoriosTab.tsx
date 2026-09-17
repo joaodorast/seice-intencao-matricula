@@ -46,8 +46,8 @@ export default function RelatoriosTab({
         <div>
           <div className="text-[16.5px] font-bold text-seice-ink">Tudo em um único lugar</div>
           <p className="mx-auto mt-1 max-w-sm text-[14px] text-seice-muted">
-            Turmas + intenções ou só a lista de intenções, em PDF ou Excel — para todas as turmas ou para uma
-            turma específica.
+            Vagas por turma ou a lista de intenções, em PDF ou Excel — para todas as turmas ou para uma turma
+            específica.
           </p>
         </div>
         <Button variant="ghost" onClick={() => setModalAberto(true)} className="mt-1">
@@ -73,7 +73,7 @@ export default function RelatoriosTab({
           <Numero label="Livres" value={totalOfertadas - totalPreenchidas} destaque />
         </div>
 
-        <VagasPorTurma turmas={turmas} preMatriculas={preMatriculas} />
+        <VagasPorTurma turmas={turmas} />
       </Card>
 
       <ExportarRelatorioModal
