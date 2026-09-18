@@ -9,10 +9,16 @@ famílias interessadas.
 
 ## Como funciona agora
 
-Quando uma família termina de preencher o formulário e a turma escolhida já
-está sem vaga (seja porque já estava cheia, seja porque outra família ocupou
-a última vaga um instante antes), a intenção **não é mais rejeitada**. Ela é
-cadastrada normalmente, só que marcada como **"lista de espera"**.
+Turmas sem vaga **não somem mais do formulário**. A família continua vendo
+todas as turmas — inclusive as que já estão em "0 vagas" desde o início —,
+com um aviso claro de "Lista de espera" no lugar do número de vagas, e
+consegue escolher e se inscrever normalmente. Isso vale tanto pra quem entra
+numa turma que zerou no meio do preenchimento (alguém ocupou a última vaga
+um instante antes) quanto pra quem escolhe de propósito uma turma que a
+secretaria já deixou com 0 vagas na planilha.
+
+Em qualquer um desses casos, a intenção **não é rejeitada**. Ela é cadastrada
+normalmente, só que marcada como **"lista de espera"**.
 
 ### O que a família vê
 
