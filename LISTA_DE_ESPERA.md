@@ -26,8 +26,8 @@ Em vez da tela normal de "Intenção enviada!", ela vê uma tela avisando:
 
 > **Você entrou na lista de espera!**
 > As vagas da turma escolhida já foram preenchidas, mas seus dados foram
-> cadastrados. Se surgir uma desistência, a secretaria entra em contato pra
-> oferecer a vaga.
+> cadastrados. Se surgir uma desistência, a secretaria entrará em contato
+> para oferecer a vaga.
 
 O comprovante (na tela, impresso e por e-mail) tem uma faixa destacada
 escrito **"Lista de espera"**. E no lugar da senha normal, ele mostra a
