@@ -57,29 +57,42 @@ export default function ConfirmacaoStep({
         </p>
       </div>
 
-      {/* "ticket" de comprovante, imprimível */}
-      <Card id="comprovante" className="w-full max-w-md overflow-hidden !p-0">
-        <div className="relative flex items-center justify-between gap-3 bg-seice-deep px-5 py-4">
-          <img src={logoIcon} alt="SEICE" className="h-9 w-auto" />
+      {/* "ticket" de comprovante, imprimível — os hooks comprovante-* são pro
+          @media print no index.css: no papel a fonte fica maior e as cores
+          viram cinza, sem depender das classes de tela (que continuam com o
+          visual dourado normal do site). */}
+      <Card id="comprovante" className="comprovante-ticket w-full max-w-md overflow-hidden !p-0">
+        <p className="comprovante-titulo-impresso hidden text-center text-[13px] font-bold uppercase tracking-[0.14em] text-seice-muted print:block">
+          Comprovante de intenção de matrícula
+        </p>
+        <div className="comprovante-cabecalho relative flex items-center justify-between gap-3 bg-seice-deep px-5 py-4">
+          <img src={logoIcon} alt="SEICE" className="comprovante-logo h-9 w-auto" />
           <div className="text-right">
-            <div className="text-[12.5px] font-semibold uppercase tracking-wide text-white/60">Senha</div>
-            <div className="font-mono text-[22px] font-bold leading-none text-seice-gold">{senha}</div>
+            <div className="comprovante-rotulo-senha text-[12.5px] font-semibold uppercase tracking-wide text-white/60">
+              Senha
+            </div>
+            <div className="comprovante-senha text-[22px] font-bold leading-none text-seice-gold">{senha}</div>
           </div>
           <div className="gold-hairline absolute inset-x-0 bottom-0 h-px opacity-80" />
         </div>
-        <div className="relative px-5 py-4">
-          <div className="absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full bg-seice-bg" />
-          <div className="absolute -right-2.5 -top-2.5 h-5 w-5 rounded-full bg-seice-bg" />
-          <div className="border-b border-dashed border-seice-border pb-3">
-            <div className="text-[13.5px] font-semibold uppercase tracking-wide text-seice-muted">Aluno(a)</div>
-            <div className="text-[18px] font-bold text-seice-ink">{submetida.aluno_nome}</div>
+        <div className="comprovante-corpo relative px-5 py-4">
+          <div className="comprovante-notch absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full bg-seice-bg" />
+          <div className="comprovante-notch absolute -right-2.5 -top-2.5 h-5 w-5 rounded-full bg-seice-bg" />
+          <div className="comprovante-linha border-b border-dashed border-seice-border pb-3">
+            <div className="comprovante-rotulo text-[13.5px] font-semibold uppercase tracking-wide text-seice-muted">
+              Aluno(a)
+            </div>
+            <div className="comprovante-aluno text-[18px] font-bold text-seice-ink">{submetida.aluno_nome}</div>
           </div>
-          <dl className="mt-3 flex flex-col gap-2 text-[15.5px]">
+          <dl className="comprovante-dados mt-3 flex flex-col gap-2 text-[15.5px]">
             <Row label="Unidade" value={unidade.nome} />
             <Row label="Turma" value={submetida.resumoTurma} />
             <Row label="Responsável" value={submetida.responsavel_nome} />
             <Row label="Telefone" value={maskPhone(submetida.telefone1)} />
           </dl>
+          <p className="comprovante-rodape-impresso hidden pt-4 text-[12px] text-seice-muted print:block">
+            Colégio SEICE · gerado em {new Date().toLocaleString("pt-BR")}
+          </p>
         </div>
       </Card>
 
@@ -97,9 +110,9 @@ export default function ConfirmacaoStep({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-3">
-      <dt className="text-seice-muted">{label}</dt>
-      <dd className="text-right font-semibold text-seice-ink">{value}</dd>
+    <div className="comprovante-linha-dado flex items-start justify-between gap-3">
+      <dt className="comprovante-rotulo text-seice-muted">{label}</dt>
+      <dd className="comprovante-valor text-right font-semibold text-seice-ink">{value}</dd>
     </div>
   );
 }
