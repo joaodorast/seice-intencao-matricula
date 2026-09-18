@@ -124,6 +124,11 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   async function handleLogin(email: string, candidato: string): Promise<boolean> {
     const contaEncontrada = buscarConta(email);
     if (!contaEncontrada) return false;
+    // conta presa numa unidade não consegue logar na tela da outra unidade
+    // nem na do painel geral — barrado aqui, antes mesmo de checar a senha,
+    // e não só redirecionado depois de já ter entrado
+    const acessoPermitido = contaEncontrada.escopo === "geral" || contaEncontrada.escopo === escopoSlug;
+    if (!acessoPermitido) return false;
     const ok = await verificarToken(candidato);
     if (ok) {
       sessionStorage.setItem(TOKEN_KEY, candidato);
