@@ -63,7 +63,6 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
     const email = sessionStorage.getItem(CONTA_KEY);
     return email ? buscarConta(email) : null;
   });
-  const [checkingSession, setCheckingSession] = useState(true);
   const [aba, setAba] = useState<AbaAdmin>("visao");
   const [unidadeFiltro, setUnidadeFiltro] = useState<string>(escopoSlug ?? "todas");
   const [busca, setBusca] = useState("");
@@ -83,22 +82,10 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
     return () => window.removeEventListener("popstate", travar);
   }, [token]);
 
-  useEffect(() => {
-    if (!token) {
-      setCheckingSession(false);
-      return;
-    }
-    verificarToken(token).then((ok) => {
-      if (!ok) {
-        sessionStorage.removeItem(TOKEN_KEY);
-        setToken(null);
-      }
-      setCheckingSession(false);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // troca de painel (rota) recarrega os dados no escopo daquela unidade
+  // troca de painel (rota) recarrega os dados no escopo daquela unidade —
+  // essa própria chamada já confirma se o token guardado ainda é válido, sem
+  // precisar de uma segunda ida ao servidor só pra "verificar sessão" antes
+  // (isso dobrava o tempo até a primeira tela aparecer)
   useEffect(() => {
     setUnidadeFiltro(escopoSlug ?? "todas");
     if (token) carregar();
@@ -173,15 +160,28 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
         buscarPreMatriculas(token, escopoSlug),
         listarTurmas(token, escopoSlug),
       ]);
-      if (minhaSeq !== cargaSeq.current) return; // já saiu uma carga mais nova, ignora esta
+      if (minhaSeq !== cargaSeq.current) return; // já saiu uma carga mais nova, ignora só os dados desta
       setRegistros(pm);
       setTurmas(tm);
     } catch (e) {
-      if (minhaSeq === cargaSeq.current && !silencioso) {
-        setErro(e instanceof Error ? e.message : "Erro ao carregar dados");
+      const msg = e instanceof Error ? e.message : "Erro ao carregar dados";
+      // token guardado não é mais válido (senha trocada, por exemplo) — essa
+      // primeira tentativa de carregar dados já serve como checagem de
+      // sessão, sem precisar de uma chamada extra só pra isso
+      if (/não autorizado/i.test(msg)) {
+        sessionStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(CONTA_KEY);
+        setToken(null);
+        setConta(null);
+        return;
       }
+      // o spinner e o erro são sempre resolvidos pela própria chamada que os
+      // abriu, nunca condicionados à trava de "carga mais nova" — senão uma
+      // atualização silenciosa concorrente podia deixar o spinner girando
+      // para sempre, sem nunca chamar setLoading(false)
+      if (!silencioso) setErro(msg);
     } finally {
-      if (minhaSeq === cargaSeq.current && !silencioso) setLoading(false);
+      if (!silencioso) setLoading(false);
     }
   }
 
@@ -209,14 +209,6 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
       r.aluno_nome.toLowerCase().includes(termo) || r.responsavel_nome.toLowerCase().includes(termo)
     );
   });
-
-  if (checkingSession) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner />
-      </div>
-    );
-  }
 
   if (!token) {
     return <LoginForm onLogin={handleLogin} unidade={unidadeFixa?.nome} />;
