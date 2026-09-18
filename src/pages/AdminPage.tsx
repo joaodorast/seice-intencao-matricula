@@ -72,6 +72,17 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  // trava o botão "voltar" do navegador enquanto estiver logado: sem isso,
+  // dava pra sair do painel só apertando voltar (o login não muda de URL,
+  // então o navegador manda de volta pra página de antes de entrar aqui)
+  useEffect(() => {
+    if (!token) return;
+    window.history.pushState(null, "", window.location.href);
+    const travar = () => window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", travar);
+    return () => window.removeEventListener("popstate", travar);
+  }, [token]);
+
   useEffect(() => {
     if (!token) {
       setCheckingSession(false);
