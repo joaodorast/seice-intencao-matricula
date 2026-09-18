@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ClipboardList,
   Download,
@@ -9,12 +9,14 @@ import {
   RefreshCw,
   School,
   Search,
+  Settings2,
 } from "lucide-react";
 import LoginForm from "../components/admin/LoginForm";
 import PreMatriculaTable from "../components/admin/PreMatriculaTable";
 import OverviewTab from "../components/admin/OverviewTab";
 import TurmasTab from "../components/admin/TurmasTab";
 import RelatoriosTab from "../components/admin/RelatoriosTab";
+import ConfiguracoesTab from "../components/admin/ConfiguracoesTab";
 import { Button, Spinner } from "../components/ui";
 import logoIcon from "../assets/seice-icon.png";
 import { UNIDADES } from "../config";
@@ -22,14 +24,16 @@ import { atualizarStatus, buscarPreMatriculas, verificarToken } from "../lib/adm
 import { listarTurmas } from "../lib/adminTurmasApi";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { unidadeCurta } from "../lib/labels";
+import { buscarConta, EMAIL_COM_CONFIGURACOES, type Conta } from "../lib/contas";
 import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow, Unidade } from "../types";
 
 const TOKEN_KEY = "seice_admin_token";
+const CONTA_KEY = "seice_admin_conta_email";
 // atualiza os números sozinho de tempos em tempos, mesmo se o aviso em tempo
 // real (Supabase Realtime) falhar por algum motivo — é só uma rede de segurança
 const AUTO_REFRESH_MS = 45_000;
 
-type AbaAdmin = "visao" | "prematriculas" | "turmas" | "relatorios";
+type AbaAdmin = "visao" | "prematriculas" | "turmas" | "relatorios" | "configuracoes";
 
 const ABAS: { key: AbaAdmin; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "visao", label: "Visão geral", icon: LayoutDashboard },
@@ -52,8 +56,13 @@ const PAINEIS = [
 
 export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade }) {
   const escopoSlug = unidadeFixa?.slug;
+  const navigate = useNavigate();
 
   const [token, setToken] = useState<string | null>(() => sessionStorage.getItem(TOKEN_KEY));
+  const [conta, setConta] = useState<Conta | null>(() => {
+    const email = sessionStorage.getItem(CONTA_KEY);
+    return email ? buscarConta(email) : null;
+  });
   const [checkingSession, setCheckingSession] = useState(true);
   const [aba, setAba] = useState<AbaAdmin>("visao");
   const [unidadeFiltro, setUnidadeFiltro] = useState<string>(escopoSlug ?? "todas");
@@ -85,6 +94,15 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, escopoSlug]);
 
+  // conta presa numa unidade (secretaria de CE/JP): manda pro painel dela se
+  // tentar abrir o geral ou o da outra unidade — endereçamento automático
+  useEffect(() => {
+    if (!conta || conta.escopo === "geral") return;
+    const rotaCerta = ROTA_PAINEL_UNIDADE[conta.escopo];
+    if (escopoSlug !== conta.escopo) navigate(rotaCerta, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conta, escopoSlug]);
+
   // aviso em tempo real: uma intenção nova, um cancelamento ou um ajuste de
   // turma (neste painel ou em outro) recarrega os números sozinho, sem F5
   useEffect(() => {
@@ -103,18 +121,24 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, escopoSlug]);
 
-  async function handleLogin(candidato: string): Promise<boolean> {
+  async function handleLogin(email: string, candidato: string): Promise<boolean> {
+    const contaEncontrada = buscarConta(email);
+    if (!contaEncontrada) return false;
     const ok = await verificarToken(candidato);
     if (ok) {
       sessionStorage.setItem(TOKEN_KEY, candidato);
+      sessionStorage.setItem(CONTA_KEY, contaEncontrada.email);
       setToken(candidato);
+      setConta(contaEncontrada);
     }
     return ok;
   }
 
   function logout() {
     sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(CONTA_KEY);
     setToken(null);
+    setConta(null);
   }
 
   // várias coisas disparam carregar() (broadcast em tempo real, o poll de
@@ -185,6 +209,12 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   const unidadeTabs = [{ slug: "todas", nome: "Todas as unidades" }, ...UNIDADES];
   const escopoLabel = unidadeFixa ? `${unidadeCurta(unidadeFixa.slug)} · ${unidadeFixa.nome}` : "Todas as unidades";
   const sufixoExport = escopoSlug ?? unidadeFiltro;
+  // a aba de Configurações (com o reset de dados de teste) só aparece pra
+  // essa conta específica — é uma ação sensível, não é pra qualquer login geral
+  const abasVisiveis =
+    conta?.email === EMAIL_COM_CONFIGURACOES
+      ? [...ABAS, { key: "configuracoes" as const, label: "Configurações", icon: Settings2 }]
+      : ABAS;
 
   return (
     <div className="min-h-screen">
@@ -196,7 +226,9 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
               <div className="font-display text-[20px] font-semibold text-white">
                 {unidadeFixa ? `Painel ${unidadeCurta(unidadeFixa.slug)}` : "Painel da Secretaria"}
               </div>
-              <div className="text-[14px] text-white/55">{escopoLabel} · Ano letivo 2027</div>
+              <div className="text-[14px] text-white/55">
+                {escopoLabel} · Ano letivo 2027{conta ? ` · ${conta.nome}` : ""}
+              </div>
             </div>
           </div>
 
@@ -236,7 +268,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6">
         {/* Navegação por seção do painel */}
         <div className="card-surface mb-4 flex gap-2 overflow-x-auto rounded-2xl border border-seice-border p-1.5 sm:flex-wrap sm:overflow-visible">
-          {ABAS.map(({ key, label, icon: Icon }) => (
+          {abasVisiveis.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setAba(key)}
@@ -331,6 +363,9 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
             )}
             {aba === "relatorios" && (
               <RelatoriosTab turmas={turmas} preMatriculas={registros} escopo={escopoLabelCurto(unidadeFixa?.slug)} />
+            )}
+            {aba === "configuracoes" && conta?.email === EMAIL_COM_CONFIGURACOES && (
+              <ConfiguracoesTab token={token} onReset={() => carregar()} />
             )}
           </>
         )}
