@@ -168,14 +168,27 @@ body {
   }
 }
 
-/* Comprovante imprimível (ConfirmacaoStep): imprime em fundo branco.
-   Os elementos internos usam as cores do tema escuro (texto branco/dourado,
-   cabeçalho quase preto) — sem sobrescrever cada um deles, o navegador some
-   com as cores de fundo na impressão e sobra texto claro sobre papel branco,
-   invisível. Por isso o "#comprovante *" força tudo pra texto escuro em
-   fundo branco, e as exceções abaixo devolvem só os acentos que fazem
-   sentido no papel. */
+/* Comprovante imprimível (ConfirmacaoStep): em vez de sair uma folha A4
+   enorme com um cartãozinho perdido no canto, a impressão usa um papel bem
+   menor (A5) e o comprovante ocupa quase a página inteira, centralizado —
+   fica parecendo um recibo de verdade, não um pedaço de página. As cores do
+   tema escuro (texto branco/dourado, cabeçalho quase preto) não fazem
+   sentido no papel, então tudo vira escala de cinza aqui, com uma fonte bem
+   maior e padronizada (os hooks comprovante-* ficam só pra isso, sem mexer
+   no visual da tela). */
 @media print {
+  @page {
+    size: A5 portrait;
+    margin: 14mm;
+  }
+
+  /* o body é escuro no site inteiro (tema dark) — sem isso, a impressão sai
+     com uma faixa preta enorme ao redor do comprovante branco */
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
   body * {
     visibility: hidden;
   }
@@ -183,26 +196,85 @@ body {
   #comprovante * {
     visibility: visible;
   }
+
   #comprovante {
     position: absolute;
     inset: 0;
+    margin: auto;
+    width: 100% !important;
+    max-width: none !important;
+    height: fit-content;
     box-shadow: none !important;
-    border: 1px solid #d4d4d4 !important;
+    border: 1px solid #c9c9c9 !important;
+    border-radius: 16px !important;
   }
   #comprovante,
   #comprovante * {
     background: #ffffff !important;
-    color: #14161b !important;
-    border-color: #d8d8d8 !important;
+    color: #222222 !important;
+    border-color: #d4d4d4 !important;
     box-shadow: none !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  #comprovante .text-seice-gold,
-  #comprovante .text-seice-muted {
-    color: #6b6b6b !important;
+
+  #comprovante .comprovante-titulo-impresso {
+    padding-top: 14px;
+    font-size: 14px !important;
+    letter-spacing: 0.12em;
+    color: #555555 !important;
+  }
+  #comprovante .comprovante-cabecalho {
+    background: #f2f2f2 !important;
+    padding: 20px 26px !important;
+  }
+  #comprovante .comprovante-logo {
+    height: 38px !important;
+  }
+  #comprovante .comprovante-rotulo-senha {
+    font-size: 14px !important;
+    color: #666666 !important;
+  }
+  #comprovante .comprovante-senha {
+    font-size: 46px !important;
+    color: #1a1a1a !important;
+  }
+  #comprovante .comprovante-corpo {
+    padding: 26px !important;
+  }
+  #comprovante .comprovante-rotulo {
+    font-size: 14px !important;
+    color: #666666 !important;
+  }
+  #comprovante .comprovante-aluno {
+    font-size: 26px !important;
+    margin-top: 4px;
+  }
+  #comprovante .comprovante-linha {
+    padding-bottom: 18px !important;
+  }
+  #comprovante .comprovante-dados {
+    gap: 14px !important;
+    margin-top: 18px !important;
+    font-size: 19px !important;
+  }
+  #comprovante .comprovante-linha-dado {
+    padding: 4px 0;
+  }
+  #comprovante .comprovante-valor {
+    font-size: 19px !important;
+    color: #1a1a1a !important;
+  }
+  #comprovante .comprovante-notch {
+    background: #ffffff !important;
+    border: 1px solid #d4d4d4 !important;
+  }
+  #comprovante .comprovante-rodape-impresso {
+    font-size: 13px !important;
+    color: #888888 !important;
+    border-top: 1px dashed #d4d4d4;
   }
   #comprovante .gold-hairline {
-    background: #cfa100 !important;
+    background: #bbbbbb !important;
   }
 }
