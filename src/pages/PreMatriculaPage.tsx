@@ -168,7 +168,10 @@ export default function PreMatriculaPage() {
     // sequencial de volta sem dar permissão de leitura (SELECT) na tabela.
     // p_responsavel_cpf vai vazio: o campo de CPF foi retirado do formulário
     // a pedido da direção, mas a coluna no banco ainda exige o parâmetro.
-    const { data: numeroSenha, error } = await supabase.rpc("enviar_intencao", {
+    // Turma cheia não é mais erro: o banco aceita a intenção normalmente e
+    // devolve lista_espera = true, então essa chamada praticamente não falha
+    // mais por falta de vaga.
+    const { data, error } = await supabase.rpc("enviar_intencao", {
       p_unidade_id: payload.unidade_id,
       p_turma_id: payload.turma_id,
       p_responsavel_nome: payload.responsavel_nome,
@@ -180,30 +183,21 @@ export default function PreMatriculaPage() {
     });
     setSubmitting(false);
 
-    if (error || numeroSenha == null) {
-      const vagasEsgotadas = /vagas dispon/i.test(error?.message || "");
-      setSubmitErro(
-        vagasEsgotadas
-          ? "Que pena! As vagas dessa turma acabaram de se esgotar. Volte e escolha outra turma disponível."
-          : "Não foi possível enviar sua intenção de matrícula agora. Verifique os dados e tente novamente."
-      );
-      if (vagasEsgotadas) {
-        const slug = unidade!.slug;
-        recarregarTurmas().then((lista) => {
-          if (lista) setTurmasDisponiveis(lista.filter((t) => t.unidade_id === slug));
-        });
-      }
+    const linha = data?.[0];
+    if (error || !linha) {
+      setSubmitErro("Não foi possível enviar sua intenção de matrícula agora. Verifique os dados e tente novamente.");
       return;
     }
 
     setSubmetida({
       ...payload,
-      numeroSenha,
+      numeroSenha: linha.numero_senha,
+      listaEspera: linha.lista_espera,
       resumoTurma: `${serieGroup!.serie} — Turma ${turma!.codigo} (${turnoLabel(turma!.turno)})${
         turma!.curso ? " — " + turma!.curso : ""
       }`,
     });
-    if (payload.email) enviarComprovantePorEmail(payload.unidade_id, numeroSenha);
+    if (payload.email) enviarComprovantePorEmail(payload.unidade_id, linha.numero_senha);
     recarregarTurmas();
     go("confirmacao");
   }
