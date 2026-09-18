@@ -27,8 +27,8 @@ begin
 
   if v_espera then
     select count(*) into v_posicao
-    from public.pre_matriculas
-    where turma_id = p_turma_id and lista_espera = true and criado_em <= v_criado;
+    from public.pre_matriculas pm
+    where pm.turma_id = p_turma_id and pm.lista_espera = true and pm.criado_em <= v_criado;
   else
     v_posicao := null;
   end if;
