@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { CheckCircle2, Printer, RotateCcw } from "lucide-react";
 import { formatarSenha, maskPhone } from "../../lib/format";
@@ -57,44 +58,20 @@ export default function ConfirmacaoStep({
         </p>
       </div>
 
-      {/* "ticket" de comprovante, imprimível — os hooks comprovante-* são pro
-          @media print no index.css: no papel a fonte fica maior e as cores
-          viram cinza, sem depender das classes de tela (que continuam com o
-          visual dourado normal do site). */}
-      <Card id="comprovante" className="comprovante-ticket w-full max-w-md overflow-hidden !p-0">
-        <p className="comprovante-titulo-impresso hidden text-center text-[13px] font-bold uppercase tracking-[0.14em] text-seice-muted print:block">
-          Comprovante de intenção de matrícula
-        </p>
-        <div className="comprovante-cabecalho relative flex items-center justify-between gap-3 bg-seice-deep px-5 py-4">
-          <img src={logoIcon} alt="SEICE" className="comprovante-logo h-9 w-auto" />
-          <div className="text-right">
-            <div className="comprovante-rotulo-senha text-[12.5px] font-semibold uppercase tracking-wide text-white/60">
-              Senha
-            </div>
-            <div className="comprovante-senha text-[22px] font-bold leading-none text-seice-gold">{senha}</div>
-          </div>
-          <div className="gold-hairline absolute inset-x-0 bottom-0 h-px opacity-80" />
-        </div>
-        <div className="comprovante-corpo relative px-5 py-4">
-          <div className="comprovante-notch absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full bg-seice-bg" />
-          <div className="comprovante-notch absolute -right-2.5 -top-2.5 h-5 w-5 rounded-full bg-seice-bg" />
-          <div className="comprovante-linha border-b border-dashed border-seice-border pb-3">
-            <div className="comprovante-rotulo text-[13.5px] font-semibold uppercase tracking-wide text-seice-muted">
-              Aluno(a)
-            </div>
-            <div className="comprovante-aluno text-[18px] font-bold text-seice-ink">{submetida.aluno_nome}</div>
-          </div>
-          <dl className="comprovante-dados mt-3 flex flex-col gap-2 text-[15.5px]">
-            <Row label="Unidade" value={unidade.nome} />
-            <Row label="Turma" value={submetida.resumoTurma} />
-            <Row label="Responsável" value={submetida.responsavel_nome} />
-            <Row label="Telefone" value={maskPhone(submetida.telefone1)} />
-          </dl>
-          <p className="comprovante-rodape-impresso hidden pt-4 text-[12px] text-seice-muted print:block">
-            Colégio SEICE · gerado em {new Date().toLocaleString("pt-BR")}
-          </p>
-        </div>
+      {/* ticket na tela, com o visual normal do site (dourado/escuro) */}
+      <Card className="w-full max-w-md overflow-hidden !p-0">
+        <ComprovanteConteudo senha={senha} submetida={submetida} unidade={unidade} />
       </Card>
+
+      {/* cópia só pra impressão, fora da árvore da página: assim o resto do
+          site (bem mais alto que o ticket) não conta como espaço em branco
+          e empurra o comprovante para uma segunda folha. */}
+      {createPortal(
+        <div id="comprovante-impressao" className="hidden print:block">
+          <ComprovanteConteudo senha={senha} submetida={submetida} unidade={unidade} />
+        </div>,
+        document.body
+      )}
 
       <div className="flex w-full max-w-md flex-col gap-2.5 sm:flex-row">
         <Button variant="ghost" className="flex-1" onClick={() => window.print()}>
@@ -103,6 +80,58 @@ export default function ConfirmacaoStep({
         <Button variant="ghost" className="flex-1" onClick={onRestart}>
           <RotateCcw size={16} /> Nova intenção
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Conteúdo do "ticket", usado tanto na tela quanto na cópia de impressão. Os
+ * hooks comprovante-* são o que o @media print (index.css) usa pra padronizar
+ * fonte/cor/tamanho no papel, sem mexer no visual normal da tela.
+ */
+function ComprovanteConteudo({
+  senha,
+  submetida,
+  unidade,
+}: {
+  senha: string;
+  submetida: PreMatriculaSubmetida;
+  unidade: Unidade;
+}) {
+  return (
+    <div className="comprovante-ticket">
+      <p className="comprovante-titulo-impresso hidden text-center text-[13px] font-bold uppercase tracking-[0.14em] text-seice-muted print:block">
+        Comprovante de intenção de matrícula
+      </p>
+      <div className="comprovante-cabecalho relative flex items-center justify-between gap-3 bg-seice-deep px-5 py-4">
+        <img src={logoIcon} alt="SEICE" className="comprovante-logo h-9 w-auto" />
+        <div className="text-right">
+          <div className="comprovante-rotulo-senha text-[12.5px] font-semibold uppercase tracking-wide text-white/60">
+            Senha
+          </div>
+          <div className="comprovante-senha text-[22px] font-bold leading-none text-seice-gold">{senha}</div>
+        </div>
+        <div className="gold-hairline absolute inset-x-0 bottom-0 h-px opacity-80" />
+      </div>
+      <div className="comprovante-corpo relative px-5 py-4">
+        <div className="comprovante-notch absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full bg-seice-bg" />
+        <div className="comprovante-notch absolute -right-2.5 -top-2.5 h-5 w-5 rounded-full bg-seice-bg" />
+        <div className="comprovante-linha border-b border-dashed border-seice-border pb-3">
+          <div className="comprovante-rotulo text-[13.5px] font-semibold uppercase tracking-wide text-seice-muted">
+            Aluno(a)
+          </div>
+          <div className="comprovante-aluno text-[18px] font-bold text-seice-ink">{submetida.aluno_nome}</div>
+        </div>
+        <dl className="comprovante-dados mt-3 flex flex-col gap-2 text-[15.5px]">
+          <Row label="Unidade" value={unidade.nome} />
+          <Row label="Turma" value={submetida.resumoTurma} />
+          <Row label="Responsável" value={submetida.responsavel_nome} />
+          <Row label="Telefone" value={maskPhone(submetida.telefone1)} />
+        </dl>
+        <p className="comprovante-rodape-impresso hidden pt-4 text-[12px] text-seice-muted print:block">
+          Colégio SEICE · gerado em {new Date().toLocaleString("pt-BR")}
+        </p>
       </div>
     </div>
   );
