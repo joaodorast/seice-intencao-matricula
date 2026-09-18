@@ -64,8 +64,8 @@ export default function ConfirmacaoStep({
             <>
               As vagas da turma escolhida pra{" "}
               <strong className="font-semibold text-seice-ink">{submetida.aluno_nome}</strong> já foram
-              preenchidas, mas seus dados foram cadastrados. Se surgir uma desistência, a secretaria entra em
-              contato pra oferecer a vaga.
+              preenchidas, mas seus dados foram cadastrados. Se surgir uma desistência, a secretaria entrará em
+              contato para oferecer a vaga.
             </>
           ) : (
             <>
