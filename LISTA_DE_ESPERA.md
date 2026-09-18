@@ -24,15 +24,18 @@ Em vez da tela normal de "Intenção enviada!", ela vê uma tela avisando:
 > oferecer a vaga.
 
 O comprovante (na tela, impresso e por e-mail) tem uma faixa destacada
-escrito **"Lista de espera"**, pra ficar claro que não é uma vaga garantida.
+escrito **"Lista de espera"**. E no lugar da senha normal, ele mostra a
+**posição da família na fila daquela turma** — "1ª", "2ª", "3ª"... contada
+por ordem de chegada: quem se inscreveu primeiro fica na frente.
 
 ### O que a secretaria vê
 
 No painel (Visão geral e na aba Intenções), toda inscrição que caiu na lista
-de espera tem um selo amarelo com um relógio, escrito **"Lista de espera"**,
-do lado do nome do aluno — dá pra ver de cara, sem precisar abrir o
-registro. Os relatórios em PDF e Excel também têm uma coluna "Lista de
-espera" (Sim/Não).
+de espera tem um selo amarelo com um relógio, escrito **"1ª na lista de
+espera"**, **"2ª na lista de espera"**, etc. — já mostrando a posição de
+cada família na fila daquela turma, sem precisar abrir o registro nem
+contar manualmente quem chegou antes. Os relatórios em PDF e Excel também
+têm uma coluna "Lista de espera" (Sim/Não).
 
 ### O que NÃO muda
 
@@ -50,11 +53,12 @@ espera" (Sim/Não).
 ### O que a secretaria PRECISA fazer manualmente
 
 O sistema não avisa a família sozinho quando uma vaga abre — ele só marca
-quem está na lista de espera. Quando uma vaga realmente abrir (por exemplo,
-um cancelamento), a secretaria precisa:
+quem está na lista de espera e em que posição. Quando uma vaga realmente
+abrir (por exemplo, um cancelamento), a secretaria precisa:
 
 1. Olhar quem está na lista de espera daquela turma (filtrar por unidade/
-   turma na aba Intenções e procurar o selo amarelo).
+   turma na aba Intenções e procurar o selo amarelo) e chamar pela posição —
+   a "1ª" tem prioridade sobre a "2ª", e assim por diante.
 2. Entrar em contato com a família pelo telefone ou e-mail cadastrado.
 3. Mudar o status da intenção conforme for andando a matrícula.
 
