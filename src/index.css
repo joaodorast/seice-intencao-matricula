@@ -168,48 +168,48 @@ body {
   }
 }
 
-/* Comprovante imprimível (ConfirmacaoStep): em vez de sair uma folha A4
-   enorme com um cartãozinho perdido no canto, a impressão usa um papel bem
-   menor (A5) e o comprovante ocupa quase a página inteira, centralizado —
-   fica parecendo um recibo de verdade, não um pedaço de página. As cores do
-   tema escuro (texto branco/dourado, cabeçalho quase preto) não fazem
-   sentido no papel, então tudo vira escala de cinza aqui, com uma fonte bem
-   maior e padronizada (os hooks comprovante-* ficam só pra isso, sem mexer
-   no visual da tela). */
+/* Comprovante imprimível (ConfirmacaoStep): a cópia de impressão é
+   renderizada via portal direto no <body> (fora de #root), então o resto da
+   página — bem mais alto que o ticket — não entra na paginação e não empurra
+   um segundo papel em branco. O papel é A5 (menor que A4), o comprovante
+   ocupa quase a página inteira, centralizado, em escala de cinza com um
+   preto de verdade no cabeçalho e um fio dourado bem discreto — fonte maior
+   e padronizada (os hooks comprovante-* são só pra isso, sem mexer no
+   visual da tela). */
 @media print {
   @page {
     size: A5 portrait;
     margin: 14mm;
   }
 
-  /* o body é escuro no site inteiro (tema dark) — sem isso, a impressão sai
-     com uma faixa preta enorme ao redor do comprovante branco */
   html,
   body {
     background: #ffffff !important;
+    height: auto !important;
   }
 
-  body * {
-    visibility: hidden;
-  }
-  #comprovante,
-  #comprovante * {
-    visibility: visible;
+  /* some com a página inteira do site — só a cópia de impressão fica */
+  #root {
+    display: none !important;
   }
 
-  #comprovante {
-    position: absolute;
+  /* o confete (canvas-confetti) também é anexado direto no body, fora do
+     #root — sem isso, as bolinhas do confete aparecem espalhadas no papel */
+  canvas {
+    display: none !important;
+  }
+
+  #comprovante-impressao {
+    display: block !important;
+    position: fixed;
     inset: 0;
     margin: auto;
-    width: 100% !important;
-    max-width: none !important;
+    width: 100%;
     height: fit-content;
-    box-shadow: none !important;
-    border: 1px solid #c9c9c9 !important;
-    border-radius: 16px !important;
   }
-  #comprovante,
-  #comprovante * {
+
+  #comprovante-impressao,
+  #comprovante-impressao * {
     background: #ffffff !important;
     color: #222222 !important;
     border-color: #d4d4d4 !important;
@@ -218,63 +218,73 @@ body {
     print-color-adjust: exact !important;
   }
 
-  #comprovante .comprovante-titulo-impresso {
+  #comprovante-impressao .comprovante-ticket {
+    border: 1px solid #c9c9c9 !important;
+    border-radius: 16px !important;
+    overflow: hidden;
+  }
+  #comprovante-impressao .comprovante-titulo-impresso {
     padding-top: 14px;
     font-size: 14px !important;
     letter-spacing: 0.12em;
     color: #555555 !important;
   }
-  #comprovante .comprovante-cabecalho {
-    background: #f2f2f2 !important;
+  #comprovante-impressao .comprovante-cabecalho {
+    background: #141414 !important;
     padding: 20px 26px !important;
   }
-  #comprovante .comprovante-logo {
+  #comprovante-impressao .comprovante-cabecalho * {
+    background: transparent !important;
+    color: #ffffff !important;
+  }
+  #comprovante-impressao .comprovante-logo {
     height: 38px !important;
   }
-  #comprovante .comprovante-rotulo-senha {
+  #comprovante-impressao .comprovante-rotulo-senha {
     font-size: 14px !important;
-    color: #666666 !important;
+    color: #ffffffaa !important;
   }
-  #comprovante .comprovante-senha {
+  #comprovante-impressao .comprovante-senha {
     font-size: 46px !important;
-    color: #1a1a1a !important;
+    color: #ffffff !important;
   }
-  #comprovante .comprovante-corpo {
+  #comprovante-impressao .comprovante-corpo {
     padding: 26px !important;
   }
-  #comprovante .comprovante-rotulo {
+  #comprovante-impressao .comprovante-rotulo {
     font-size: 14px !important;
     color: #666666 !important;
   }
-  #comprovante .comprovante-aluno {
+  #comprovante-impressao .comprovante-aluno {
     font-size: 26px !important;
     margin-top: 4px;
   }
-  #comprovante .comprovante-linha {
+  #comprovante-impressao .comprovante-linha {
     padding-bottom: 18px !important;
   }
-  #comprovante .comprovante-dados {
+  #comprovante-impressao .comprovante-dados {
     gap: 14px !important;
     margin-top: 18px !important;
     font-size: 19px !important;
   }
-  #comprovante .comprovante-linha-dado {
+  #comprovante-impressao .comprovante-linha-dado {
     padding: 4px 0;
   }
-  #comprovante .comprovante-valor {
+  #comprovante-impressao .comprovante-valor {
     font-size: 19px !important;
     color: #1a1a1a !important;
   }
-  #comprovante .comprovante-notch {
+  #comprovante-impressao .comprovante-notch {
     background: #ffffff !important;
     border: 1px solid #d4d4d4 !important;
   }
-  #comprovante .comprovante-rodape-impresso {
+  #comprovante-impressao .comprovante-rodape-impresso {
     font-size: 13px !important;
     color: #888888 !important;
     border-top: 1px dashed #d4d4d4;
   }
-  #comprovante .gold-hairline {
-    background: #bbbbbb !important;
+  /* fio dourado bem discreto — só um toque de cor, quase imperceptível */
+  #comprovante-impressao .gold-hairline {
+    background: #e8c65a99 !important;
   }
 }
