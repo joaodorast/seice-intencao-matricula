@@ -24,6 +24,7 @@ import { atualizarStatus, buscarPreMatriculas, verificarToken } from "../lib/adm
 import { listarTurmas } from "../lib/adminTurmasApi";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { unidadeCurta } from "../lib/labels";
+import { calcularPosicoesEspera } from "../lib/format";
 import { buscarConta, EMAIL_COM_CONFIGURACOES, type Conta } from "../lib/contas";
 import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow, Unidade } from "../types";
 
@@ -209,6 +210,9 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
       r.aluno_nome.toLowerCase().includes(termo) || r.responsavel_nome.toLowerCase().includes(termo)
     );
   });
+  // calculada sobre todos os registros (não só os filtrados na tela), pra
+  // posição não mudar dependendo de busca/filtro aplicado
+  const posicoesEspera = calcularPosicoesEspera(registros);
 
   if (!token) {
     return <LoginForm onLogin={handleLogin} unidade={unidadeFixa?.nome} />;
@@ -355,12 +359,17 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
               <OverviewTab
                 turmas={turmas}
                 preMatriculas={registros}
+                posicoesEspera={posicoesEspera}
                 onStatusChange={handleStatusChange}
                 onVerTodas={() => setAba("prematriculas")}
               />
             )}
             {aba === "prematriculas" && (
-              <PreMatriculaTable registros={registrosFiltrados} onStatusChange={handleStatusChange} />
+              <PreMatriculaTable
+                registros={registrosFiltrados}
+                posicoesEspera={posicoesEspera}
+                onStatusChange={handleStatusChange}
+              />
             )}
             {aba === "turmas" && (
               <TurmasTab
