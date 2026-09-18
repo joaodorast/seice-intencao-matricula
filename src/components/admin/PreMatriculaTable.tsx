@@ -8,9 +8,11 @@ import StatusControl from "./StatusControl";
 
 export default function PreMatriculaTable({
   registros,
+  posicoesEspera,
   onStatusChange,
 }: {
   registros: PreMatriculaAdminRow[];
+  posicoesEspera: Map<string, number>;
   onStatusChange: (id: string, status: StatusPreMatricula) => void;
 }) {
   if (registros.length === 0) {
@@ -37,7 +39,7 @@ export default function PreMatriculaTable({
                 {r.lista_espera && (
                   <div className="mt-1.5">
                     <Badge tone="gold" icon={<Clock size={12} />}>
-                      Lista de espera
+                      {posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª na lista de espera` : "Lista de espera"}
                     </Badge>
                   </div>
                 )}
@@ -111,7 +113,7 @@ export default function PreMatriculaTable({
                   {r.lista_espera && (
                     <div className="mt-1">
                       <Badge tone="gold" icon={<Clock size={12} />}>
-                        Lista de espera
+                        {posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª na lista de espera` : "Lista de espera"}
                       </Badge>
                     </div>
                   )}
