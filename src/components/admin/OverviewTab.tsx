@@ -1,9 +1,9 @@
-import { CheckCircle2, ClipboardList, DoorOpen, Layers } from "lucide-react";
+import { CheckCircle2, ClipboardList, Clock, DoorOpen, Layers } from "lucide-react";
 import { formatarSenha } from "../../lib/format";
 import { STATUS_INFO, STATUS_ORDER, descricaoTurma } from "../../lib/labels";
 import VagasPorTurma from "./VagasPorTurma";
 import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow } from "../../types";
-import { Card, EmptyState, SectionDesc, SectionTitle } from "../ui";
+import { Badge, Card, EmptyState, SectionDesc, SectionTitle } from "../ui";
 import StatCard from "./StatCard";
 import StatusControl from "./StatusControl";
 
@@ -101,7 +101,14 @@ export default function OverviewTab({
                     {formatarSenha(r.numero_senha)}
                   </span>
                   <div className="min-w-0">
-                    <div className="truncate text-[15.5px] font-bold text-seice-ink">{r.aluno_nome}</div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="truncate text-[15.5px] font-bold text-seice-ink">{r.aluno_nome}</div>
+                      {r.lista_espera && (
+                        <Badge tone="gold" icon={<Clock size={11} />}>
+                          Espera
+                        </Badge>
+                      )}
+                    </div>
                     <div className="truncate text-[14px] text-seice-muted">{descricaoTurma(r.turmas)}</div>
                   </div>
                 </div>
