@@ -38,12 +38,15 @@ function agruparPorSerie(turmas: TurmaDisponivel[], nivel: string): SerieGroup[]
   return Array.from(map.values()).sort((a, b) => a.ordem - b.ordem);
 }
 
-// Turmas com vaga de todas as unidades numa única chamada — feita assim que a
-// página abre, para a escolha da unidade já encontrar os dados prontos.
-async function buscarTurmasComVaga(): Promise<TurmaDisponivel[] | null> {
+// Turmas de todas as unidades numa única chamada — feita assim que a página
+// abre, para a escolha da unidade já encontrar os dados prontos. Turmas sem
+// vaga também entram na lista: mesmo cheias, a família consegue escolhê-las
+// e entrar na lista de espera — só não aparece aqui o que a secretaria nunca
+// chegou a cadastrar como turma.
+async function buscarTurmas(): Promise<TurmaDisponivel[] | null> {
   const { data, error } = await supabase.rpc("get_turmas_disponiveis");
   if (error) return null;
-  return ((data || []) as TurmaDisponivel[]).filter((t) => t.vagas_restantes > 0);
+  return (data || []) as TurmaDisponivel[];
 }
 
 const slideVariants = {
@@ -69,11 +72,11 @@ export default function PreMatriculaPage() {
   const turmasRef = useRef<Promise<TurmaDisponivel[] | null> | null>(null);
 
   useEffect(() => {
-    turmasRef.current = buscarTurmasComVaga();
+    turmasRef.current = buscarTurmas();
   }, []);
 
   function recarregarTurmas() {
-    turmasRef.current = buscarTurmasComVaga();
+    turmasRef.current = buscarTurmas();
     return turmasRef.current;
   }
 
