@@ -40,3 +40,8 @@ export async function atualizarStatus(
 ): Promise<void> {
   await call(token, "", { method: "PATCH", body: JSON.stringify({ id, status }) });
 }
+
+/** Apaga as intenções de matrícula atuais (dados de teste) e reinicia a senha em 01. */
+export async function resetarDadosTeste(token: string): Promise<void> {
+  await call(token, "", { method: "DELETE" });
+}
