@@ -27,3 +27,28 @@ export function formatDateTime(iso: string): string {
 export function formatarSenha(numero: number): string {
   return String(numero).padStart(2, "0");
 }
+
+/**
+ * Posição de cada intenção em lista de espera dentro da própria turma, por
+ * ordem de chegada (quem se inscreveu primeiro tem prioridade). Calculada no
+ * cliente, a partir dos registros já carregados — não precisa de mais uma
+ * chamada ao banco. Ex.: id → 1, 2, 3 (exibido como "1ª", "2ª"...).
+ */
+export function calcularPosicoesEspera(
+  registros: { id: string; turma_id: string; lista_espera: boolean; criado_em: string }[]
+): Map<string, number> {
+  const posicoes = new Map<string, number>();
+  const porTurma = new Map<string, typeof registros>();
+  for (const r of registros) {
+    if (!r.lista_espera) continue;
+    const lista = porTurma.get(r.turma_id) ?? [];
+    lista.push(r);
+    porTurma.set(r.turma_id, lista);
+  }
+  for (const lista of porTurma.values()) {
+    lista
+      .sort((a, b) => a.criado_em.localeCompare(b.criado_em))
+      .forEach((r, i) => posicoes.set(r.id, i + 1));
+  }
+  return posicoes;
+}
