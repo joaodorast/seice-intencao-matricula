@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     const { data: registro } = await supabase
       .from("pre_matriculas")
       .select(
-        "email, aluno_nome, responsavel_nome, telefone1, numero_senha, unidade_id, lista_espera, turmas(codigo, serie, turno, curso)",
+        "email, aluno_nome, responsavel_nome, telefone1, numero_senha, criado_em, unidade_id, turma_id, lista_espera, turmas(codigo, serie, turno, curso)",
       )
       .eq("unidade_id", unidade_id)
       .eq("numero_senha", numero_senha)
@@ -65,10 +65,24 @@ Deno.serve(async (req) => {
       : "";
 
     const listaEspera = registro.lista_espera === true;
+
+    // posição na lista de espera daquela turma, por ordem de chegada — igual
+    // ao que a família já vê na tela de confirmação
+    let posicaoEspera: number | null = null;
+    if (listaEspera) {
+      const { count } = await supabase
+        .from("pre_matriculas")
+        .select("id", { count: "exact", head: true })
+        .eq("turma_id", registro.turma_id)
+        .eq("lista_espera", true)
+        .lte("criado_em", registro.criado_em);
+      posicaoEspera = count ?? null;
+    }
+
     const mensagem = listaEspera
       ? `As vagas da turma escolhida para <strong>${registro.aluno_nome}</strong> já foram preenchidas, mas os
          dados foram cadastrados na <strong>lista de espera</strong> da unidade
-         <strong>${unidadeNome(registro.unidade_id)}</strong>. Se surgir uma desistência, a secretaria entra em
+         <strong>${unidadeNome(registro.unidade_id)}</strong>. Se surgir uma desistência, a secretaria entrará em
          contato para oferecer a vaga.`
       : `Recebemos a intenção de matrícula de <strong>${registro.aluno_nome}</strong> para a unidade
          <strong>${unidadeNome(registro.unidade_id)}</strong>. Guarde esta senha — a secretaria vai entrar em
@@ -83,8 +97,12 @@ Deno.serve(async (req) => {
         }
         <div style="background:#0b0b0b; padding:22px 26px; ${listaEspera ? "" : "border-radius:14px 14px 0 0;"}">
           <span style="color:#ffc800; font-weight:bold; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;">Colégio SEICE</span>
-          <div style="color:#ffffffb3; font-size:12px; margin-top:6px;">Senha de atendimento</div>
-          <div style="color:#ffc800; font-family: 'Courier New', monospace; font-size:28px; font-weight:bold;">${senhaFmt}</div>
+          <div style="color:#ffffffb3; font-size:12px; margin-top:6px;">${
+            listaEspera ? "Posição na lista de espera" : "Senha de atendimento"
+          }</div>
+          <div style="color:#ffc800; font-family: 'Courier New', monospace; font-size:28px; font-weight:bold;">${
+            listaEspera ? `${posicaoEspera}ª` : senhaFmt
+          }</div>
         </div>
         <div style="border:1px solid #e5e5e5; border-top:none; padding:22px 26px; border-radius:0 0 14px 14px;">
           <p style="font-size:15px; line-height:1.5; margin:0 0 16px;">${mensagem}</p>
@@ -107,7 +125,7 @@ Deno.serve(async (req) => {
         from: "Colégio SEICE <onboarding@resend.dev>",
         to: registro.email,
         subject: listaEspera
-          ? `Você entrou na lista de espera — Senha ${senhaFmt}`
+          ? `Você entrou na lista de espera — ${posicaoEspera}ª posição`
           : `Intenção de matrícula recebida — Senha ${senhaFmt}`,
         html,
       }),
