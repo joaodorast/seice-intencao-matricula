@@ -63,7 +63,7 @@ Deno.serve(async (req: Request) => {
       let query = supabase
         .from("pre_matriculas")
         .select(
-          "id, numero_senha, criado_em, unidade_id, turma_id, responsavel_nome, responsavel_cpf, telefone1, telefone2, email, aluno_nome, status, turmas(codigo, turno, serie, serie_full, nivel, curso)",
+          "id, numero_senha, criado_em, unidade_id, turma_id, responsavel_nome, responsavel_cpf, telefone1, telefone2, email, aluno_nome, status, lista_espera, turmas(codigo, turno, serie, serie_full, nivel, curso)",
         )
         .order("criado_em", { ascending: false });
 
