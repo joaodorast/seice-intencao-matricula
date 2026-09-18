@@ -54,6 +54,8 @@ export interface PreMatriculaSubmetida extends PreMatriculaPayload {
   resumoTurma: string;
   /** true quando a turma já estava cheia e a intenção entrou na lista de espera. */
   listaEspera: boolean;
+  /** Posição por ordem de chegada na lista de espera daquela turma (1ª, 2ª...). null fora da lista de espera. */
+  posicaoEspera: number | null;
 }
 
 export interface TurmaAdminRow {
