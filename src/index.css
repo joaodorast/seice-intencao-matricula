@@ -199,13 +199,14 @@ body {
     display: none !important;
   }
 
+  /* fica no fluxo normal da página (não "position: fixed"): no Safari do
+     iPhone, elemento fixed some da pré-visualização/impressão real — o
+     comprovante sai em branco. Em fluxo normal ele sempre aparece. */
   #comprovante-impressao {
     display: block !important;
-    position: fixed;
-    inset: 0;
-    margin: auto;
+    position: static;
     width: 100%;
-    height: fit-content;
+    margin: 0 auto;
   }
 
   #comprovante-impressao,
