@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { CheckCircle2, Printer, RotateCcw } from "lucide-react";
+import { CheckCircle2, Clock, Printer, RotateCcw } from "lucide-react";
 import { formatarSenha, maskPhone } from "../../lib/format";
 import type { PreMatriculaSubmetida, Unidade } from "../../types";
 import logoIcon from "../../assets/seice-icon.png";
@@ -16,8 +16,12 @@ export default function ConfirmacaoStep({
   submetida: PreMatriculaSubmetida;
   onRestart: () => void;
 }) {
+  const listaEspera = submetida.listaEspera;
+
   useEffect(() => {
-    // confete carregado só aqui, pra não pesar no carregamento inicial do site
+    // confete só faz sentido quando a vaga foi garantida — não faz sentido
+    // comemorar entrar numa lista de espera
+    if (listaEspera) return;
     let cancelado = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     import("canvas-confetti").then(({ default: confetti }) => {
@@ -32,7 +36,7 @@ export default function ConfirmacaoStep({
       cancelado = true;
       if (timer) clearTimeout(timer);
     };
-  }, []);
+  }, [listaEspera]);
 
   const senha = formatarSenha(submetida.numeroSenha);
 
@@ -42,19 +46,32 @@ export default function ConfirmacaoStep({
         initial={{ scale: 0.4, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 18 }}
-        className="flex h-20 w-20 items-center justify-center rounded-full bg-seice-success text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_16px_32px_-10px_rgba(21,128,61,0.55)]"
+        className={`flex h-20 w-20 items-center justify-center rounded-full text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_16px_32px_-10px_rgba(0,0,0,0.35)] ${
+          listaEspera ? "bg-seice-gold text-seice-gold-ink" : "bg-seice-success"
+        }`}
       >
-        <CheckCircle2 size={40} strokeWidth={2.2} />
+        {listaEspera ? <Clock size={40} strokeWidth={2.2} /> : <CheckCircle2 size={40} strokeWidth={2.2} />}
       </motion.div>
 
       <div className="text-center">
         <h2 className="font-display text-[30px] font-semibold tracking-tight text-seice-ink sm:text-[33.5px]">
-          Intenção de matrícula enviada!
+          {listaEspera ? "Você entrou na lista de espera!" : "Intenção de matrícula enviada!"}
         </h2>
         <p className="mx-auto mt-2 max-w-md text-[17px] leading-relaxed text-seice-muted">
-          Recebemos os dados de <strong className="font-semibold text-seice-ink">{submetida.aluno_nome}</strong>{" "}
-          para a unidade <strong className="font-semibold text-seice-ink">{unidade.nome}</strong>. Guarde sua
-          senha de atendimento — a secretaria vai entrar em contato para dar continuidade.
+          {listaEspera ? (
+            <>
+              As vagas da turma escolhida pra{" "}
+              <strong className="font-semibold text-seice-ink">{submetida.aluno_nome}</strong> já foram
+              preenchidas, mas seus dados foram cadastrados. Se surgir uma desistência, a secretaria entra em
+              contato pra oferecer a vaga.
+            </>
+          ) : (
+            <>
+              Recebemos os dados de <strong className="font-semibold text-seice-ink">{submetida.aluno_nome}</strong>{" "}
+              para a unidade <strong className="font-semibold text-seice-ink">{unidade.nome}</strong>. Guarde sua
+              senha de atendimento — a secretaria vai entrar em contato para dar continuidade.
+            </>
+          )}
         </p>
       </div>
 
@@ -104,6 +121,11 @@ function ComprovanteConteudo({
       <p className="comprovante-titulo-impresso hidden text-center text-[13px] font-bold uppercase tracking-[0.14em] text-seice-muted print:block">
         Comprovante de intenção de matrícula
       </p>
+      {submetida.listaEspera && (
+        <div className="comprovante-lista-espera bg-seice-gold px-5 py-2 text-center text-[13px] font-bold uppercase tracking-wide text-seice-gold-ink">
+          Lista de espera
+        </div>
+      )}
       <div className="comprovante-cabecalho relative flex items-center justify-between gap-3 bg-seice-deep px-5 py-4">
         <img src={logoIcon} alt="SEICE" className="comprovante-logo h-9 w-auto" />
         <div className="text-right">
