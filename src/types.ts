@@ -52,6 +52,8 @@ export interface PreMatriculaSubmetida extends PreMatriculaPayload {
   /** Senha de atendimento sequencial (01, 02, 03...), gerada pelo banco. */
   numeroSenha: number;
   resumoTurma: string;
+  /** true quando a turma já estava cheia e a intenção entrou na lista de espera. */
+  listaEspera: boolean;
 }
 
 export interface TurmaAdminRow {
@@ -101,6 +103,7 @@ export interface PreMatriculaAdminRow {
   email: string | null;
   aluno_nome: string;
   status: StatusPreMatricula;
+  lista_espera: boolean;
   turmas: {
     codigo: string;
     turno: Turno;
