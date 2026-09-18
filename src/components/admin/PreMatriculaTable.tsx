@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
+import { Clock } from "lucide-react";
 import { formatarSenha, maskPhone, formatDateTime } from "../../lib/format";
 import { STATUS_INFO, descricaoTurma, unidadeNome } from "../../lib/labels";
 import type { PreMatriculaAdminRow, StatusPreMatricula } from "../../types";
-import { EmptyState } from "../ui";
+import { Badge, EmptyState } from "../ui";
 import StatusControl from "./StatusControl";
 
 export default function PreMatriculaTable({
@@ -33,6 +34,13 @@ export default function PreMatriculaTable({
                 </div>
                 <h3 className="text-[17px] font-bold leading-tight text-seice-ink">{r.aluno_nome}</h3>
                 <p className="mt-0.5 text-[14.5px] text-seice-muted">{descricaoTurma(r.turmas)}</p>
+                {r.lista_espera && (
+                  <div className="mt-1.5">
+                    <Badge tone="gold" icon={<Clock size={12} />}>
+                      Lista de espera
+                    </Badge>
+                  </div>
+                )}
               </div>
               <span
                 className={`shrink-0 rounded-full px-2.5 py-1 text-[13px] font-semibold ${STATUS_INFO[r.status].badge}`}
@@ -100,6 +108,13 @@ export default function PreMatriculaTable({
                 </td>
                 <td className="border-b border-seice-border px-3.5 py-3 align-top font-bold text-seice-ink">
                   {r.aluno_nome}
+                  {r.lista_espera && (
+                    <div className="mt-1">
+                      <Badge tone="gold" icon={<Clock size={12} />}>
+                        Lista de espera
+                      </Badge>
+                    </div>
+                  )}
                 </td>
                 <td className="border-b border-seice-border px-3.5 py-3 align-top text-seice-soft">
                   {descricaoTurma(r.turmas)}
