@@ -27,7 +27,7 @@ export default function Header() {
 
         <div>
           <h1 className="font-display text-[33.5px] font-semibold leading-[1.12] tracking-tight text-seice-ink sm:text-[45px]">
-            Intenção de matrícula online
+            Intenção de Matrícula Online
           </h1>
           <p className="mt-3 max-w-xl text-[17.5px] leading-relaxed text-seice-muted sm:text-[18.5px]">
             Registre o interesse na vaga do seu filho nas unidades{" "}
