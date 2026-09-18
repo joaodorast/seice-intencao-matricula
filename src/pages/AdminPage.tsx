@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  CheckCircle2,
   ClipboardList,
   Download,
   FileBarChart2,
@@ -23,7 +24,7 @@ import { UNIDADES } from "../config";
 import { atualizarStatus, buscarPreMatriculas, verificarToken } from "../lib/adminApi";
 import { listarTurmas } from "../lib/adminTurmasApi";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
-import { unidadeCurta } from "../lib/labels";
+import { STATUS_INFO, unidadeCurta } from "../lib/labels";
 import { calcularPosicoesEspera } from "../lib/format";
 import { buscarConta, EMAIL_COM_CONFIGURACOES, type Conta } from "../lib/contas";
 import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow, Unidade } from "../types";
@@ -71,6 +72,12 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   const [turmas, setTurmas] = useState<TurmaAdminRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  // aviso curto depois de mudar o status de alguém: a intenção continua com
+  // os dados intactos (só sai da lista de "pendentes" quando deixa de ser
+  // pendente), mas sem esse aviso a secretaria via só ela sumir da tela e
+  // achava que tinha se perdido
+  const [aviso, setAviso] = useState<string | null>(null);
+  const avisoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // trava o botão "voltar" do navegador enquanto estiver logado: sem isso,
   // dava pra sair do painel só apertando voltar (o login não muda de URL,
@@ -186,11 +193,23 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
     }
   }
 
+  function mostrarAviso(texto: string) {
+    if (avisoTimer.current) clearTimeout(avisoTimer.current);
+    setAviso(texto);
+    avisoTimer.current = setTimeout(() => setAviso(null), 3500);
+  }
+
   async function handleStatusChange(id: string, status: StatusPreMatricula) {
     if (!token) return;
     const anterior = registros;
+    const registro = registros.find((r) => r.id === id);
     cargaSeq.current++; // invalida qualquer carga em andamento: a otimista abaixo manda agora
     setRegistros((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)));
+    // some da lista de "pendentes" assim que deixa de ser pendente — os dados
+    // continuam intactos na aba Intenções, só avisa pra não parecer que sumiu
+    if (registro && status !== "pendente") {
+      mostrarAviso(`${registro.aluno_nome} marcado como ${STATUS_INFO[status].label} — continua na aba Intenções.`);
+    }
     try {
       await atualizarStatus(token, id, status);
       carregar(true); // cancelar libera vaga: as turmas mudam junto
@@ -388,6 +407,15 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
           </>
         )}
       </div>
+
+      {aviso && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-5 z-50 flex justify-center px-4">
+          <div className="pointer-events-auto flex items-center gap-2.5 rounded-xl border border-seice-border-strong bg-seice-deep px-4 py-3 text-[14.5px] font-medium text-white shadow-[0_16px_32px_-10px_rgba(0,0,0,0.5)]">
+            <CheckCircle2 size={17} className="shrink-0 text-seice-success" />
+            {aviso}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
