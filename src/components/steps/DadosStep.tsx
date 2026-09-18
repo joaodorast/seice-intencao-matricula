@@ -63,6 +63,9 @@ export default function DadosStep({
 
   async function garantirReserva() {
     if (reservaRef.current) return;
+    // turma já sem vaga desde a escolha: não faz sentido tentar reservar (o
+    // banco sempre recusaria) — a pessoa vai direto pra lista de espera
+    if (turma.vagas_restantes <= 0) return;
     reservaRef.current = "pendente"; // evita disparar duas vezes seguidas
     const id = await reservarVaga(turma.id);
     if (!id) {
@@ -144,9 +147,15 @@ export default function DadosStep({
       <div className="inset-surface rounded-xl border border-seice-border p-4 sm:p-5">
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
           <span className="text-[13.5px] font-bold uppercase tracking-[0.1em] text-seice-muted">Sua escolha</span>
-          <Badge tone="success" icon={<CheckCircle2 size={13} />}>
-            {vagas} vaga{vagas === 1 ? "" : "s"} disponíve{vagas === 1 ? "l" : "is"}
-          </Badge>
+          {vagas > 0 ? (
+            <Badge tone="success" icon={<CheckCircle2 size={13} />}>
+              {vagas} vaga{vagas === 1 ? "" : "s"} disponíve{vagas === 1 ? "l" : "is"}
+            </Badge>
+          ) : (
+            <Badge tone="gold" icon={<Timer size={13} />}>
+              Lista de espera
+            </Badge>
+          )}
         </div>
         <dl className={`grid grid-cols-2 gap-x-4 gap-y-3 ${turma.curso ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
           <SummaryItem label="Unidade" value={unidade.nome} />
@@ -155,6 +164,18 @@ export default function DadosStep({
           {turma.curso && <SummaryItem label="Curso" value={turma.curso} />}
         </dl>
       </div>
+
+      {/* turma já sem vaga desde a escolha: não tenta reservar, só avisa que
+          vai entrar na lista de espera — nada de alarme aqui */}
+      {vagas <= 0 && (
+        <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-seice-gold/40 bg-seice-gold-soft px-4 py-3">
+          <Timer size={17} className="shrink-0 text-seice-gold" />
+          <p className="text-[14.5px] leading-snug text-seice-ink">
+            <strong className="font-semibold">Esta turma está sem vagas no momento.</strong> Ao enviar, sua
+            intenção entra na lista de espera — se surgir uma desistência, a secretaria entra em contato.
+          </p>
+        </div>
+      )}
 
       {/* aviso da reserva: aparece assim que a pessoa começa a digitar */}
       {reservaAte && restanteMs > 0 && (
