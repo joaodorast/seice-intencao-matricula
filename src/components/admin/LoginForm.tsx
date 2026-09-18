@@ -6,13 +6,12 @@ import logo from "../../assets/seice-logo.png";
 import mockupApp from "../../assets/Mockup-ClassApp-min.avif";
 import { Button } from "../ui";
 
-const EMAIL_ADMIN = "admin@seice.com.br";
-
 export default function LoginForm({
   onLogin,
   unidade,
 }: {
-  onLogin: (token: string) => Promise<boolean>;
+  /** Valida o e-mail contra as contas cadastradas e a senha contra o backend. */
+  onLogin: (email: string, token: string) => Promise<boolean>;
   /** Nome da unidade quando o login é de um painel específico (SEICE CE / JP). */
   unidade?: string;
 }) {
@@ -26,12 +25,7 @@ export default function LoginForm({
     if (!email.trim() || !senha.trim()) return;
     setChecking(true);
     setErro(false);
-    if (email.trim().toLowerCase() !== EMAIL_ADMIN) {
-      setChecking(false);
-      setErro(true);
-      return;
-    }
-    const ok = await onLogin(senha.trim());
+    const ok = await onLogin(email.trim(), senha.trim());
     setChecking(false);
     if (!ok) setErro(true);
   }
