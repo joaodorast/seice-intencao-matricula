@@ -31,7 +31,7 @@ export default function SerieStep({
       <Card>
         <SectionEyebrow>Passo 3 de 6</SectionEyebrow>
         <SectionTitle>Escolha a série</SectionTitle>
-        <SectionDesc>Vagas disponíveis para o ano letivo de 2027.</SectionDesc>
+        <SectionDesc>Turmas sem vaga também aparecem — dá pra entrar na lista de espera.</SectionDesc>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {series.map((s, i) => {
