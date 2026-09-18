@@ -39,7 +39,7 @@ export default function NivelStep({
         <BackBar label={backLabel} onBack={onBack} />
         <Card>
           <EmptyState emoji="📭">
-            No momento não há turmas com vagas disponíveis em <strong>{unidade.nome}</strong> para 2027.
+            No momento não há turmas cadastradas em <strong>{unidade.nome}</strong> para 2027.
           </EmptyState>
           <Button variant="ghost" className="w-full" onClick={onTrocarUnidade}>
             Escolher outra unidade
@@ -55,7 +55,7 @@ export default function NivelStep({
       <Card>
         <SectionEyebrow>Passo 2 de 6</SectionEyebrow>
         <SectionTitle>Qual o nível de ensino?</SectionTitle>
-        <SectionDesc>Só aparecem aqui os níveis que têm pelo menos uma turma com vaga.</SectionDesc>
+        <SectionDesc>Turmas sem vaga também aparecem — dá pra entrar na lista de espera.</SectionDesc>
 
         <div className="flex flex-col gap-3">
           {niveis.map((n, i) => {
@@ -81,8 +81,8 @@ export default function NivelStep({
                   <div className="text-[15px] text-seice-muted">{n.desc}</div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Badge tone="success">
-                    {totalVagas} vaga{totalVagas === 1 ? "" : "s"}
+                  <Badge tone={totalVagas > 0 ? "success" : "gold"}>
+                    {totalVagas > 0 ? `${totalVagas} vaga${totalVagas === 1 ? "" : "s"}` : "Lista de espera"}
                   </Badge>
                   <ChevronRight
                     size={18}
