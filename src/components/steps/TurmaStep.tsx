@@ -40,7 +40,7 @@ export default function TurmaStep({
       <Card>
         <SectionEyebrow>Passo 4 de 6</SectionEyebrow>
         <SectionTitle>Escolha a turma</SectionTitle>
-        <SectionDesc>Turno e vagas restantes de cada turma disponível.</SectionDesc>
+        <SectionDesc>Turno e vagas de cada turma — sem vaga também dá pra entrar na lista de espera.</SectionDesc>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {turmas.map((t, i) => (
@@ -71,7 +71,9 @@ export default function TurmaStep({
                     </Badge>
                   )}
                   <Badge tone="gold">
-                    {t.vagas_restantes} vaga{t.vagas_restantes === 1 ? "" : "s"}
+                    {t.vagas_restantes > 0
+                      ? `${t.vagas_restantes} vaga${t.vagas_restantes === 1 ? "" : "s"}`
+                      : "Lista de espera"}
                   </Badge>
                 </div>
               </div>
