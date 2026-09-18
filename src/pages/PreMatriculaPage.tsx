@@ -193,6 +193,7 @@ export default function PreMatriculaPage() {
       ...payload,
       numeroSenha: linha.numero_senha,
       listaEspera: linha.lista_espera,
+      posicaoEspera: linha.posicao_espera ?? null,
       resumoTurma: `${serieGroup!.serie} — Turma ${turma!.codigo} (${turnoLabel(turma!.turno)})${
         turma!.curso ? " — " + turma!.curso : ""
       }`,
