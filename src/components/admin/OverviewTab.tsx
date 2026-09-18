@@ -10,11 +10,13 @@ import StatusControl from "./StatusControl";
 export default function OverviewTab({
   turmas,
   preMatriculas,
+  posicoesEspera,
   onStatusChange,
   onVerTodas,
 }: {
   turmas: TurmaAdminRow[];
   preMatriculas: PreMatriculaAdminRow[];
+  posicoesEspera: Map<string, number>;
   onStatusChange: (id: string, status: StatusPreMatricula) => void;
   onVerTodas: () => void;
 }) {
@@ -105,7 +107,7 @@ export default function OverviewTab({
                       <div className="truncate text-[15.5px] font-bold text-seice-ink">{r.aluno_nome}</div>
                       {r.lista_espera && (
                         <Badge tone="gold" icon={<Clock size={11} />}>
-                          Espera
+                          {posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª espera` : "Espera"}
                         </Badge>
                       )}
                     </div>
