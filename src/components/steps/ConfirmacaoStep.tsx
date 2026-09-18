@@ -39,6 +39,8 @@ export default function ConfirmacaoStep({
   }, [listaEspera]);
 
   const senha = formatarSenha(submetida.numeroSenha);
+  const posicao =
+    submetida.posicaoEspera != null ? `${submetida.posicaoEspera}ª` : null;
 
   return (
     <div className="flex flex-col items-center gap-5">
@@ -77,7 +79,7 @@ export default function ConfirmacaoStep({
 
       {/* ticket na tela, com o visual normal do site (dourado/escuro) */}
       <Card className="w-full max-w-md overflow-hidden !p-0">
-        <ComprovanteConteudo senha={senha} submetida={submetida} unidade={unidade} />
+        <ComprovanteConteudo senha={senha} posicao={posicao} submetida={submetida} unidade={unidade} />
       </Card>
 
       {/* cópia só pra impressão, fora da árvore da página: assim o resto do
@@ -85,7 +87,7 @@ export default function ConfirmacaoStep({
           e empurra o comprovante para uma segunda folha. */}
       {createPortal(
         <div id="comprovante-impressao" className="hidden print:block">
-          <ComprovanteConteudo senha={senha} submetida={submetida} unidade={unidade} />
+          <ComprovanteConteudo senha={senha} posicao={posicao} submetida={submetida} unidade={unidade} />
         </div>,
         document.body
       )}
@@ -109,10 +111,12 @@ export default function ConfirmacaoStep({
  */
 function ComprovanteConteudo({
   senha,
+  posicao,
   submetida,
   unidade,
 }: {
   senha: string;
+  posicao: string | null;
   submetida: PreMatriculaSubmetida;
   unidade: Unidade;
 }) {
@@ -130,9 +134,11 @@ function ComprovanteConteudo({
         <img src={logoIcon} alt="SEICE" className="comprovante-logo h-9 w-auto" />
         <div className="text-right">
           <div className="comprovante-rotulo-senha text-[12.5px] font-semibold uppercase tracking-wide text-white/60">
-            Senha
+            {posicao ? "Posição na lista de espera" : "Senha"}
           </div>
-          <div className="comprovante-senha text-[22px] font-bold leading-none text-seice-gold">{senha}</div>
+          <div className="comprovante-senha text-[22px] font-bold leading-none text-seice-gold">
+            {posicao ?? senha}
+          </div>
         </div>
         <div className="gold-hairline absolute inset-x-0 bottom-0 h-px opacity-80" />
       </div>
