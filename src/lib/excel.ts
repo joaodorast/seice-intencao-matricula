@@ -27,6 +27,7 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
     "Telefone 2": r.telefone2 ? maskPhone(r.telefone2) : "",
     "E-mail": r.email ?? "",
     Status: r.status,
+    "Lista de espera": r.lista_espera ? "Sim" : "Não",
   }));
 }
 
@@ -45,6 +46,7 @@ const LARGURAS_INTENCOES = [
   { wch: 16 },
   { wch: 22 },
   { wch: 12 },
+  { wch: 14 },
 ];
 
 export function exportarIntencoesExcel(registros: PreMatriculaAdminRow[], sufixo: string) {
