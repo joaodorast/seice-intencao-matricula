@@ -22,7 +22,7 @@ export default function Header() {
           alt="Colégio SEICE — Sistema de Ensino Integrado de Campos Elíseos"
           width={672}
           height={247}
-          className="h-12 w-auto sm:h-14"
+          className="h-12 w-auto shrink-0 self-start sm:h-14"
         />
 
         <div>
