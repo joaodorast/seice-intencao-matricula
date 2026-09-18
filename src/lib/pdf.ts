@@ -145,6 +145,7 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
     r.responsavel_nome,
     maskPhone(r.telefone1),
     STATUS_INFO[r.status]?.label ?? r.status,
+    r.lista_espera ? "Sim" : "Não",
   ]);
 }
 
@@ -170,7 +171,7 @@ export async function exportarIntencoesPDF(
   autoTable(doc, {
     ...estiloTabela(),
     startY: y + 6,
-    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "Telefone", "Status"]],
+    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "Telefone", "Status", "Lista de espera"]],
     body: linhasIntencoes(registros),
   });
 
