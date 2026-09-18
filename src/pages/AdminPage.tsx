@@ -233,10 +233,11 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* troca entre painéis — só existe no painel geral (/admin); os
-                dashboards de unidade (/seice-ce, /seice-jp) são fechados na
-                própria unidade, sem link pra ver o da outra secretaria */}
-            {!unidadeFixa && (
+            {/* troca entre painéis — só pra quem tem acesso geral (enxerga as
+                duas unidades). Um login preso numa unidade (secretaria de CE
+                ou JP) nunca vê isso, em nenhuma rota — sem jeito de abrir o
+                painel geral nem o da outra secretaria. */}
+            {conta?.escopo === "geral" && (
               <nav className="flex items-center gap-1 rounded-xl border border-white/12 bg-white/5 p-1">
                 {PAINEIS.map((p) => {
                   const ativo = (p.slug ?? null) === (escopoSlug ?? null);
