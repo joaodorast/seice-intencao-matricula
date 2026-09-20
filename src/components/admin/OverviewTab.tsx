@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CheckCircle2, ClipboardList, Clock, DoorOpen, Layers } from "lucide-react";
 import { formatarSenha } from "../../lib/format";
 import { STATUS_INFO, STATUS_ORDER, descricaoTurma } from "../../lib/labels";
@@ -6,6 +7,8 @@ import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow } from "..
 import { Badge, Card, EmptyState, SectionDesc, SectionTitle } from "../ui";
 import StatCard from "./StatCard";
 import StatusControl from "./StatusControl";
+
+const ESCONDER_RESOLVIDAS_KEY = "seice_admin_esconder_resolvidas";
 
 export default function OverviewTab({
   turmas,
@@ -30,8 +33,30 @@ export default function OverviewTab({
     STATUS_ORDER.map((s) => [s, preMatriculas.filter((p) => p.status === s).length])
   ) as Record<StatusPreMatricula, number>;
 
-  const pendentesRecentes = preMatriculas
-    .filter((p) => p.status === "pendente")
+  // chavinha: liga (padrão) esconde quem já deixou de ser pendente dessa
+  // lista — desliga e a lista passa a mostrar as mais recentes de qualquer
+  // status, sem sumir ninguém daqui. Fica salvo no navegador da secretaria.
+  const [esconderResolvidas, setEsconderResolvidas] = useState(() => {
+    try {
+      return localStorage.getItem(ESCONDER_RESOLVIDAS_KEY) !== "false";
+    } catch {
+      return true;
+    }
+  });
+
+  function alternarEsconderResolvidas() {
+    setEsconderResolvidas((atual) => {
+      const novo = !atual;
+      try {
+        localStorage.setItem(ESCONDER_RESOLVIDAS_KEY, String(novo));
+      } catch {
+        // ambiente sem localStorage (ex.: aba anônima bloqueada) — só não persiste
+      }
+      return novo;
+    });
+  }
+
+  const pendentesRecentes = (esconderResolvidas ? preMatriculas.filter((p) => p.status === "pendente") : preMatriculas)
     .sort((a, b) => b.criado_em.localeCompare(a.criado_em))
     .slice(0, 5);
 
@@ -78,8 +103,12 @@ export default function OverviewTab({
       <Card>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div>
-            <SectionTitle>Intenções pendentes</SectionTitle>
-            <SectionDesc>As mais recentes, para agilizar o contato — mude o status sem sair daqui.</SectionDesc>
+            <SectionTitle>{esconderResolvidas ? "Intenções pendentes" : "Intenções recentes"}</SectionTitle>
+            <SectionDesc>
+              {esconderResolvidas
+                ? "As mais recentes, para agilizar o contato — mude o status sem sair daqui."
+                : "As mais recentes de qualquer status — nada some daqui, mude o status sem sair da tela."}
+            </SectionDesc>
           </div>
           {preMatriculas.length > 0 && (
             <button
@@ -92,8 +121,30 @@ export default function OverviewTab({
           )}
         </div>
 
+        <label className="mb-4 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-seice-border bg-seice-panel px-3.5 py-2.5">
+          <span className="text-[14px] font-medium text-seice-soft">
+            Esconder daqui quem já deixou de ser pendente
+          </span>
+          <span
+            role="switch"
+            aria-checked={esconderResolvidas}
+            onClick={alternarEsconderResolvidas}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+              esconderResolvidas ? "bg-seice-gold" : "bg-seice-chip"
+            }`}
+          >
+            <span
+              className={`inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow transition-transform ${
+                esconderResolvidas ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </span>
+        </label>
+
         {pendentesRecentes.length === 0 ? (
-          <EmptyState emoji="✅">Nenhuma intenção pendente no momento.</EmptyState>
+          <EmptyState emoji="✅">
+            {esconderResolvidas ? "Nenhuma intenção pendente no momento." : "Nenhuma intenção cadastrada ainda."}
+          </EmptyState>
         ) : (
           <div className="flex flex-col divide-y divide-seice-border">
             {pendentesRecentes.map((r) => (
@@ -109,6 +160,13 @@ export default function OverviewTab({
                         <Badge tone="gold" icon={<Clock size={11} />}>
                           {posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª espera` : "Espera"}
                         </Badge>
+                      )}
+                      {!esconderResolvidas && r.status !== "pendente" && (
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${STATUS_INFO[r.status].badge}`}
+                        >
+                          {STATUS_INFO[r.status].label}
+                        </span>
                       )}
                     </div>
                     <div className="truncate text-[14px] text-seice-muted">{descricaoTurma(r.turmas)}</div>
