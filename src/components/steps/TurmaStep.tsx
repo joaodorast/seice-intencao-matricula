@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { Briefcase, HeartPulse, Laptop, Sunrise, Sunset } from "lucide-react";
+import { ArrowLeft, Briefcase, HeartPulse, Laptop, Sunrise, Sunset } from "lucide-react";
 import { motion } from "framer-motion";
 import { turnoLabel } from "../../lib/format";
 import type { SerieGroup, Unidade } from "../../types";
-import { BackBar, Badge, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
+import { BackBar, Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
 
 const CURSO_ICON: Record<string, ReactNode> = {
   Informática: <Laptop size={13} />,
@@ -75,6 +75,12 @@ export default function TurmaStep({
             </motion.button>
           ))}
         </div>
+
+        {/* lista pode ficar comprida (muitas turmas) — um Voltar aqui embaixo
+            evita ter que rolar até o topo de novo pra trocar de série */}
+        <Button variant="ghost" className="mt-4 w-full" onClick={onBack}>
+          <ArrowLeft size={16} /> Voltar
+        </Button>
       </Card>
     </>
   );
