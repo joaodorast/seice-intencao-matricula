@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Check,
   FileSpreadsheet,
@@ -6,6 +6,7 @@ import {
   Layers,
   LayoutGrid,
   ListChecks,
+  ListTree,
   LoaderCircle,
   Search,
   Square,
@@ -22,7 +23,7 @@ import Modal from "./Modal";
 
 const TIER_BADGE = { abertas: "success", poucas: "gold", ultimas: "danger" } as const;
 
-type Tipo = "completo" | "intencoes";
+type Tipo = "completo" | "intencoes" | "detalhado";
 type Formato = "xlsx" | "pdf";
 
 function slugificar(txt: string): string {
@@ -45,14 +46,23 @@ export default function ExportarRelatorioModal({
   turmas,
   preMatriculas,
   escopo,
+  tipoInicial = "completo",
 }: {
   open: boolean;
   onClose: () => void;
   turmas: TurmaAdminRow[];
   preMatriculas: PreMatriculaAdminRow[];
   escopo: string;
+  tipoInicial?: Tipo;
 }) {
-  const [tipo, setTipo] = useState<Tipo>("completo");
+  const [tipo, setTipo] = useState<Tipo>(tipoInicial);
+
+  // o botão "Relatório detalhado" da tela abre o modal já nesse tipo — sem
+  // isso, reabrir o modal por ali sempre voltava pra aba "Turmas"
+  useEffect(() => {
+    if (open) setTipo(tipoInicial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
   const [todas, setTodas] = useState(true);
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [busca, setBusca] = useState("");
@@ -129,7 +139,7 @@ export default function ExportarRelatorioModal({
   function fecharEReiniciar() {
     onClose();
     setTimeout(() => {
-      setTipo("completo");
+      setTipo(tipoInicial);
       escolherTodas();
       setBusca("");
       setBaixado(null);
@@ -151,6 +161,14 @@ export default function ExportarRelatorioModal({
         } else {
           const { exportarRelatorioCompletoPDF } = await import("../../lib/pdf");
           await exportarRelatorioCompletoPDF(turmasFiltradas, escopo);
+        }
+      } else if (tipo === "detalhado") {
+        if (formato === "xlsx") {
+          const { exportarRelatorioDetalhadoExcel } = await import("../../lib/excel");
+          exportarRelatorioDetalhadoExcel(turmasFiltradas, preMatriculasFiltradas);
+        } else {
+          const { exportarRelatorioDetalhadoPDF } = await import("../../lib/pdf");
+          await exportarRelatorioDetalhadoPDF(turmasFiltradas, preMatriculasFiltradas, escopo);
         }
       } else {
         if (formato === "xlsx") {
@@ -178,6 +196,9 @@ export default function ExportarRelatorioModal({
           </TipoTab>
           <TipoTab ativo={tipo === "intencoes"} onClick={() => setTipo("intencoes")} icon={<FileText size={16} />}>
             Intenções
+          </TipoTab>
+          <TipoTab ativo={tipo === "detalhado"} onClick={() => setTipo("detalhado")} icon={<ListTree size={16} />}>
+            Detalhado
           </TipoTab>
         </div>
 
