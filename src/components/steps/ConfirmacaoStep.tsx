@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { CheckCircle2, Clock, Printer, RotateCcw } from "lucide-react";
-import { formatarSenha, maskPhone } from "../../lib/format";
+import { maskPhone } from "../../lib/format";
 import type { PreMatriculaSubmetida, Unidade } from "../../types";
 import logoIcon from "../../assets/seice-icon.png";
 import { Button, Card } from "../ui";
@@ -38,10 +38,6 @@ export default function ConfirmacaoStep({
     };
   }, [listaEspera]);
 
-  const senha = formatarSenha(submetida.numeroSenha);
-  const posicao =
-    submetida.posicaoEspera != null ? `${submetida.posicaoEspera}ª` : null;
-
   return (
     <div className="flex flex-col items-center gap-5">
       <motion.div
@@ -70,8 +66,8 @@ export default function ConfirmacaoStep({
           ) : (
             <>
               Recebemos os dados de <strong className="font-semibold text-seice-ink">{submetida.aluno_nome}</strong>{" "}
-              para a unidade <strong className="font-semibold text-seice-ink">{unidade.nome}</strong>. Guarde sua
-              senha de atendimento — a secretaria vai entrar em contato para dar continuidade.
+              para a unidade <strong className="font-semibold text-seice-ink">{unidade.nome}</strong>. A secretaria
+              vai entrar em contato para dar continuidade.
             </>
           )}
         </p>
@@ -79,7 +75,7 @@ export default function ConfirmacaoStep({
 
       {/* ticket na tela, com o visual normal do site (dourado/escuro) */}
       <Card className="w-full max-w-md overflow-hidden !p-0">
-        <ComprovanteConteudo senha={senha} posicao={posicao} submetida={submetida} unidade={unidade} />
+        <ComprovanteConteudo submetida={submetida} unidade={unidade} />
       </Card>
 
       {/* cópia só pra impressão, fora da árvore da página: assim o resto do
@@ -87,7 +83,7 @@ export default function ConfirmacaoStep({
           e empurra o comprovante para uma segunda folha. */}
       {createPortal(
         <div id="comprovante-impressao" className="hidden print:block">
-          <ComprovanteConteudo senha={senha} posicao={posicao} submetida={submetida} unidade={unidade} />
+          <ComprovanteConteudo submetida={submetida} unidade={unidade} />
         </div>,
         document.body
       )}
@@ -110,13 +106,9 @@ export default function ConfirmacaoStep({
  * fonte/cor/tamanho no papel, sem mexer no visual normal da tela.
  */
 function ComprovanteConteudo({
-  senha,
-  posicao,
   submetida,
   unidade,
 }: {
-  senha: string;
-  posicao: string | null;
   submetida: PreMatriculaSubmetida;
   unidade: Unidade;
 }) {
@@ -130,16 +122,8 @@ function ComprovanteConteudo({
           Lista de espera
         </div>
       )}
-      <div className="comprovante-cabecalho relative flex items-center justify-between gap-3 bg-seice-deep px-5 py-4">
+      <div className="comprovante-cabecalho relative flex items-center justify-center gap-3 bg-seice-deep px-5 py-4">
         <img src={logoIcon} alt="SEICE" className="comprovante-logo h-9 w-auto" />
-        <div className="text-right">
-          <div className="comprovante-rotulo-senha text-[12.5px] font-semibold uppercase tracking-wide text-white/60">
-            {posicao ? "Posição na lista de espera" : "Senha"}
-          </div>
-          <div className="comprovante-senha text-[22px] font-bold leading-none text-seice-gold">
-            {posicao ?? senha}
-          </div>
-        </div>
         <div className="gold-hairline absolute inset-x-0 bottom-0 h-px opacity-80" />
       </div>
       <div className="comprovante-corpo relative px-5 py-4">
