@@ -180,10 +180,12 @@ export async function exportarIntencoesPDF(
 }
 
 /**
- * Relatório detalhado: pra cada turma, uma faixa com a ocupação (ofertadas/
- * ocupadas/livres) e logo abaixo a lista de alunos daquela turma com
- * telefone completo — tudo num só PDF, sem precisar cruzar o relatório de
- * turmas com o de intenções.
+ * Relatório detalhado: página 1 é a mesma tabela de ocupação do relatório
+ * de turmas (ofertadas/preenchidas/livres por turma); página 2 é a lista de
+ * contato — turma, aluno, telefone e responsável, agrupados por turma —
+ * pronta pra Priscilla imprimir e distribuir pras atendentes ligarem. Sem
+ * status (não faz sentido mostrar "Matriculado" numa lista feita pra
+ * organizar quem ainda precisa ser contatado).
  */
 export async function exportarRelatorioDetalhadoPDF(
   turmas: TurmaAdminRow[],
@@ -203,47 +205,79 @@ export async function exportarRelatorioDetalhadoPDF(
   const livres = turmas.reduce((acc, t) => acc + t.vagas_restantes, 0);
   const preenchidas = ofertadas - livres;
 
-  cabecalho(doc, logo, "Relatório detalhado 2027", escopo, `${turmas.length} turma(s) · ${preMatriculas.length} aluno(s)`);
-  const y = indicadores(doc, 38, [
+  // página 1 — ocupação por turma (igual ao relatório de turmas)
+  cabecalho(doc, logo, "Relatório detalhado 2027 — Vagas por turma", escopo, `${turmas.length} turma(s)`);
+  const y1 = indicadores(doc, 38, [
     { rotulo: "Turmas", valor: String(turmas.length) },
-    { rotulo: "Vagas ocupadas", valor: String(preenchidas) },
-    { rotulo: "Vagas livres", valor: String(livres) },
-    { rotulo: "Alunos cadastrados", valor: String(preMatriculas.length) },
+    { rotulo: "Vagas ofertadas", valor: String(ofertadas) },
+    { rotulo: "Preenchidas", valor: String(preenchidas) },
+    { rotulo: "Livres", valor: String(livres) },
   ]);
 
-  type Celula = string | { content: string; colSpan: number; styles: Record<string, unknown> };
-  const corpo: Celula[][] = [];
+  type CelulaTurma = string | number | { content: string; colSpan: number; styles: Record<string, unknown> };
+  const corpoTurmas: CelulaTurma[][] = [];
+  let grupoAtual = "";
   for (const t of ordenarTurmas(turmas)) {
-    const turmaPreenchidas = Math.max(t.vagas_planilha - t.vagas_restantes, 0);
-    corpo.push([
-      {
-        content: `${unidadeNome(t.unidade_id)} · ${t.serie} · Turma ${t.codigo} (${turnoLabel(t.turno)})${
-          t.curso ? " · " + t.curso : ""
-        }  —  ${turmaPreenchidas}/${t.vagas_planilha} vagas ocupadas`,
-        colSpan: 4,
-        styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" },
-      },
-    ]);
-    const alunos = porTurma.get(t.id) ?? [];
-    if (alunos.length === 0) {
-      corpo.push([{ content: "— nenhuma intenção cadastrada —", colSpan: 4, styles: { textColor: CINZA_TEXTO, fontStyle: "normal" } }]);
-      continue;
+    const grupo = `${unidadeNome(t.unidade_id)}  ·  ${NIVEL_LABELS[t.nivel] ?? t.nivel}`;
+    if (grupo !== grupoAtual) {
+      corpoTurmas.push([{ content: grupo, colSpan: 8, styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" } }]);
+      grupoAtual = grupo;
     }
+    const status = vagaStatus(t.vagas_restantes, t.vagas_planilha);
+    corpoTurmas.push([
+      t.serie,
+      t.codigo,
+      turnoLabel(t.turno),
+      t.curso || "-",
+      t.vagas_planilha,
+      Math.max(t.vagas_planilha - t.vagas_restantes, 0),
+      t.vagas_restantes,
+      t.vagas_planilha === 0 ? "Sem oferta" : status.label,
+    ]);
+  }
+
+  autoTable(doc, {
+    ...estiloTabela(),
+    startY: y1 + 6,
+    head: [["Série", "Turma", "Turno", "Curso", "Ofertadas", "Preenchidas", "Livres", "Situação"]],
+    body: corpoTurmas,
+    columnStyles: {
+      4: { halign: "center" },
+      5: { halign: "center" },
+      6: { halign: "center", fontStyle: "bold", textColor: GRAFITE },
+    },
+  });
+
+  // página 2 — lista de contato, agrupada por turma
+  doc.addPage();
+  cabecalho(doc, logo, "Relatório detalhado 2027 — Contatos", escopo, `${preMatriculas.length} aluno(s)`);
+
+  type CelulaContato = string | { content: string; colSpan: number; styles: Record<string, unknown> };
+  const corpoContatos: CelulaContato[][] = [];
+  for (const t of ordenarTurmas(turmas)) {
+    const turmaNome = `${unidadeNome(t.unidade_id)} · ${t.serie} · Turma ${t.codigo} (${turnoLabel(t.turno)})${
+      t.curso ? " · " + t.curso : ""
+    }`;
+    const alunos = porTurma.get(t.id) ?? [];
+    if (alunos.length === 0) continue;
+    corpoContatos.push([
+      { content: turmaNome, colSpan: 4, styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" } },
+    ]);
     for (const p of alunos) {
-      corpo.push([
+      corpoContatos.push([
+        turmaNome + (p.lista_espera ? " · Lista de espera" : ""),
         p.aluno_nome,
         maskPhone(p.telefone1),
         p.responsavel_nome,
-        `${STATUS_INFO[p.status]?.label ?? p.status}${p.lista_espera ? " · Lista de espera" : ""}`,
       ]);
     }
   }
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: y + 6,
-    head: [["Aluno", "Telefone", "Responsável", "Status"]],
-    body: corpo,
+    startY: 38,
+    head: [["Turma", "Aluno", "Telefone", "Responsável"]],
+    body: corpoContatos,
   });
 
   rodape(doc, escopo);
