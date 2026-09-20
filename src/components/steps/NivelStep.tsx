@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Baby, Backpack, BookOpen, ChevronRight, GraduationCap } from "lucide-react";
+import { ArrowLeft, Baby, Backpack, BookOpen, ChevronRight, GraduationCap } from "lucide-react";
 import { motion } from "framer-motion";
 import { NIVEIS } from "../../config";
 import type { Nivel, TurmaDisponivel, Unidade } from "../../types";
@@ -91,6 +91,12 @@ export default function NivelStep({
             );
           })}
         </div>
+
+        {/* mesmo padrão do passo de turma: um Voltar aqui embaixo também,
+            pra não depender só do botão lá no topo */}
+        <Button variant="ghost" className="mt-4 w-full" onClick={onBack}>
+          <ArrowLeft size={16} /> Voltar
+        </Button>
       </Card>
     </>
   );
