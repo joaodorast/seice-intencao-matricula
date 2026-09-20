@@ -123,6 +123,7 @@ function ComprovanteConteudo({
         </div>
       )}
       <div className="comprovante-cabecalho relative flex items-center justify-center gap-3 bg-seice-deep px-5 py-4">
+        <div className="comprovante-borda-topo absolute inset-x-0 top-0 h-1 bg-seice-gold" />
         <img src={logoIcon} alt="SEICE" className="comprovante-logo h-9 w-auto" />
         <div className="gold-hairline absolute inset-x-0 bottom-0 h-px opacity-80" />
       </div>
