@@ -1,7 +1,7 @@
 import * as XLSX from "xlsx";
 import { NIVEL_LABELS } from "../config";
 import { formatarSenha, maskPhone, turnoLabel } from "./format";
-import { ordenarTurmas, unidadeNome } from "./labels";
+import { STATUS_INFO, ordenarTurmas, unidadeNome } from "./labels";
 import { vagaStatus } from "./vagas";
 import type { PreMatriculaAdminRow, TurmaAdminRow } from "../types";
 
@@ -56,6 +56,71 @@ export function exportarIntencoesExcel(registros: PreMatriculaAdminRow[], sufixo
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Intenções de matrícula");
   baixarWorkbook(wb, `intencoes-matricula-seice-${sufixo}-${Date.now()}.xlsx`);
+}
+
+/**
+ * Relatório detalhado: uma linha por aluno, mas com a ocupação da turma dele
+ * (ofertadas/preenchidas/livres) repetida em cada linha — assim dá pra
+ * filtrar/ordenar por turma no Excel e já ver a ocupação junto do aluno,
+ * sem precisar cruzar com a aba de "Vagas por turma".
+ */
+export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatriculas: PreMatriculaAdminRow[]) {
+  const porTurma = new Map<string, PreMatriculaAdminRow[]>();
+  for (const p of preMatriculas) {
+    if (!porTurma.has(p.turma_id)) porTurma.set(p.turma_id, []);
+    porTurma.get(p.turma_id)!.push(p);
+  }
+
+  const linhas: Record<string, string | number>[] = [];
+  for (const t of ordenarTurmas(turmas)) {
+    const preenchidas = Math.max(t.vagas_planilha - t.vagas_restantes, 0);
+    const base = {
+      Unidade: unidadeNome(t.unidade_id),
+      Nível: NIVEL_LABELS[t.nivel] ?? t.nivel,
+      Série: t.serie,
+      Turma: t.codigo,
+      Turno: turnoLabel(t.turno),
+      "Vagas ofertadas": t.vagas_planilha,
+      "Vagas ocupadas": preenchidas,
+      "Vagas livres": t.vagas_restantes,
+    };
+    const alunos = porTurma.get(t.id) ?? [];
+    if (alunos.length === 0) {
+      linhas.push({ ...base, Aluno: "", Responsável: "", Telefone: "", Status: "", "Lista de espera": "" });
+      continue;
+    }
+    for (const p of alunos) {
+      linhas.push({
+        ...base,
+        Aluno: p.aluno_nome,
+        Responsável: p.responsavel_nome,
+        Telefone: maskPhone(p.telefone1),
+        Status: STATUS_INFO[p.status]?.label ?? p.status,
+        "Lista de espera": p.lista_espera ? "Sim" : "Não",
+      });
+    }
+  }
+
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  ws["!cols"] = [
+    { wch: 16 },
+    { wch: 22 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 8 },
+    { wch: 15 },
+    { wch: 14 },
+    { wch: 12 },
+    { wch: 24 },
+    { wch: 24 },
+    { wch: 16 },
+    { wch: 14 },
+    { wch: 14 },
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Relatório detalhado");
+  baixarWorkbook(wb, `relatorio-detalhado-seice-${Date.now()}.xlsx`);
 }
 
 export function exportarRelatorioCompletoExcel(turmas: TurmaAdminRow[]) {
