@@ -2,8 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { NIVEL_LABELS } from "../../config";
 import type { SerieGroup, Unidade } from "../../types";
-import VagasGauge from "../VagasGauge";
-import { BackBar, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
+import { BackBar, Badge, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
 
 export default function SerieStep({
   unidade,
@@ -36,7 +35,6 @@ export default function SerieStep({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {series.map((s, i) => {
             const totalVagas = s.turmas.reduce((acc, t) => acc + t.vagas_restantes, 0);
-            const totalOfertadas = s.turmas.reduce((acc, t) => acc + t.vagas_planilha, 0);
             return (
               <motion.button
                 key={s.ordem}
@@ -55,11 +53,13 @@ export default function SerieStep({
                     className="text-seice-muted transition-transform group-hover:translate-x-0.5 group-hover:text-seice-ink"
                   />
                 </div>
-                <div className="text-[15px] text-seice-muted">
-                  {s.turmas.length} turma{s.turmas.length > 1 ? "s" : ""} disponíve
-                  {s.turmas.length > 1 ? "is" : "l"}
+                <div className="flex items-center gap-2 text-[15px] text-seice-muted">
+                  <span>
+                    {s.turmas.length} turma{s.turmas.length > 1 ? "s" : ""} disponíve
+                    {s.turmas.length > 1 ? "is" : "l"}
+                  </span>
+                  {totalVagas === 0 && <Badge tone="gold">Lista de espera</Badge>}
                 </div>
-                <VagasGauge vagasRestantes={totalVagas} vagasOfertadas={totalOfertadas} />
               </motion.button>
             );
           })}
