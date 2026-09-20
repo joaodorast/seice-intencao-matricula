@@ -179,6 +179,77 @@ export async function exportarIntencoesPDF(
   doc.save(`intencoes-matricula-seice-${sufixo}-${Date.now()}.pdf`);
 }
 
+/**
+ * Relatório detalhado: pra cada turma, uma faixa com a ocupação (ofertadas/
+ * ocupadas/livres) e logo abaixo a lista de alunos daquela turma com
+ * telefone completo — tudo num só PDF, sem precisar cruzar o relatório de
+ * turmas com o de intenções.
+ */
+export async function exportarRelatorioDetalhadoPDF(
+  turmas: TurmaAdminRow[],
+  preMatriculas: PreMatriculaAdminRow[],
+  escopo = "Todas as unidades"
+) {
+  const doc = new jsPDF({ orientation: "landscape" });
+  const logo = await carregarLogo();
+
+  const porTurma = new Map<string, PreMatriculaAdminRow[]>();
+  for (const p of preMatriculas) {
+    if (!porTurma.has(p.turma_id)) porTurma.set(p.turma_id, []);
+    porTurma.get(p.turma_id)!.push(p);
+  }
+
+  const ofertadas = turmas.reduce((acc, t) => acc + t.vagas_planilha, 0);
+  const livres = turmas.reduce((acc, t) => acc + t.vagas_restantes, 0);
+  const preenchidas = ofertadas - livres;
+
+  cabecalho(doc, logo, "Relatório detalhado 2027", escopo, `${turmas.length} turma(s) · ${preMatriculas.length} aluno(s)`);
+  const y = indicadores(doc, 38, [
+    { rotulo: "Turmas", valor: String(turmas.length) },
+    { rotulo: "Vagas ocupadas", valor: String(preenchidas) },
+    { rotulo: "Vagas livres", valor: String(livres) },
+    { rotulo: "Alunos cadastrados", valor: String(preMatriculas.length) },
+  ]);
+
+  type Celula = string | { content: string; colSpan: number; styles: Record<string, unknown> };
+  const corpo: Celula[][] = [];
+  for (const t of ordenarTurmas(turmas)) {
+    const turmaPreenchidas = Math.max(t.vagas_planilha - t.vagas_restantes, 0);
+    corpo.push([
+      {
+        content: `${unidadeNome(t.unidade_id)} · ${t.serie} · Turma ${t.codigo} (${turnoLabel(t.turno)})${
+          t.curso ? " · " + t.curso : ""
+        }  —  ${turmaPreenchidas}/${t.vagas_planilha} vagas ocupadas`,
+        colSpan: 4,
+        styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" },
+      },
+    ]);
+    const alunos = porTurma.get(t.id) ?? [];
+    if (alunos.length === 0) {
+      corpo.push([{ content: "— nenhuma intenção cadastrada —", colSpan: 4, styles: { textColor: CINZA_TEXTO, fontStyle: "normal" } }]);
+      continue;
+    }
+    for (const p of alunos) {
+      corpo.push([
+        p.aluno_nome,
+        maskPhone(p.telefone1),
+        p.responsavel_nome,
+        `${STATUS_INFO[p.status]?.label ?? p.status}${p.lista_espera ? " · Lista de espera" : ""}`,
+      ]);
+    }
+  }
+
+  autoTable(doc, {
+    ...estiloTabela(),
+    startY: y + 6,
+    head: [["Aluno", "Telefone", "Responsável", "Status"]],
+    body: corpo,
+  });
+
+  rodape(doc, escopo);
+  doc.save(`relatorio-detalhado-seice-${Date.now()}.pdf`);
+}
+
 export async function exportarRelatorioCompletoPDF(turmas: TurmaAdminRow[], escopo = "Todas as unidades") {
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
