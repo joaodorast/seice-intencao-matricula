@@ -247,14 +247,6 @@ body {
   #comprovante-impressao .comprovante-logo {
     height: 38px !important;
   }
-  #comprovante-impressao .comprovante-rotulo-senha {
-    font-size: 14px !important;
-    color: #ffffffaa !important;
-  }
-  #comprovante-impressao .comprovante-senha {
-    font-size: 46px !important;
-    color: #ffffff !important;
-  }
   #comprovante-impressao .comprovante-corpo {
     padding: 26px !important;
   }
