@@ -15,7 +15,7 @@ import {
 import { maskPhone, onlyDigits, turnoLabel, validEmail } from "../../lib/format";
 import { RESERVA_MINUTOS, liberarReserva, renovarReserva, reservarVaga } from "../../lib/reservas";
 import type { SerieGroup, TurmaDisponivel, Unidade } from "../../types";
-import { Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
+import { BackBar, Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
 
 export interface DadosFormValues {
   respNome: string;
@@ -138,7 +138,16 @@ export default function DadosStep({
   const vagas = turma.vagas_restantes;
 
   return (
-    <Card>
+    <>
+      <BackBar
+        label={
+          <>
+            {unidade.nome} · <strong className="font-semibold text-seice-ink">{serieGroup.serie}</strong>
+          </>
+        }
+        onBack={onBack}
+      />
+      <Card>
       <SectionEyebrow>Passo 5 de 6</SectionEyebrow>
       <SectionTitle>Quase lá! Preencha os dados</SectionTitle>
       <SectionDesc>Sem nenhuma cobrança nesta etapa — é só preencher e enviar.</SectionDesc>
@@ -306,6 +315,7 @@ export default function DadosStep({
         </div>
       </form>
     </Card>
+    </>
   );
 }
 
