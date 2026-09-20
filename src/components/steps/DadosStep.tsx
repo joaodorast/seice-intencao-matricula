@@ -147,11 +147,7 @@ export default function DadosStep({
       <div className="inset-surface rounded-xl border border-seice-border p-4 sm:p-5">
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
           <span className="text-[13.5px] font-bold uppercase tracking-[0.1em] text-seice-muted">Sua escolha</span>
-          {vagas > 0 ? (
-            <Badge tone="success" icon={<CheckCircle2 size={13} />}>
-              {vagas} vaga{vagas === 1 ? "" : "s"} disponíve{vagas === 1 ? "l" : "is"}
-            </Badge>
-          ) : (
+          {vagas <= 0 && (
             <Badge tone="gold" icon={<Timer size={13} />}>
               Lista de espera
             </Badge>
