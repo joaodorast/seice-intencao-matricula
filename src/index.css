@@ -286,4 +286,9 @@ body {
   #comprovante-impressao .gold-hairline {
     background: #e8c65a99 !important;
   }
+  /* bordinha dourada bem visível no topo do cabeçalho — essa, ao contrário
+     do fio de baixo, é pra aparecer de verdade */
+  #comprovante-impressao .comprovante-borda-topo {
+    background: #ffc800 !important;
+  }
 }
