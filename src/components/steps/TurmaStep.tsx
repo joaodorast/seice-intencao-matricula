@@ -3,7 +3,6 @@ import { Briefcase, HeartPulse, Laptop, Sunrise, Sunset } from "lucide-react";
 import { motion } from "framer-motion";
 import { turnoLabel } from "../../lib/format";
 import type { SerieGroup, Unidade } from "../../types";
-import VagasGauge from "../VagasGauge";
 import { BackBar, Badge, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
 
 const CURSO_ICON: Record<string, ReactNode> = {
@@ -70,14 +69,9 @@ export default function TurmaStep({
                       {t.curso}
                     </Badge>
                   )}
-                  <Badge tone="gold">
-                    {t.vagas_restantes > 0
-                      ? `${t.vagas_restantes} vaga${t.vagas_restantes === 1 ? "" : "s"}`
-                      : "Lista de espera"}
-                  </Badge>
+                  {t.vagas_restantes === 0 && <Badge tone="gold">Lista de espera</Badge>}
                 </div>
               </div>
-              <VagasGauge vagasRestantes={t.vagas_restantes} vagasOfertadas={t.vagas_planilha} />
             </motion.button>
           ))}
         </div>
