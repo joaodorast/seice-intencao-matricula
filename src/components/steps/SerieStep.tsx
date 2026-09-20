@@ -1,8 +1,8 @@
-import { ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { NIVEL_LABELS } from "../../config";
 import type { SerieGroup, Unidade } from "../../types";
-import { BackBar, Badge, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
+import { BackBar, Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
 
 export default function SerieStep({
   unidade,
@@ -64,6 +64,12 @@ export default function SerieStep({
             );
           })}
         </div>
+
+        {/* mesmo padrão do passo de turma: um Voltar aqui embaixo também,
+            pra não depender só do botão lá no topo */}
+        <Button variant="ghost" className="mt-4 w-full" onClick={onBack}>
+          <ArrowLeft size={16} /> Voltar
+        </Button>
       </Card>
     </>
   );
