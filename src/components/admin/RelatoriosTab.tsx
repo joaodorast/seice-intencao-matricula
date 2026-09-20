@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Download, TrendingUp } from "lucide-react";
+import { Download, ListTree, TrendingUp } from "lucide-react";
 import { resumoTurmas } from "../../lib/labels";
 import type { PreMatriculaAdminRow, TurmaAdminRow } from "../../types";
 import { Button, Card, SectionDesc, SectionTitle } from "../ui";
 import ExportarRelatorioModal from "./ExportarRelatorioModal";
 import VagasPorTurma from "./VagasPorTurma";
+
+type TipoModal = "completo" | "intencoes" | "detalhado";
 
 export default function RelatoriosTab({
   turmas,
@@ -17,6 +19,12 @@ export default function RelatoriosTab({
   escopo?: string;
 }) {
   const [modalAberto, setModalAberto] = useState(false);
+  const [tipoModal, setTipoModal] = useState<TipoModal>("completo");
+
+  function abrirModal(tipo: TipoModal) {
+    setTipoModal(tipo);
+    setModalAberto(true);
+  }
 
   const resumo = resumoTurmas(turmas);
   const totalOfertadas = resumo.reduce((acc, r) => acc + r.ofertadas, 0);
@@ -34,9 +42,14 @@ export default function RelatoriosTab({
             Dados de <strong className="text-seice-ink">{escopo}</strong> — escolha o recorte na exportação.
           </p>
         </div>
-        <Button onClick={() => setModalAberto(true)} className="shrink-0 !px-5">
-          <Download size={17} /> Exportar relatório
-        </Button>
+        <div className="flex flex-wrap gap-2.5">
+          <Button variant="ghost" onClick={() => abrirModal("detalhado")} className="shrink-0 !px-5">
+            <ListTree size={17} /> Relatório detalhado
+          </Button>
+          <Button onClick={() => abrirModal("completo")} className="shrink-0 !px-5">
+            <Download size={17} /> Exportar relatório
+          </Button>
+        </div>
       </div>
 
       <Card className="flex flex-col items-center gap-3 border-dashed !py-10 text-center">
@@ -46,11 +59,11 @@ export default function RelatoriosTab({
         <div>
           <div className="text-[16.5px] font-bold text-seice-ink">Tudo em um único lugar</div>
           <p className="mx-auto mt-1 max-w-sm text-[14px] text-seice-muted">
-            Vagas por turma ou a lista de intenções, em PDF ou Excel — para todas as turmas ou para uma turma
-            específica.
+            Vagas por turma, a lista de intenções ou o relatório detalhado (turma + alunos + telefone), em PDF ou
+            Excel — para todas as turmas ou para uma turma específica.
           </p>
         </div>
-        <Button variant="ghost" onClick={() => setModalAberto(true)} className="mt-1">
+        <Button variant="ghost" onClick={() => abrirModal("completo")} className="mt-1">
           <Download size={16} /> Abrir exportação
         </Button>
       </Card>
@@ -82,6 +95,7 @@ export default function RelatoriosTab({
         turmas={turmas}
         preMatriculas={preMatriculas}
         escopo={escopo}
+        tipoInicial={tipoModal}
       />
     </div>
   );
