@@ -29,8 +29,11 @@ export default function Stepper({ atual }: { atual: Passo }) {
         </div>
         <ol className="relative grid grid-cols-6">
           {STEPS.map((s, i) => {
-            const isDone = i < idx;
-            const isActive = i === idx;
+            // na tela de confirmação (envio já feito), o último círculo também
+            // fica marcado como concluído, em vez de continuar "ativo" — a
+            // intenção já foi enviada, não tem mais nada pendente ali
+            const isDone = i < idx || (atual === "confirmacao" && i === idx);
+            const isActive = i === idx && atual !== "confirmacao";
             return (
               <li
                 key={s.key}
