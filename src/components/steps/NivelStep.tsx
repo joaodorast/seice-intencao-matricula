@@ -81,9 +81,7 @@ export default function NivelStep({
                   <div className="text-[15px] text-seice-muted">{n.desc}</div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Badge tone={totalVagas > 0 ? "success" : "gold"}>
-                    {totalVagas > 0 ? `${totalVagas} vaga${totalVagas === 1 ? "" : "s"}` : "Lista de espera"}
-                  </Badge>
+                  {totalVagas === 0 && <Badge tone="gold">Lista de espera</Badge>}
                   <ChevronRight
                     size={18}
                     className="text-seice-muted transition-transform group-hover:translate-x-0.5 group-hover:text-seice-ink"
