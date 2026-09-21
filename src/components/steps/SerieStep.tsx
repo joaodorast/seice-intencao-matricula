@@ -63,7 +63,7 @@ export default function SerieStep({
                     <Badge tone="gold">
                       {(() => {
                         const vagasVisiveis = vagasVisiveisDaSerie(s.turmas);
-                        return vagasVisiveis > 0 ? `${vagasVisiveis} vaga${vagasVisiveis === 1 ? "" : "s"}` : "Lista de espera";
+                        return `${vagasVisiveis} vaga${vagasVisiveis === 1 ? "" : "s"}`;
                       })()}
                     </Badge>
                   ) : (
