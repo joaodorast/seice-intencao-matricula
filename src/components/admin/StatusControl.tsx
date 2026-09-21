@@ -4,20 +4,20 @@ import { STATUS_INFO } from "../../lib/labels";
 import type { StatusPreMatricula } from "../../types";
 import ConfirmModal from "./ConfirmModal";
 
-const OPCOES: StatusPreMatricula[] = ["pendente", "contatado", "matriculado"];
+const OPCOES: StatusPreMatricula[] = ["pendente", "contatado"];
 
 /** Etapa ativa sempre em dourado — o mesmo destaque usado nos outros
  *  seletores do painel (unidade, aba), pra manter a mesma linguagem visual. */
 const ESTILO_ATIVO = "bg-seice-gold text-seice-gold-ink";
 
 /**
- * Controle explícito de status: as três opções (Pendente/Contatado/
- * Matriculado) sempre visíveis lado a lado, e a pessoa clica em qualquer uma
- * pra jogar a intenção direto pra lá — não precisa avançar um passo de cada
- * vez. Um select escondido no meio da linha passava despercebido; aqui a
- * opção escolhida vira destaque, tomando o lugar da anterior. Cancelar e
- * reabrir passam por um modal de confirmação próprio, não pelo confirm()
- * nativo do navegador (que aparece com a cara do "localhost diz").
+ * Controle explícito de status: as duas opções (Pendente/Contatado) sempre
+ * visíveis lado a lado, e a pessoa clica em qualquer uma pra jogar a
+ * intenção direto pra lá — não precisa avançar um passo de cada vez.
+ * "Matriculado" não é mais uma opção clicável aqui a pedido da direção — só
+ * Pendente/Contatado (mais Cancelar). Cancelar e reabrir passam por um
+ * modal de confirmação próprio, não pelo confirm() nativo do navegador (que
+ * aparece com a cara do "localhost diz").
  */
 export default function StatusControl({
   status,
