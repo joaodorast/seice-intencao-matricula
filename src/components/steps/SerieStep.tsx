@@ -1,6 +1,7 @@
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { NIVEL_LABELS } from "../../config";
+import { serieComVagaVisivel, vagasVisiveisDaSerie } from "../../lib/vagasVisiveis";
 import type { SerieGroup, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -58,7 +59,16 @@ export default function SerieStep({
                     {s.turmas.length} turma{s.turmas.length > 1 ? "s" : ""} disponíve
                     {s.turmas.length > 1 ? "is" : "l"}
                   </span>
-                  {totalVagas === 0 && <Badge tone="gold">Lista de espera</Badge>}
+                  {serieComVagaVisivel(s.turmas) ? (
+                    <Badge tone="gold">
+                      {(() => {
+                        const vagasVisiveis = vagasVisiveisDaSerie(s.turmas);
+                        return vagasVisiveis > 0 ? `${vagasVisiveis} vaga${vagasVisiveis === 1 ? "" : "s"}` : "Lista de espera";
+                      })()}
+                    </Badge>
+                  ) : (
+                    totalVagas === 0 && <Badge tone="gold">Lista de espera</Badge>
+                  )}
                 </div>
               </motion.button>
             );
