@@ -35,7 +35,6 @@ export default function SerieStep({
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {series.map((s, i) => {
-            const totalVagas = s.turmas.reduce((acc, t) => acc + t.vagas_restantes, 0);
             return (
               <motion.button
                 key={s.ordem}
@@ -59,16 +58,13 @@ export default function SerieStep({
                     {s.turmas.length} turma{s.turmas.length > 1 ? "s" : ""} disponíve
                     {s.turmas.length > 1 ? "is" : "l"}
                   </span>
-                  {serieComVagaVisivel(s.turmas) ? (
-                    <Badge tone="gold">
-                      {(() => {
-                        const vagasVisiveis = vagasVisiveisDaSerie(s.turmas);
-                        return `${vagasVisiveis} vaga${vagasVisiveis === 1 ? "" : "s"}`;
-                      })()}
-                    </Badge>
-                  ) : (
-                    totalVagas === 0 && <Badge tone="gold">Lista de espera</Badge>
-                  )}
+                  <Badge tone="gold">
+                    {(() => {
+                      if (!serieComVagaVisivel(s.turmas)) return "Lista de espera";
+                      const vagasVisiveis = vagasVisiveisDaSerie(s.turmas);
+                      return vagasVisiveis > 0 ? `${vagasVisiveis} vaga${vagasVisiveis === 1 ? "" : "s"}` : "Lista de espera";
+                    })()}
+                  </Badge>
                 </div>
               </motion.button>
             );
