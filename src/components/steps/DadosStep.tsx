@@ -157,16 +157,14 @@ export default function DadosStep({
       <div className="inset-surface rounded-xl border border-seice-border p-4 sm:p-5">
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
           <span className="text-[13.5px] font-bold uppercase tracking-[0.1em] text-seice-muted">Sua escolha</span>
-          {vagaVisivelParaResponsavel(turma) ? (
-            <Badge tone={vagas > 0 ? "success" : "gold"} icon={vagas > 0 ? <CheckCircle2 size={13} /> : <Timer size={13} />}>
+          {vagaVisivelParaResponsavel(turma) && vagas > 0 ? (
+            <Badge tone="success" icon={<CheckCircle2 size={13} />}>
               {vagas} vaga{vagas === 1 ? "" : "s"}
             </Badge>
           ) : (
-            vagas <= 0 && (
-              <Badge tone="gold" icon={<Timer size={13} />}>
-                Lista de espera
-              </Badge>
-            )
+            <Badge tone="gold" icon={<Timer size={13} />}>
+              Lista de espera
+            </Badge>
           )}
         </div>
         <dl className={`grid grid-cols-2 gap-x-4 gap-y-3 ${turma.curso ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
