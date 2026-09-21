@@ -3,6 +3,7 @@ import { ArrowLeft, Briefcase, HeartPulse, Laptop, Sunrise, Sunset } from "lucid
 import { motion } from "framer-motion";
 import { turnoLabel } from "../../lib/format";
 import type { SerieGroup, Unidade } from "../../types";
+import { vagaVisivelParaResponsavel } from "../../lib/vagasVisiveis";
 import { BackBar, Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
 
 const CURSO_ICON: Record<string, ReactNode> = {
@@ -69,7 +70,15 @@ export default function TurmaStep({
                       {t.curso}
                     </Badge>
                   )}
-                  {t.vagas_restantes === 0 && <Badge tone="gold">Lista de espera</Badge>}
+                  {vagaVisivelParaResponsavel(t) ? (
+                    <Badge tone="gold">
+                      {t.vagas_restantes > 0
+                        ? `${t.vagas_restantes} vaga${t.vagas_restantes === 1 ? "" : "s"}`
+                        : "Lista de espera"}
+                    </Badge>
+                  ) : (
+                    t.vagas_restantes === 0 && <Badge tone="gold">Lista de espera</Badge>
+                  )}
                 </div>
               </div>
             </motion.button>
