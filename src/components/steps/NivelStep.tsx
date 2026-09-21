@@ -13,8 +13,16 @@ const NIVEL_ICONS: Record<Nivel, ReactNode> = {
 };
 
 // Jardim Primavera não tem trilha técnica — só o Médio Preparatório, do 1º
-// ao 2º ano (Campos Elíseos é que tem Informática/Enfermagem/Administração,
-// do 1º ao 3º ano). O resumo dessa etapa precisa refletir isso por unidade.
+// ao 2º ano (Campos Elíseos é que tem Ensino Médio Técnico, com Informática/
+// Enfermagem/Administração, do 1º ao 3º ano). O nome e o resumo dessa etapa
+// precisam refletir isso por unidade.
+function rotuloNivel(nivel: { key: Nivel; label: string }, unidadeSlug: string): string {
+  if (nivel.key === "medio" && unidadeSlug === "campos-eliseos") {
+    return "Ensino Médio Técnico";
+  }
+  return nivel.label;
+}
+
 function descricaoNivel(nivel: { key: Nivel; desc: string }, unidadeSlug: string): string {
   if (nivel.key === "medio" && unidadeSlug === "jardim-primavera") {
     return "1º ao 2º ano — Médio Preparatório";
@@ -87,7 +95,7 @@ export default function NivelStep({
                   {NIVEL_ICONS[n.key]}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[18px] font-bold text-seice-ink">{n.label}</div>
+                  <div className="text-[18px] font-bold text-seice-ink">{rotuloNivel(n, unidade.slug)}</div>
                   <div className="text-[15px] text-seice-muted">{descricaoNivel(n, unidade.slug)}</div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
