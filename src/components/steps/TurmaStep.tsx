@@ -70,13 +70,11 @@ export default function TurmaStep({
                       {t.curso}
                     </Badge>
                   )}
-                  {vagaVisivelParaResponsavel(t) ? (
-                    <Badge tone="gold">
-                      {t.vagas_restantes} vaga{t.vagas_restantes === 1 ? "" : "s"}
-                    </Badge>
-                  ) : (
-                    t.vagas_restantes === 0 && <Badge tone="gold">Lista de espera</Badge>
-                  )}
+                  <Badge tone="gold">
+                    {vagaVisivelParaResponsavel(t) && t.vagas_restantes > 0
+                      ? `${t.vagas_restantes} vaga${t.vagas_restantes === 1 ? "" : "s"}`
+                      : "Lista de espera"}
+                  </Badge>
                 </div>
               </div>
             </motion.button>
