@@ -159,7 +159,7 @@ export default function DadosStep({
           <span className="text-[13.5px] font-bold uppercase tracking-[0.1em] text-seice-muted">Sua escolha</span>
           {vagaVisivelParaResponsavel(turma) ? (
             <Badge tone={vagas > 0 ? "success" : "gold"} icon={vagas > 0 ? <CheckCircle2 size={13} /> : <Timer size={13} />}>
-              {vagas > 0 ? `${vagas} vaga${vagas === 1 ? "" : "s"} disponíve${vagas === 1 ? "l" : "is"}` : "Lista de espera"}
+              {vagas} vaga{vagas === 1 ? "" : "s"}
             </Badge>
           ) : (
             vagas <= 0 && (
