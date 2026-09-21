@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { maskPhone, onlyDigits, turnoLabel, validEmail } from "../../lib/format";
 import { RESERVA_MINUTOS, liberarReserva, renovarReserva, reservarVaga } from "../../lib/reservas";
+import { vagaVisivelParaResponsavel } from "../../lib/vagasVisiveis";
 import type { SerieGroup, TurmaDisponivel, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -156,10 +157,16 @@ export default function DadosStep({
       <div className="inset-surface rounded-xl border border-seice-border p-4 sm:p-5">
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
           <span className="text-[13.5px] font-bold uppercase tracking-[0.1em] text-seice-muted">Sua escolha</span>
-          {vagas <= 0 && (
-            <Badge tone="gold" icon={<Timer size={13} />}>
-              Lista de espera
+          {vagaVisivelParaResponsavel(turma) ? (
+            <Badge tone={vagas > 0 ? "success" : "gold"} icon={vagas > 0 ? <CheckCircle2 size={13} /> : <Timer size={13} />}>
+              {vagas > 0 ? `${vagas} vaga${vagas === 1 ? "" : "s"} disponíve${vagas === 1 ? "l" : "is"}` : "Lista de espera"}
             </Badge>
+          ) : (
+            vagas <= 0 && (
+              <Badge tone="gold" icon={<Timer size={13} />}>
+                Lista de espera
+              </Badge>
+            )
           )}
         </div>
         <dl className={`grid grid-cols-2 gap-x-4 gap-y-3 ${turma.curso ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
