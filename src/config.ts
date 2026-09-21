@@ -59,7 +59,7 @@ export const NIVEIS: NivelConfig[] = [
   {
     key: "medio",
     label: "Ensino Médio",
-    desc: "Técnico — 1º ao 3º ano — Informática, Enfermagem e Administração",
+    desc: "1º ao 3º ano — Informática, Enfermagem e Administração",
   },
 ];
 
