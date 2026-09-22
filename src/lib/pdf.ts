@@ -2,7 +2,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { NIVEL_LABELS } from "../config";
 import logoUrl from "../assets/seice-logo.png";
-import { formatarSenha, maskPhone, turnoLabel } from "./format";
+import { calcularPosicoesEspera, formatarSenha, maskPhone, turnoLabel } from "./format";
 import { STATUS_INFO, ordenarTurmas, unidadeNome } from "./labels";
 import { vagaStatus } from "./vagas";
 import type { PreMatriculaAdminRow, TurmaAdminRow } from "../types";
@@ -136,6 +136,10 @@ function estiloTabela() {
 }
 
 function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
+  // senha (sequencial geral) e posição na lista de espera (só entre quem
+  // está esperando vaga naquela turma) são contagens diferentes — por isso
+  // alguém pode ter uma senha "alta" e ainda ser a 1ª da lista de espera.
+  const posicoesEspera = calcularPosicoesEspera(registros);
   return registros.map((r) => [
     formatarSenha(r.numero_senha),
     new Date(r.criado_em).toLocaleString("pt-BR"),
@@ -145,7 +149,7 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
     r.responsavel_nome,
     maskPhone(r.telefone1),
     STATUS_INFO[r.status]?.label ?? r.status,
-    r.lista_espera ? "Sim" : "Não",
+    posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª` : r.lista_espera ? "Sim" : "Não",
   ]);
 }
 
@@ -171,7 +175,7 @@ export async function exportarIntencoesPDF(
   autoTable(doc, {
     ...estiloTabela(),
     startY: y + 6,
-    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "Telefone", "Status", "Lista de espera"]],
+    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "Telefone", "Status", "Posição na espera"]],
     body: linhasIntencoes(registros),
   });
 
@@ -254,6 +258,7 @@ export async function exportarRelatorioDetalhadoPDF(
 
   type CelulaContato = string | { content: string; colSpan: number; styles: Record<string, unknown> };
   const corpoContatos: CelulaContato[][] = [];
+  const posicoesEsperaContatos = calcularPosicoesEspera(preMatriculas);
   for (const t of ordenarTurmas(turmas)) {
     const turmaNome = `${unidadeNome(t.unidade_id)} · ${t.serie} · Turma ${t.codigo} (${turnoLabel(t.turno)})${
       t.curso ? " · " + t.curso : ""
@@ -264,8 +269,11 @@ export async function exportarRelatorioDetalhadoPDF(
       { content: turmaNome, colSpan: 4, styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" } },
     ]);
     for (const p of alunos) {
+      const sufixoEspera = posicoesEsperaContatos.has(p.id)
+        ? ` · ${posicoesEsperaContatos.get(p.id)}ª na lista de espera`
+        : "";
       corpoContatos.push([
-        turmaNome + (p.lista_espera ? " · Lista de espera" : ""),
+        turmaNome + sufixoEspera,
         p.aluno_nome,
         maskPhone(p.telefone1),
         p.responsavel_nome,
