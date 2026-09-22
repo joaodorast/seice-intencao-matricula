@@ -28,6 +28,7 @@ export default function OverviewTab({
   const totalVagasRestantes = turmas.reduce((acc, t) => acc + t.vagas_restantes, 0);
   const totalOcupadas = totalVagasOfertadas - totalVagasRestantes;
   const totalIntencoes = preMatriculas.length;
+  const totalListaEspera = preMatriculas.filter((p) => p.lista_espera).length;
 
   const porStatus = Object.fromEntries(
     STATUS_ORDER.map((s) => [s, preMatriculas.filter((p) => p.status === s).length])
@@ -62,7 +63,7 @@ export default function OverviewTab({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard icon={<Layers size={19} />} label="Turmas ofertadas" value={totalTurmas} accent="black" />
         <StatCard
           icon={<DoorOpen size={19} />}
@@ -74,13 +75,21 @@ export default function OverviewTab({
           icon={<CheckCircle2 size={19} />}
           label="Vagas ocupadas"
           value={totalOcupadas}
+          sub="Só quem tem vaga garantida — não inclui lista de espera"
           accent="success"
+        />
+        <StatCard
+          icon={<Clock size={19} />}
+          label="Em lista de espera"
+          value={totalListaEspera}
+          sub="Não ocupa vaga — está incluído nas intenções recebidas"
+          accent="danger"
         />
         <StatCard
           icon={<ClipboardList size={19} />}
           label="Intenções recebidas"
           value={totalIntencoes}
-          sub={`${porStatus.pendente} pendente${porStatus.pendente === 1 ? "" : "s"}`}
+          sub={`${porStatus.pendente} pendente${porStatus.pendente === 1 ? "" : "s"} · inclui vaga garantida + espera`}
           accent="black"
         />
       </div>
