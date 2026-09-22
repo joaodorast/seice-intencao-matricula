@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import { NIVEL_LABELS } from "../config";
-import { formatarSenha, maskPhone, turnoLabel } from "./format";
+import { calcularPosicoesEspera, formatarSenha, maskPhone, turnoLabel } from "./format";
 import { STATUS_INFO, ordenarTurmas, unidadeNome } from "./labels";
 import { vagaStatus } from "./vagas";
 import type { PreMatriculaAdminRow, TurmaAdminRow } from "../types";
@@ -13,6 +13,11 @@ function baixarWorkbook(wb: XLSX.WorkBook, nomeArquivo: string) {
 }
 
 function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
+  // senha (número de atendimento) e posição na lista de espera são contagens
+  // diferentes — a senha é sequencial pra todo mundo, a posição é só entre
+  // quem está esperando vaga naquela turma. Por isso "Manuela" pode ser
+  // senha 21 e, ao mesmo tempo, 1ª da lista de espera da turma dela.
+  const posicoesEspera = calcularPosicoesEspera(registros);
   return registros.map((r) => ({
     Senha: formatarSenha(r.numero_senha),
     "Recebido em": new Date(r.criado_em).toLocaleString("pt-BR"),
@@ -28,6 +33,7 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
     "E-mail": r.email ?? "",
     Status: r.status,
     "Lista de espera": r.lista_espera ? "Sim" : "Não",
+    "Posição na lista de espera": posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª` : "",
   }));
 }
 
@@ -47,6 +53,7 @@ const LARGURAS_INTENCOES = [
   { wch: 22 },
   { wch: 12 },
   { wch: 14 },
+  { wch: 20 },
 ];
 
 export function exportarIntencoesExcel(registros: PreMatriculaAdminRow[], sufixo: string) {
@@ -70,6 +77,7 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
     if (!porTurma.has(p.turma_id)) porTurma.set(p.turma_id, []);
     porTurma.get(p.turma_id)!.push(p);
   }
+  const posicoesEspera = calcularPosicoesEspera(preMatriculas);
 
   const linhas: Record<string, string | number>[] = [];
   for (const t of ordenarTurmas(turmas)) {
@@ -86,7 +94,15 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
     };
     const alunos = porTurma.get(t.id) ?? [];
     if (alunos.length === 0) {
-      linhas.push({ ...base, Aluno: "", Responsável: "", Telefone: "", Status: "", "Lista de espera": "" });
+      linhas.push({
+        ...base,
+        Aluno: "",
+        Responsável: "",
+        Telefone: "",
+        Status: "",
+        "Lista de espera": "",
+        "Posição na lista de espera": "",
+      });
       continue;
     }
     for (const p of alunos) {
@@ -97,6 +113,7 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
         Telefone: maskPhone(p.telefone1),
         Status: STATUS_INFO[p.status]?.label ?? p.status,
         "Lista de espera": p.lista_espera ? "Sim" : "Não",
+        "Posição na lista de espera": posicoesEspera.has(p.id) ? `${posicoesEspera.get(p.id)}ª` : "",
       });
     }
   }
@@ -116,6 +133,7 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
     { wch: 16 },
     { wch: 14 },
     { wch: 14 },
+    { wch: 20 },
   ];
 
   const wb = XLSX.utils.book_new();
