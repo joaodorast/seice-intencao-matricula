@@ -50,10 +50,12 @@ export function Badge({
   children,
   tone = "neutral",
   icon,
+  title,
 }: {
   children: ReactNode;
   tone?: "neutral" | "dark" | "success" | "danger" | "info" | "gold";
   icon?: ReactNode;
+  title?: string;
 }) {
   const tones: Record<string, string> = {
     neutral: "bg-seice-chip text-seice-soft ring-1 ring-seice-border",
@@ -65,6 +67,7 @@ export function Badge({
   };
   return (
     <span
+      title={title}
       className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[13.5px] font-semibold ${tones[tone]}`}
     >
       {icon}
