@@ -26,7 +26,7 @@ import { atualizarStatus, buscarPreMatriculas, verificarToken } from "../lib/adm
 import { listarTurmas } from "../lib/adminTurmasApi";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { STATUS_INFO, unidadeCurta } from "../lib/labels";
-import { calcularPosicoesEspera } from "../lib/format";
+import { calcularPosicoesEspera, calcularPosicoesIntencao } from "../lib/format";
 import { buscarConta, EMAIL_COM_CONFIGURACOES, type Conta } from "../lib/contas";
 import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow, Unidade } from "../types";
 
@@ -228,18 +228,27 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
     const termo = busca.trim().toLowerCase();
     if (!termo) return true;
     return (
-      r.aluno_nome.toLowerCase().includes(termo) || r.responsavel_nome.toLowerCase().includes(termo)
+      r.aluno_nome.toLowerCase().includes(termo) ||
+      r.responsavel_nome.toLowerCase().includes(termo) ||
+      (r.turmas?.serie ?? "").toLowerCase().includes(termo) ||
+      (r.turmas?.serie_full ?? "").toLowerCase().includes(termo) ||
+      (r.turmas?.codigo ?? "").toLowerCase().includes(termo)
     );
   });
   // calculada sobre todos os registros (não só os filtrados na tela), pra
   // posição não mudar dependendo de busca/filtro aplicado
   const posicoesEspera = calcularPosicoesEspera(registros);
+  const posicoesIntencao = calcularPosicoesIntencao(registros);
   // duas telas separadas, igual no relatório em PDF: uma só com quem tem
-  // vaga garantida, outra só com quem está na lista de espera (por posição)
-  const registrosIntencoes = registrosFiltrados.filter((r) => !r.lista_espera);
+  // vaga garantida, outra só com quem está na lista de espera — as duas por
+  // ordem de chegada (senha/horário mais cedo primeiro), que é a ordem de
+  // prioridade pra secretaria ligar
+  const registrosIntencoes = registrosFiltrados
+    .filter((r) => !r.lista_espera)
+    .sort((a, b) => a.numero_senha - b.numero_senha);
   const registrosListaEspera = registrosFiltrados
     .filter((r) => r.lista_espera)
-    .sort((a, b) => (posicoesEspera.get(a.id) ?? 0) - (posicoesEspera.get(b.id) ?? 0));
+    .sort((a, b) => a.numero_senha - b.numero_senha);
 
   if (!token) {
     return <LoginForm onLogin={handleLogin} unidade={unidadeFixa?.nome} />;
@@ -353,7 +362,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                 type="text"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar por aluno ou responsável..."
+                placeholder="Buscar por aluno, responsável, série ou turma..."
                 className="inset-surface w-full rounded-xl border border-seice-border-strong py-2.5 pl-9 pr-3.5 text-[15px] text-seice-ink outline-none placeholder:text-seice-muted focus:border-seice-gold focus:ring-4 focus:ring-seice-gold/20"
               />
             </div>
@@ -395,20 +404,33 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
               />
             )}
             {aba === "prematriculas" && (
-              <PreMatriculaTable
-                registros={registrosIntencoes}
-                posicoesEspera={posicoesEspera}
-                onStatusChange={handleStatusChange}
-                colunaListaEspera={false}
-              />
+              <>
+                <p className="mb-4 text-[14.5px] leading-relaxed text-seice-muted">
+                  Ordenado por senha (quem se inscreveu mais cedo primeiro). A coluna "Posição na fila" é a
+                  ordem de chegada <strong className="text-seice-ink">dentro da turma daquela linha</strong> —
+                  cada turma conta a própria fila, por isso é normal aparecer "1ª" várias vezes.
+                </p>
+                <PreMatriculaTable
+                  registros={registrosIntencoes}
+                  posicoes={posicoesIntencao}
+                  onStatusChange={handleStatusChange}
+                />
+              </>
             )}
             {aba === "listaEspera" && (
-              <PreMatriculaTable
-                registros={registrosListaEspera}
-                posicoesEspera={posicoesEspera}
-                onStatusChange={handleStatusChange}
-                mensagemVazia="Ninguém na lista de espera no momento."
-              />
+              <>
+                <p className="mb-4 text-[14.5px] leading-relaxed text-seice-muted">
+                  Ordenado por senha (quem se inscreveu mais cedo primeiro). A coluna "Posição na fila" é a
+                  ordem <strong className="text-seice-ink">dentro da turma daquela linha</strong> — cada
+                  turma tem sua própria fila, por isso é normal aparecer "1ª" várias vezes.
+                </p>
+                <PreMatriculaTable
+                  registros={registrosListaEspera}
+                  posicoes={posicoesEspera}
+                  onStatusChange={handleStatusChange}
+                  mensagemVazia="Ninguém na lista de espera no momento."
+                />
+              </>
             )}
             {aba === "turmas" && (
               <TurmasTab
