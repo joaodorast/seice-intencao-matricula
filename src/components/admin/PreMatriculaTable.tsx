@@ -69,25 +69,28 @@ export default function PreMatriculaTable({
         ))}
       </div>
 
-      {/* tela grande: tabela completa */}
-      <div className="card-surface hidden overflow-x-auto rounded-2xl border border-seice-border lg:block">
-        <table className="w-full min-w-260 border-collapse text-[15px]">
+      {/* tela grande: tabela completa — sem largura mínima forçada nem
+          quebra de linha travada, pra caber inteira sem precisar de rolagem
+          horizontal mesmo com muitas linhas na tela */}
+      <div className="card-surface hidden rounded-2xl border border-seice-border lg:block">
+        <table className="w-full table-fixed border-collapse text-[14px]">
           <thead>
             <tr>
               {[
-                "Senha",
-                "Recebido em",
-                "Unidade",
-                "Aluno",
-                "Turma",
-                "Responsável",
-                "Telefone(s)",
-                "E-mail",
-                "Status",
-              ].map((h) => (
+                ["Senha", "w-[6%]"],
+                ["Recebido em", "w-[8%]"],
+                ["Unidade", "w-[8%]"],
+                ["Aluno", "w-[13%]"],
+                ["Turma", "w-[11%]"],
+                ["Lista de espera", "w-[8%]"],
+                ["Responsável", "w-[10%]"],
+                ["Telefone(s)", "w-[9%]"],
+                ["E-mail", "w-[9%]"],
+                ["Status", "w-[18%]"],
+              ].map(([h, w]) => (
                 <th
                   key={h}
-                  className="whitespace-nowrap border-b border-seice-border bg-seice-panel px-3.5 py-3 text-left text-[13px] font-bold uppercase tracking-wide text-seice-muted"
+                  className={`${w} border-b border-seice-border bg-seice-panel px-2.5 py-3 text-left text-[12.5px] font-bold uppercase tracking-wide text-seice-muted`}
                 >
                   {h}
                 </th>
@@ -97,34 +100,36 @@ export default function PreMatriculaTable({
           <tbody>
             {registros.map((r) => (
               <tr key={r.id} className="transition-colors hover:bg-seice-chip/40">
-                <td className="border-b border-seice-border px-3.5 py-3 align-top">
-                  <span className="inline-flex items-center rounded-full bg-seice-gold px-3 py-1.5 font-mono text-[16px] font-extrabold text-seice-gold-ink">
+                <td className="border-b border-seice-border px-2.5 py-3 align-top">
+                  <span className="inline-flex items-center rounded-full bg-seice-gold px-2.5 py-1 font-mono text-[14px] font-extrabold text-seice-gold-ink">
                     {formatarSenha(r.numero_senha)}
                   </span>
                 </td>
-                <td className="border-b border-seice-border px-3.5 py-3 align-top text-seice-muted">
+                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-muted">
                   {formatDateTime(r.criado_em)}
                 </td>
-                <td className="border-b border-seice-border px-3.5 py-3 align-top text-seice-soft">
+                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
                   {unidadeNome(r.unidade_id)}
                 </td>
-                <td className="border-b border-seice-border px-3.5 py-3 align-top font-bold text-seice-ink">
+                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top font-bold text-seice-ink">
                   {r.aluno_nome}
-                  {r.lista_espera && (
-                    <div className="mt-1">
-                      <Badge tone="gold" icon={<Clock size={12} />}>
-                        {posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª na lista de espera` : "Lista de espera"}
-                      </Badge>
-                    </div>
-                  )}
                 </td>
-                <td className="border-b border-seice-border px-3.5 py-3 align-top text-seice-soft">
+                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
                   {descricaoTurma(r.turmas)}
                 </td>
-                <td className="border-b border-seice-border px-3.5 py-3 align-top text-seice-soft">
+                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top">
+                  {r.lista_espera ? (
+                    <Badge tone="gold" icon={<Clock size={12} />}>
+                      {posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª` : "Sim"}
+                    </Badge>
+                  ) : (
+                    <span className="text-seice-muted">—</span>
+                  )}
+                </td>
+                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
                   {r.responsavel_nome}
                 </td>
-                <td className="border-b border-seice-border px-3.5 py-3 align-top text-seice-soft">
+                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
                   {maskPhone(r.telefone1)}
                   {r.telefone2 && (
                     <>
@@ -133,10 +138,10 @@ export default function PreMatriculaTable({
                     </>
                   )}
                 </td>
-                <td className="border-b border-seice-border px-3.5 py-3 align-top text-seice-soft">
+                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
                   {r.email || "—"}
                 </td>
-                <td className="border-b border-seice-border px-3.5 py-3 align-top">
+                <td className="border-b border-seice-border px-2.5 py-3 align-top">
                   <StatusControl status={r.status} onChange={(status) => onStatusChange(r.id, status)} />
                 </td>
               </tr>
