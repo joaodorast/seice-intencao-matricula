@@ -28,19 +28,19 @@ export function formatarSenha(numero: number): string {
   return String(numero).padStart(2, "0");
 }
 
-/**
- * Posição de cada intenção em lista de espera dentro da própria turma, por
- * ordem de chegada (quem se inscreveu primeiro tem prioridade). Calculada no
- * cliente, a partir dos registros já carregados — não precisa de mais uma
- * chamada ao banco. Ex.: id → 1, 2, 3 (exibido como "1ª", "2ª"...).
- */
-export function calcularPosicoesEspera(
-  registros: { id: string; turma_id: string; lista_espera: boolean; criado_em: string }[]
+type RegistroComTurma = { id: string; turma_id: string; lista_espera: boolean; criado_em: string };
+
+/** Agrupa por turma e numera por ordem de chegada (quem se inscreveu
+ *  primeiro fica em 1º) — usado tanto pra lista de espera quanto pra
+ *  intenções confirmadas, cada uma com sua própria fila por turma. */
+function calcularPosicoesPorTurma<T extends RegistroComTurma>(
+  registros: T[],
+  incluir: (r: T) => boolean
 ): Map<string, number> {
   const posicoes = new Map<string, number>();
-  const porTurma = new Map<string, typeof registros>();
+  const porTurma = new Map<string, T[]>();
   for (const r of registros) {
-    if (!r.lista_espera) continue;
+    if (!incluir(r)) continue;
     const lista = porTurma.get(r.turma_id) ?? [];
     lista.push(r);
     porTurma.set(r.turma_id, lista);
@@ -51,4 +51,23 @@ export function calcularPosicoesEspera(
       .forEach((r, i) => posicoes.set(r.id, i + 1));
   }
   return posicoes;
+}
+
+/**
+ * Posição de cada intenção em lista de espera dentro da própria turma, por
+ * ordem de chegada (quem se inscreveu primeiro tem prioridade). Calculada no
+ * cliente, a partir dos registros já carregados — não precisa de mais uma
+ * chamada ao banco. Ex.: id → 1, 2, 3 (exibido como "1ª", "2ª"...).
+ */
+export function calcularPosicoesEspera<T extends RegistroComTurma>(registros: T[]): Map<string, number> {
+  return calcularPosicoesPorTurma(registros, (r) => r.lista_espera);
+}
+
+/**
+ * Mesma ideia, mas pra quem já garantiu vaga (não está na lista de espera):
+ * a posição de chegada dentro da fila de intenções confirmadas daquela
+ * turma — ex.: "3ª" intenção confirmada da Turma 1001, não é a senha geral.
+ */
+export function calcularPosicoesIntencao<T extends RegistroComTurma>(registros: T[]): Map<string, number> {
+  return calcularPosicoesPorTurma(registros, (r) => !r.lista_espera);
 }
