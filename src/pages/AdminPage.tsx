@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   ClipboardList,
+  Clock,
   Download,
   FileBarChart2,
   LayoutDashboard,
@@ -35,11 +36,12 @@ const CONTA_KEY = "seice_admin_conta_email";
 // real (Supabase Realtime) falhar por algum motivo — é só uma rede de segurança
 const AUTO_REFRESH_MS = 45_000;
 
-type AbaAdmin = "visao" | "prematriculas" | "turmas" | "relatorios" | "configuracoes";
+type AbaAdmin = "visao" | "prematriculas" | "listaEspera" | "turmas" | "relatorios" | "configuracoes";
 
 const ABAS: { key: AbaAdmin; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "visao", label: "Visão geral", icon: LayoutDashboard },
   { key: "prematriculas", label: "Intenções", icon: ClipboardList },
+  { key: "listaEspera", label: "Lista de espera", icon: Clock },
   { key: "turmas", label: "Turmas", icon: School },
   { key: "relatorios", label: "Relatórios", icon: FileBarChart2 },
 ];
@@ -232,6 +234,12 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   // calculada sobre todos os registros (não só os filtrados na tela), pra
   // posição não mudar dependendo de busca/filtro aplicado
   const posicoesEspera = calcularPosicoesEspera(registros);
+  // duas telas separadas, igual no relatório em PDF: uma só com quem tem
+  // vaga garantida, outra só com quem está na lista de espera (por posição)
+  const registrosIntencoes = registrosFiltrados.filter((r) => !r.lista_espera);
+  const registrosListaEspera = registrosFiltrados
+    .filter((r) => r.lista_espera)
+    .sort((a, b) => (posicoesEspera.get(a.id) ?? 0) - (posicoesEspera.get(b.id) ?? 0));
 
   if (!token) {
     return <LoginForm onLogin={handleLogin} unidade={unidadeFixa?.nome} />;
@@ -316,7 +324,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
         </div>
 
         {/* Filtro por unidade — só no painel geral; nos dashboards de unidade o escopo é fixo */}
-        {!unidadeFixa && (aba === "prematriculas" || aba === "turmas") && (
+        {!unidadeFixa && (aba === "prematriculas" || aba === "listaEspera" || aba === "turmas") && (
           <div className="mb-4 flex flex-wrap gap-2">
             {unidadeTabs.map((t) => (
               <button
@@ -334,7 +342,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
           </div>
         )}
 
-        {aba === "prematriculas" && (
+        {(aba === "prematriculas" || aba === "listaEspera") && (
           <div className="mb-4 flex flex-wrap items-center gap-2.5">
             <div className="relative min-w-55 flex-1">
               <Search
@@ -356,7 +364,10 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
               variant="ghost"
               onClick={async () => {
                 const { exportarIntencoesExcel } = await import("../lib/excel");
-                exportarIntencoesExcel(registrosFiltrados, sufixoExport);
+                exportarIntencoesExcel(
+                  aba === "listaEspera" ? registrosListaEspera : registrosIntencoes,
+                  `${sufixoExport}-${aba === "listaEspera" ? "lista-espera" : "intencoes"}`
+                );
               }}
               className="!px-4 !py-2.5"
             >
@@ -385,9 +396,18 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
             )}
             {aba === "prematriculas" && (
               <PreMatriculaTable
-                registros={registrosFiltrados}
+                registros={registrosIntencoes}
                 posicoesEspera={posicoesEspera}
                 onStatusChange={handleStatusChange}
+                colunaListaEspera={false}
+              />
+            )}
+            {aba === "listaEspera" && (
+              <PreMatriculaTable
+                registros={registrosListaEspera}
+                posicoesEspera={posicoesEspera}
+                onStatusChange={handleStatusChange}
+                mensagemVazia="Ninguém na lista de espera no momento."
               />
             )}
             {aba === "turmas" && (
