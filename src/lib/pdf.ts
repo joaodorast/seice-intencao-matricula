@@ -256,7 +256,14 @@ export async function exportarRelatorioDetalhadoPDF(
   doc.addPage();
   cabecalho(doc, logo, "Relatório detalhado 2027 — Contatos", escopo, `${preMatriculas.length} aluno(s)`);
 
-  type CelulaContato = string | { content: string; colSpan: number; styles: Record<string, unknown> };
+  // ordem de ligação: primeiro quem já tem vaga garantida (por senha, a
+  // ordem de chegada), depois quem está na lista de espera (por posição) —
+  // assim a atendente liga a lista de cima pra baixo sem se confundir sobre
+  // quem já tem vaga e quem está esperando
+  type CelulaContato =
+    | string
+    | number
+    | { content: string; colSpan: number; styles: Record<string, unknown> };
   const corpoContatos: CelulaContato[][] = [];
   const posicoesEsperaContatos = calcularPosicoesEspera(preMatriculas);
   for (const t of ordenarTurmas(turmas)) {
@@ -265,15 +272,24 @@ export async function exportarRelatorioDetalhadoPDF(
     }`;
     const alunos = porTurma.get(t.id) ?? [];
     if (alunos.length === 0) continue;
+
+    const intencoes = alunos.filter((p) => !p.lista_espera).sort((a, b) => a.numero_senha - b.numero_senha);
+    const espera = alunos
+      .filter((p) => p.lista_espera)
+      .sort((a, b) => (posicoesEsperaContatos.get(a.id) ?? 0) - (posicoesEsperaContatos.get(b.id) ?? 0));
+
     corpoContatos.push([
-      { content: turmaNome, colSpan: 4, styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" } },
+      {
+        content: turmaNome,
+        colSpan: 6,
+        styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" },
+      },
     ]);
-    for (const p of alunos) {
-      const sufixoEspera = posicoesEsperaContatos.has(p.id)
-        ? ` · ${posicoesEsperaContatos.get(p.id)}ª na lista de espera`
-        : "";
+    for (const p of [...intencoes, ...espera]) {
       corpoContatos.push([
-        turmaNome + sufixoEspera,
+        formatarSenha(p.numero_senha),
+        p.lista_espera ? `${posicoesEsperaContatos.get(p.id)}ª lista de espera` : "Intenção de matrícula",
+        turmaNome,
         p.aluno_nome,
         maskPhone(p.telefone1),
         p.responsavel_nome,
@@ -284,8 +300,15 @@ export async function exportarRelatorioDetalhadoPDF(
   autoTable(doc, {
     ...estiloTabela(),
     startY: 38,
-    head: [["Turma", "Aluno", "Telefone", "Responsável"]],
+    head: [["Senha", "Situação", "Turma", "Aluno", "Telefone", "Responsável"]],
     body: corpoContatos,
+    didParseCell: (dados) => {
+      if (dados.section !== "body" || dados.column.index !== 1 || typeof dados.cell.raw !== "string") return;
+      if (dados.cell.raw !== "Intenção de matrícula") {
+        dados.cell.styles.textColor = [161, 98, 7];
+        dados.cell.styles.fontStyle = "bold";
+      }
+    },
   });
 
   rodape(doc, escopo);
