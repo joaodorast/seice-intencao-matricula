@@ -252,64 +252,70 @@ export async function exportarRelatorioDetalhadoPDF(
     },
   });
 
-  // página 2 — lista de contato, agrupada por turma
-  doc.addPage();
-  cabecalho(doc, logo, "Relatório detalhado 2027 — Contatos", escopo, `${preMatriculas.length} aluno(s)`);
-
-  // ordem de ligação: primeiro quem já tem vaga garantida (por senha, a
-  // ordem de chegada), depois quem está na lista de espera (por posição) —
-  // assim a atendente liga a lista de cima pra baixo sem se confundir sobre
-  // quem já tem vaga e quem está esperando
+  // páginas de contato: uma só com intenções de matrícula normais, outra só
+  // com lista de espera — separadas de propósito, pra Priscilla imprimir e
+  // distribuir cada uma pra quem for ligar (não fica tudo misturado)
   type CelulaContato =
     | string
     | number
     | { content: string; colSpan: number; styles: Record<string, unknown> };
-  const corpoContatos: CelulaContato[][] = [];
   const posicoesEsperaContatos = calcularPosicoesEspera(preMatriculas);
-  for (const t of ordenarTurmas(turmas)) {
-    const turmaNome = `${unidadeNome(t.unidade_id)} · ${t.serie} · Turma ${t.codigo} (${turnoLabel(t.turno)})${
-      t.curso ? " · " + t.curso : ""
-    }`;
-    const alunos = porTurma.get(t.id) ?? [];
-    if (alunos.length === 0) continue;
 
-    const intencoes = alunos.filter((p) => !p.lista_espera).sort((a, b) => a.numero_senha - b.numero_senha);
-    const espera = alunos
-      .filter((p) => p.lista_espera)
-      .sort((a, b) => (posicoesEsperaContatos.get(a.id) ?? 0) - (posicoesEsperaContatos.get(b.id) ?? 0));
-
-    corpoContatos.push([
-      {
-        content: turmaNome,
-        colSpan: 6,
-        styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" },
-      },
-    ]);
-    for (const p of [...intencoes, ...espera]) {
-      corpoContatos.push([
-        formatarSenha(p.numero_senha),
-        p.lista_espera ? `${posicoesEsperaContatos.get(p.id)}ª lista de espera` : "Intenção de matrícula",
-        turmaNome,
-        p.aluno_nome,
-        maskPhone(p.telefone1),
-        p.responsavel_nome,
+  function paginaDeContatos(
+    titulo: string,
+    cabecalhos: string[],
+    porTurmaFiltrado: (alunos: PreMatriculaAdminRow[]) => PreMatriculaAdminRow[],
+    colunasExtras: (p: PreMatriculaAdminRow) => CelulaContato[]
+  ) {
+    const corpo: CelulaContato[][] = [];
+    let totalAlunos = 0;
+    for (const t of ordenarTurmas(turmas)) {
+      const turmaNome = `${unidadeNome(t.unidade_id)} · ${t.serie} · Turma ${t.codigo} (${turnoLabel(t.turno)})${
+        t.curso ? " · " + t.curso : ""
+      }`;
+      const alunos = porTurmaFiltrado(porTurma.get(t.id) ?? []);
+      if (alunos.length === 0) continue;
+      totalAlunos += alunos.length;
+      corpo.push([
+        {
+          content: turmaNome,
+          colSpan: cabecalhos.length,
+          styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" },
+        },
       ]);
+      for (const p of alunos) {
+        corpo.push([...colunasExtras(p), turmaNome, p.aluno_nome, maskPhone(p.telefone1), p.responsavel_nome]);
+      }
     }
+
+    doc.addPage();
+    cabecalho(doc, logo, `Relatório detalhado 2027 — ${titulo}`, escopo, `${totalAlunos} aluno(s)`);
+    autoTable(doc, {
+      ...estiloTabela(),
+      startY: 38,
+      head: [cabecalhos],
+      body: corpo,
+    });
   }
 
-  autoTable(doc, {
-    ...estiloTabela(),
-    startY: 38,
-    head: [["Senha", "Situação", "Turma", "Aluno", "Telefone", "Responsável"]],
-    body: corpoContatos,
-    didParseCell: (dados) => {
-      if (dados.section !== "body" || dados.column.index !== 1 || typeof dados.cell.raw !== "string") return;
-      if (dados.cell.raw !== "Intenção de matrícula") {
-        dados.cell.styles.textColor = [161, 98, 7];
-        dados.cell.styles.fontStyle = "bold";
-      }
-    },
-  });
+  // página 2 — só intenções de matrícula normais (vaga garantida), por senha
+  paginaDeContatos(
+    "Contatos — Intenção de matrícula",
+    ["Senha", "Turma", "Aluno", "Telefone", "Responsável"],
+    (alunos) => alunos.filter((p) => !p.lista_espera).sort((a, b) => a.numero_senha - b.numero_senha),
+    (p) => [formatarSenha(p.numero_senha)]
+  );
+
+  // página 3 — só lista de espera, por posição (quem chegou primeiro no topo)
+  paginaDeContatos(
+    "Contatos — Lista de espera",
+    ["Posição", "Senha", "Turma", "Aluno", "Telefone", "Responsável"],
+    (alunos) =>
+      alunos
+        .filter((p) => p.lista_espera)
+        .sort((a, b) => (posicoesEsperaContatos.get(a.id) ?? 0) - (posicoesEsperaContatos.get(b.id) ?? 0)),
+    (p) => [`${posicoesEsperaContatos.get(p.id)}ª`, formatarSenha(p.numero_senha)]
+  );
 
   rodape(doc, escopo);
   doc.save(`relatorio-detalhado-seice-${Date.now()}.pdf`);
