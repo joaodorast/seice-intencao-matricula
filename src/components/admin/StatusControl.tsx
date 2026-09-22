@@ -35,7 +35,7 @@ export default function StatusControl({
       <>
         <div className="flex flex-wrap items-center gap-2">
           <span
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13.5px] font-bold ${STATUS_INFO.cancelado.badge}`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13.5px] font-bold ${STATUS_INFO.cancelado.badge}`}
           >
             <Ban size={14} />
             {STATUS_INFO.cancelado.label}
@@ -43,7 +43,7 @@ export default function StatusControl({
           <button
             type="button"
             onClick={() => setConfirmando("reabrir")}
-            className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[12.5px] font-semibold text-seice-muted transition hover:bg-seice-chip hover:text-seice-ink"
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12.5px] font-semibold text-seice-muted transition hover:bg-seice-chip hover:text-seice-ink"
           >
             <RotateCcw size={12} /> Reabrir
           </button>
@@ -69,7 +69,7 @@ export default function StatusControl({
           <strong className="text-[16.5px] font-extrabold text-seice-gold">{STATUS_INFO[status].label}</strong>
         </p>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-seice-deep-soft p-1">
+          <div className="inline-flex items-center gap-1 rounded-xl bg-seice-deep-soft p-1">
             {OPCOES.map((opcao) => {
               const ativo = opcao === status;
               return (
@@ -89,7 +89,7 @@ export default function StatusControl({
           <button
             type="button"
             onClick={() => setConfirmando("cancelar")}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-seice-border-strong px-3 py-1.5 text-[12.5px] font-bold text-seice-muted transition hover:border-seice-danger/40 hover:bg-seice-danger-soft hover:text-seice-danger"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-seice-border-strong px-3 py-1.5 text-[12.5px] font-bold text-seice-muted transition hover:border-seice-danger/40 hover:bg-seice-danger-soft hover:text-seice-danger"
           >
             <Ban size={14} /> Cancelar
           </button>
