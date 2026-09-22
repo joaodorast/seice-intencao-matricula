@@ -10,15 +10,21 @@ export default function PreMatriculaTable({
   registros,
   posicoesEspera,
   onStatusChange,
+  colunaListaEspera = true,
+  mensagemVazia,
 }: {
   registros: PreMatriculaAdminRow[];
   posicoesEspera: Map<string, number>;
   onStatusChange: (id: string, status: StatusPreMatricula) => void;
+  /** Desliga na aba "Intenções" (só tem gente sem lista de espera ali) — a
+   *  aba "Lista de espera" já tem tela própria, não precisa repetir aqui. */
+  colunaListaEspera?: boolean;
+  mensagemVazia?: string;
 }) {
   if (registros.length === 0) {
     return (
       <div className="card-surface rounded-2xl border border-seice-border">
-        <EmptyState emoji="🗂️">Nenhuma intenção de matrícula encontrada.</EmptyState>
+        <EmptyState emoji="🗂️">{mensagemVazia ?? "Nenhuma intenção de matrícula encontrada."}</EmptyState>
       </div>
     );
   }
@@ -76,18 +82,31 @@ export default function PreMatriculaTable({
         <table className="w-full table-fixed border-collapse text-[14px]">
           <thead>
             <tr>
-              {[
-                ["Senha", "w-[6%]"],
-                ["Recebido em", "w-[8%]"],
-                ["Unidade", "w-[8%]"],
-                ["Aluno", "w-[13%]"],
-                ["Turma", "w-[11%]"],
-                ["Lista de espera", "w-[8%]"],
-                ["Responsável", "w-[10%]"],
-                ["Telefone(s)", "w-[9%]"],
-                ["E-mail", "w-[9%]"],
-                ["Status", "w-[18%]"],
-              ].map(([h, w]) => (
+              {(colunaListaEspera
+                ? [
+                    ["Senha", "w-[6%]"],
+                    ["Recebido em", "w-[8%]"],
+                    ["Unidade", "w-[8%]"],
+                    ["Aluno", "w-[13%]"],
+                    ["Turma", "w-[11%]"],
+                    ["Lista de espera", "w-[8%]"],
+                    ["Responsável", "w-[10%]"],
+                    ["Telefone(s)", "w-[9%]"],
+                    ["E-mail", "w-[9%]"],
+                    ["Status", "w-[18%]"],
+                  ]
+                : [
+                    ["Senha", "w-[6%]"],
+                    ["Recebido em", "w-[9%]"],
+                    ["Unidade", "w-[9%]"],
+                    ["Aluno", "w-[15%]"],
+                    ["Turma", "w-[13%]"],
+                    ["Responsável", "w-[11%]"],
+                    ["Telefone(s)", "w-[9%]"],
+                    ["E-mail", "w-[10%]"],
+                    ["Status", "w-[18%]"],
+                  ]
+              ).map(([h, w]) => (
                 <th
                   key={h}
                   className={`${w} border-b border-seice-border bg-seice-panel px-2.5 py-3 text-left text-[12.5px] font-bold uppercase tracking-wide text-seice-muted`}
@@ -117,15 +136,17 @@ export default function PreMatriculaTable({
                 <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
                   {descricaoTurma(r.turmas)}
                 </td>
-                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top">
-                  {r.lista_espera ? (
-                    <Badge tone="gold" icon={<Clock size={12} />}>
-                      {posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª` : "Sim"}
-                    </Badge>
-                  ) : (
-                    <span className="text-seice-muted">—</span>
-                  )}
-                </td>
+                {colunaListaEspera && (
+                  <td className="break-words border-b border-seice-border px-2.5 py-3 align-top">
+                    {r.lista_espera ? (
+                      <Badge tone="gold" icon={<Clock size={12} />}>
+                        {posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª` : "Sim"}
+                      </Badge>
+                    ) : (
+                      <span className="text-seice-muted">—</span>
+                    )}
+                  </td>
+                )}
                 <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
                   {r.responsavel_nome}
                 </td>
