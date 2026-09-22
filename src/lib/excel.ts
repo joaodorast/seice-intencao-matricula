@@ -96,6 +96,7 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
     if (alunos.length === 0) {
       linhas.push({
         ...base,
+        Senha: "",
         Aluno: "",
         Responsável: "",
         Telefone: "",
@@ -105,9 +106,16 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
       });
       continue;
     }
-    for (const p of alunos) {
+    // ordem de ligação: primeiro quem tem vaga garantida (por senha), depois
+    // quem está na lista de espera (por posição)
+    const intencoes = alunos.filter((p) => !p.lista_espera).sort((a, b) => a.numero_senha - b.numero_senha);
+    const espera = alunos
+      .filter((p) => p.lista_espera)
+      .sort((a, b) => (posicoesEspera.get(a.id) ?? 0) - (posicoesEspera.get(b.id) ?? 0));
+    for (const p of [...intencoes, ...espera]) {
       linhas.push({
         ...base,
+        Senha: formatarSenha(p.numero_senha),
         Aluno: p.aluno_nome,
         Responsável: p.responsavel_nome,
         Telefone: maskPhone(p.telefone1),
@@ -128,6 +136,7 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
     { wch: 15 },
     { wch: 14 },
     { wch: 12 },
+    { wch: 8 },
     { wch: 24 },
     { wch: 24 },
     { wch: 16 },
