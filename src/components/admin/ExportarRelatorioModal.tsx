@@ -6,6 +6,7 @@ import {
   Layers,
   LayoutGrid,
   ListChecks,
+  ListOrdered,
   ListTree,
   LoaderCircle,
   Search,
@@ -23,7 +24,7 @@ import Modal from "./Modal";
 
 const TIER_BADGE = { abertas: "success", poucas: "gold", ultimas: "danger" } as const;
 
-type Tipo = "completo" | "intencoes" | "detalhado";
+type Tipo = "completo" | "intencoes" | "detalhado" | "porsenha";
 type Formato = "xlsx" | "pdf";
 
 function slugificar(txt: string): string {
@@ -170,6 +171,14 @@ export default function ExportarRelatorioModal({
           const { exportarRelatorioDetalhadoPDF } = await import("../../lib/pdf");
           await exportarRelatorioDetalhadoPDF(turmasFiltradas, preMatriculasFiltradas, escopo);
         }
+      } else if (tipo === "porsenha") {
+        if (formato === "xlsx") {
+          const { exportarPorSenhaExcel } = await import("../../lib/excel");
+          exportarPorSenhaExcel(preMatriculasFiltradas, sufixo);
+        } else {
+          const { exportarPorSenhaPDF } = await import("../../lib/pdf");
+          await exportarPorSenhaPDF(preMatriculasFiltradas, escopo);
+        }
       } else {
         if (formato === "xlsx") {
           const { exportarIntencoesExcel } = await import("../../lib/excel");
@@ -199,6 +208,9 @@ export default function ExportarRelatorioModal({
           </TipoTab>
           <TipoTab ativo={tipo === "detalhado"} onClick={() => setTipo("detalhado")} icon={<ListTree size={16} />}>
             Detalhado
+          </TipoTab>
+          <TipoTab ativo={tipo === "porsenha"} onClick={() => setTipo("porsenha")} icon={<ListOrdered size={16} />}>
+            Por senha
           </TipoTab>
         </div>
 
