@@ -321,6 +321,44 @@ export async function exportarRelatorioDetalhadoPDF(
   doc.save(`relatorio-detalhado-seice-${Date.now()}.pdf`);
 }
 
+/**
+ * Lista única, sem separar por turma — ordenada só pela senha (ordem de
+ * chegada de todo mundo, misturando turmas diferentes de propósito). É a
+ * ordem que a secretaria usa pra ligar: não importa a turma, importa quem
+ * chegou primeiro.
+ */
+export async function exportarPorSenhaPDF(preMatriculas: PreMatriculaAdminRow[], escopo = "Todas as unidades") {
+  const doc = new jsPDF({ orientation: "landscape" });
+  const logo = await carregarLogo();
+  const posicoesEspera = calcularPosicoesEspera(preMatriculas);
+
+  const ordenados = [...preMatriculas].sort((a, b) => a.numero_senha - b.numero_senha);
+
+  cabecalho(doc, logo, "Ordenado por senha 2027", escopo, `${ordenados.length} registro(s)`);
+
+  type Celula = string | { content: string; styles: Record<string, unknown> };
+  const corpo: Celula[][] = ordenados.map((p) => [
+    formatarSenha(p.numero_senha),
+    p.lista_espera
+      ? { content: `${posicoesEspera.get(p.id)}ª lista de espera`, styles: { textColor: [161, 98, 7], fontStyle: "bold" } }
+      : "Intenção de matrícula",
+    p.turmas ? `${p.turmas.serie} · Turma ${p.turmas.codigo} (${turnoLabel(p.turmas.turno)})` : "—",
+    p.aluno_nome,
+    maskPhone(p.telefone1),
+    p.responsavel_nome,
+  ]);
+
+  autoTable(doc, {
+    ...estiloTabela(),
+    startY: 38,
+    head: [["Senha", "Situação", "Turma", "Aluno", "Telefone", "Responsável"]],
+    body: corpo,
+  });
+
+  rodape(doc, escopo);
+  doc.save(`ordenado-por-senha-seice-${Date.now()}.pdf`);
+}
+
 export async function exportarRelatorioCompletoPDF(turmas: TurmaAdminRow[], escopo = "Todas as unidades") {
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
