@@ -30,10 +30,13 @@ export default function Header() {
             Quero uma vaga no Seice!
           </h1>
           <p className="mt-3 max-w-xl text-[17.5px] leading-relaxed text-seice-muted sm:text-[18.5px]">
-            Registre o interesse na vaga do seu filho nas unidades{" "}
+            Registre o seu interesse em estudar conosco em 2027.
+          </p>
+          <p className="mt-2 max-w-xl text-[17.5px] leading-relaxed text-seice-muted sm:text-[18.5px]">
+            Consulte as oportunidades para as unidades{" "}
             <strong className="font-semibold text-seice-ink">Campos Elíseos</strong> e{" "}
-            <strong className="font-semibold text-seice-ink">Jardim Primavera</strong> — do Maternal ao 3º
-            ano do Ensino Médio.
+            <strong className="font-semibold text-seice-ink">Jardim Primavera</strong>, do Maternal ao Ensino
+            Médio.
           </p>
         </div>
 
