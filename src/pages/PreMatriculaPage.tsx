@@ -175,6 +175,11 @@ export default function PreMatriculaPage() {
     // Turma cheia não é mais erro: o banco aceita a intenção normalmente e
     // devolve lista_espera = true, então essa chamada praticamente não falha
     // mais por falta de vaga.
+    // p_forcar_lista_espera: turma escondida da contagem pública (ver
+    // vagasVisiveis.ts) sempre mostra "Lista de espera" pro responsável, então
+    // o registro tem que cair em lista_espera = true de verdade no banco —
+    // não só na tela — mesmo que ainda exista vaga real (que fica livre pra
+    // a secretaria matricular manualmente).
     const { data, error } = await supabase.rpc("enviar_intencao", {
       p_unidade_id: payload.unidade_id,
       p_turma_id: payload.turma_id,
@@ -184,6 +189,7 @@ export default function PreMatriculaPage() {
       p_telefone2: payload.telefone2,
       p_email: payload.email,
       p_aluno_nome: payload.aluno_nome,
+      p_forcar_lista_espera: !vagaVisivelParaResponsavel(turma!),
     });
     setSubmitting(false);
 
@@ -193,17 +199,10 @@ export default function PreMatriculaPage() {
       return;
     }
 
-    // a turma pode estar com vaga real no banco (conta como matrícula no
-    // painel da secretaria) mas escondida da contagem pública — nesse caso
-    // o responsável já viu "lista de espera" nos passos anteriores, então a
-    // tela final também precisa mostrar lista de espera pra ele, mesmo que
-    // o banco tenha processado como vaga garantida.
-    const listaEsperaParaResponsavel = !vagaVisivelParaResponsavel(turma!) || linha.lista_espera;
-
     setSubmetida({
       ...payload,
       numeroSenha: linha.numero_senha,
-      listaEspera: listaEsperaParaResponsavel,
+      listaEspera: linha.lista_espera,
       posicaoEspera: linha.posicao_espera ?? null,
       resumoTurma: `${serieGroup!.serie} — Turma ${turma!.codigo} (${turnoLabel(turma!.turno)})${
         turma!.curso ? " — " + turma!.curso : ""
