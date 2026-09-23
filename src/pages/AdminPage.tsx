@@ -224,7 +224,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   const registrosDaUnidade = registros.filter(
     (r) => unidadeFiltro === "todas" || r.unidade_id === unidadeFiltro
   );
-  const registrosFiltrados = registrosDaUnidade.filter((r) => {
+  function combinaBusca(r: PreMatriculaAdminRow): boolean {
     const termo = busca.trim().toLowerCase();
     if (!termo) return true;
     return (
@@ -234,21 +234,32 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
       (r.turmas?.serie_full ?? "").toLowerCase().includes(termo) ||
       (r.turmas?.codigo ?? "").toLowerCase().includes(termo)
     );
-  });
+  }
   // calculada sobre todos os registros (não só os filtrados na tela), pra
   // posição não mudar dependendo de busca/filtro aplicado
   const posicoesEspera = calcularPosicoesEspera(registros);
   const posicoesIntencao = calcularPosicoesIntencao(registros);
   // duas telas separadas, igual no relatório em PDF: uma só com quem tem
-  // vaga garantida, outra só com quem está na lista de espera — as duas por
-  // ordem de chegada (senha/horário mais cedo primeiro), que é a ordem de
-  // prioridade pra secretaria ligar
-  const registrosIntencoes = registrosFiltrados
+  // vaga garantida, outra só com quem está na lista de espera — ordenadas
+  // por ordem de chegada (senha/horário mais cedo primeiro), que é a ordem
+  // de prioridade pra secretaria ligar.
+  //
+  // A senha "de verdade" (numero_senha) é sequencial pra TODO MUNDO junto —
+  // por isso, depois de separar em duas telas (e com cancelamentos no meio),
+  // ela fica cheia de buraco dentro de cada tela (01, 03, 05, 08...). Pra
+  // essas duas telas específicas, a numeração exibida é recontada do zero,
+  // só dentro da própria tela (01, 02, 03, 04...) — sem tocar no registro
+  // real, só pra reordenar na exibição, do jeito que a secretaria liga.
+  const registrosIntencoesTodos = registrosDaUnidade
     .filter((r) => !r.lista_espera)
-    .sort((a, b) => a.numero_senha - b.numero_senha);
-  const registrosListaEspera = registrosFiltrados
+    .sort((a, b) => a.numero_senha - b.numero_senha)
+    .map((r, i) => ({ ...r, numero_senha: i + 1 }));
+  const registrosListaEsperaTodos = registrosDaUnidade
     .filter((r) => r.lista_espera)
-    .sort((a, b) => a.numero_senha - b.numero_senha);
+    .sort((a, b) => a.numero_senha - b.numero_senha)
+    .map((r, i) => ({ ...r, numero_senha: i + 1 }));
+  const registrosIntencoes = registrosIntencoesTodos.filter(combinaBusca);
+  const registrosListaEspera = registrosListaEsperaTodos.filter(combinaBusca);
 
   if (!token) {
     return <LoginForm onLogin={handleLogin} unidade={unidadeFixa?.nome} />;
@@ -372,11 +383,31 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
             <Button
               variant="ghost"
               onClick={async () => {
-                const { exportarIntencoesExcel } = await import("../lib/excel");
-                exportarIntencoesExcel(
-                  aba === "listaEspera" ? registrosListaEspera : registrosIntencoes,
-                  `${sufixoExport}-${aba === "listaEspera" ? "lista-espera" : "intencoes"}`
-                );
+                const registrosParaExportar = registrosDaUnidade.filter(combinaBusca);
+                if (aba === "listaEspera") {
+                  const { exportarPorSenhaListaEsperaPDF } = await import("../lib/pdf");
+                  await exportarPorSenhaListaEsperaPDF(registrosParaExportar, escopoLabel);
+                } else {
+                  const { exportarPorSenhaIntencoesPDF } = await import("../lib/pdf");
+                  await exportarPorSenhaIntencoesPDF(registrosParaExportar, escopoLabel);
+                }
+              }}
+              className="!px-4 !py-2.5"
+            >
+              <Download size={14} /> PDF
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                const registrosParaExportar = registrosDaUnidade.filter(combinaBusca);
+                const sufixo = `${sufixoExport}-${aba === "listaEspera" ? "lista-espera" : "intencoes"}`;
+                if (aba === "listaEspera") {
+                  const { exportarPorSenhaListaEsperaExcel } = await import("../lib/excel");
+                  exportarPorSenhaListaEsperaExcel(registrosParaExportar, sufixo);
+                } else {
+                  const { exportarPorSenhaIntencoesExcel } = await import("../lib/excel");
+                  exportarPorSenhaIntencoesExcel(registrosParaExportar, sufixo);
+                }
               }}
               className="!px-4 !py-2.5"
             >
