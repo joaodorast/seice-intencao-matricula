@@ -3,7 +3,7 @@ import { ArrowLeft, Baby, Backpack, BookOpen, ChevronRight, GraduationCap } from
 import { motion } from "framer-motion";
 import { NIVEIS } from "../../config";
 import type { Nivel, TurmaDisponivel, Unidade } from "../../types";
-import { BackBar, Badge, Button, Card, EmptyState, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
+import { BackBar, Badge, Button, Card, EmptyState, SectionEyebrow, SectionTitle } from "../ui";
 
 const NIVEL_ICONS: Record<Nivel, ReactNode> = {
   infantil: <Baby size={22} />,
@@ -73,7 +73,6 @@ export default function NivelStep({
       <Card>
         <SectionEyebrow>Passo 2 de 6</SectionEyebrow>
         <SectionTitle>Qual o nível de ensino?</SectionTitle>
-        <SectionDesc>Turmas sem vaga também aparecem — dá pra entrar na lista de espera.</SectionDesc>
 
         <div className="flex flex-col gap-3">
           {niveis.map((n, i) => {
