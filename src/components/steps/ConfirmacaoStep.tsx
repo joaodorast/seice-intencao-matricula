@@ -53,15 +53,15 @@ export default function ConfirmacaoStep({
 
       <div className="text-center">
         <h2 className="font-display text-[30px] font-semibold tracking-tight text-seice-ink sm:text-[33.5px]">
-          {listaEspera ? "Você entrou na lista de espera!" : "Intenção de matrícula enviada!"}
+          {listaEspera ? "Você está na Lista de Espera 2027!" : "PEDIDO DE MATRÍCULA REALIZADO!"}
         </h2>
         <p className="mx-auto mt-2 max-w-md text-[17px] leading-relaxed text-seice-muted">
           {listaEspera ? (
             <>
-              As vagas da turma escolhida pra{" "}
+              As vagas da turma escolhida para{" "}
               <strong className="font-semibold text-seice-ink">{submetida.aluno_nome}</strong> já foram
-              preenchidas, mas seus dados foram cadastrados. Se surgir uma desistência, a secretaria entrará em
-              contato para oferecer a vaga.
+              preenchidas. A partir de 27 de outubro, caso haja vagas disponíveis, a secretaria entrará em contato
+              seguindo a ordem de inscrição na turma.
             </>
           ) : (
             <>
