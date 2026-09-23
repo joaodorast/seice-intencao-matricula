@@ -2,9 +2,9 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 // Mesmo esquema de autenticação do admin-pre-matriculas: o painel manda um
-// token no header `x-admin-token`, aqui comparamos o hash SHA-256 dele com o
-// hash guardado em public.app_config (chave 'admin_token_hash'). Nunca
-// guardamos o token em texto puro.
+// token no header `x-admin-token`, aqui comparamos o hash SHA-256 dele com os
+// hashes guardados em public.app_config (chaves 'admin_token_hash' e
+// 'staff_token_hash'). Nunca guardamos o token em texto puro.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -41,18 +41,20 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   const token = req.headers.get("x-admin-token") ?? "";
-  const { data: cfg, error: cfgError } = await supabase
+  const { data: cfgRows, error: cfgError } = await supabase
     .from("app_config")
-    .select("value")
-    .eq("key", "admin_token_hash")
-    .maybeSingle();
+    .select("key, value")
+    .in("key", ["admin_token_hash", "staff_token_hash"]);
 
-  if (cfgError || !cfg) {
+  const adminHash = cfgRows?.find((r) => r.key === "admin_token_hash")?.value;
+  if (cfgError || !adminHash) {
     return json({ error: "Configuração de acesso indisponível" }, 500);
   }
+  const staffHash = cfgRows?.find((r) => r.key === "staff_token_hash")?.value;
 
   const tokenHash = token ? await sha256Hex(token) : "";
-  if (!token || tokenHash !== cfg.value) {
+  const autorizado = (!!token && tokenHash === adminHash) || (!!token && !!staffHash && tokenHash === staffHash);
+  if (!autorizado) {
     return json({ error: "Não autorizado" }, 401);
   }
 
