@@ -150,6 +150,41 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
   baixarWorkbook(wb, `relatorio-detalhado-seice-${Date.now()}.xlsx`);
 }
 
+/**
+ * Lista única, sem separar por turma — ordenada só pela senha, misturando
+ * turmas de propósito. É a ordem que a secretaria usa pra ligar: não
+ * importa a turma, importa quem chegou primeiro.
+ */
+export function exportarPorSenhaExcel(preMatriculas: PreMatriculaAdminRow[], sufixo: string) {
+  const posicoesEspera = calcularPosicoesEspera(preMatriculas);
+  const linhas = [...preMatriculas]
+    .sort((a, b) => a.numero_senha - b.numero_senha)
+    .map((p) => ({
+      Senha: formatarSenha(p.numero_senha),
+      Situação: p.lista_espera ? `${posicoesEspera.get(p.id)}ª lista de espera` : "Intenção de matrícula",
+      Unidade: unidadeNome(p.unidade_id),
+      Turma: p.turmas ? `${p.turmas.serie} · Turma ${p.turmas.codigo} (${turnoLabel(p.turmas.turno)})` : "—",
+      Aluno: p.aluno_nome,
+      Telefone: maskPhone(p.telefone1),
+      Responsável: p.responsavel_nome,
+    }));
+
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  ws["!cols"] = [
+    { wch: 8 },
+    { wch: 22 },
+    { wch: 16 },
+    { wch: 28 },
+    { wch: 24 },
+    { wch: 16 },
+    { wch: 24 },
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Ordenado por senha");
+  baixarWorkbook(wb, `ordenado-por-senha-seice-${sufixo}-${Date.now()}.xlsx`);
+}
+
 export function exportarRelatorioCompletoExcel(turmas: TurmaAdminRow[]) {
   const wb = XLSX.utils.book_new();
 
