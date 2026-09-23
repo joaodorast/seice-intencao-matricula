@@ -16,7 +16,7 @@ import { maskPhone, onlyDigits, turnoLabel, validEmail } from "../../lib/format"
 import { RESERVA_MINUTOS, liberarReserva, renovarReserva, reservarVaga } from "../../lib/reservas";
 import { vagaVisivelParaResponsavel } from "../../lib/vagasVisiveis";
 import type { SerieGroup, TurmaDisponivel, Unidade } from "../../types";
-import { BackBar, Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
+import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
 export interface DadosFormValues {
   respNome: string;
@@ -156,7 +156,6 @@ export default function DadosStep({
       <Card>
       <SectionEyebrow>Passo 5 de 6</SectionEyebrow>
       <SectionTitle>Quase lá! Preencha os dados</SectionTitle>
-      <SectionDesc>Sem nenhuma cobrança nesta etapa — é só preencher e enviar.</SectionDesc>
 
       {/* resumo da escolha — fica no topo em qualquer tamanho de tela */}
       <div className="inset-surface rounded-xl border border-seice-border p-4 sm:p-5">
