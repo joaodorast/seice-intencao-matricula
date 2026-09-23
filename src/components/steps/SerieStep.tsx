@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { NIVEL_LABELS } from "../../config";
 import { serieComVagaVisivel, vagasVisiveisDaSerie } from "../../lib/vagasVisiveis";
 import type { SerieGroup, Unidade } from "../../types";
-import { BackBar, Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
+import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
 export default function SerieStep({
   unidade,
@@ -31,7 +31,6 @@ export default function SerieStep({
       <Card>
         <SectionEyebrow>Passo 3 de 6</SectionEyebrow>
         <SectionTitle>Escolha a série</SectionTitle>
-        <SectionDesc>Turmas sem vaga também aparecem — dá pra entrar na lista de espera.</SectionDesc>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {series.map((s, i) => {
