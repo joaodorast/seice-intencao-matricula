@@ -151,38 +151,91 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
 }
 
 /**
- * Lista única, sem separar por turma — ordenada só pela senha, misturando
- * turmas de propósito. É a ordem que a secretaria usa pra ligar: não
- * importa a turma, importa quem chegou primeiro.
+ * Tira quem cancelou e reconta a senha do zero, só dentro dessa lista (01,
+ * 02, 03...) — sem isso, a senha "de verdade" fica cheia de buraco depois
+ * de filtrar por tipo e tirar cancelados. Não mexe no registro real, só na
+ * numeração mostrada no relatório.
  */
-export function exportarPorSenhaExcel(preMatriculas: PreMatriculaAdminRow[], sufixo: string) {
-  const posicoesEspera = calcularPosicoesEspera(preMatriculas);
-  const linhas = [...preMatriculas]
+function ordenarERenumerar(preMatriculas: PreMatriculaAdminRow[]): PreMatriculaAdminRow[] {
+  return [...preMatriculas]
+    .filter((p) => p.status !== "cancelado")
     .sort((a, b) => a.numero_senha - b.numero_senha)
-    .map((p) => ({
-      Senha: formatarSenha(p.numero_senha),
-      Situação: p.lista_espera ? `${posicoesEspera.get(p.id)}ª lista de espera` : "Intenção de matrícula",
-      Unidade: unidadeNome(p.unidade_id),
-      Turma: p.turmas ? `${p.turmas.serie} · Turma ${p.turmas.codigo} (${turnoLabel(p.turmas.turno)})` : "—",
-      Aluno: p.aluno_nome,
-      Telefone: maskPhone(p.telefone1),
-      Responsável: p.responsavel_nome,
-    }));
+    .map((p, i) => ({ ...p, numero_senha: i + 1 }));
+}
+
+function celulaTurma(p: PreMatriculaAdminRow): string {
+  return p.turmas ? `${p.turmas.serie} · Turma ${p.turmas.codigo} (${turnoLabel(p.turmas.turno)})` : "—";
+}
+
+/**
+ * Lista única, sem separar por turma — ordenada só pela senha, misturando
+ * turmas e tipos (intenção + lista de espera) de propósito. É a ordem que a
+ * secretaria usa pra ligar: não importa a turma, importa quem chegou
+ * primeiro. Quem cancelou não aparece.
+ */
+export function exportarPorSenhaExcel(preMatriculasComCancelados: PreMatriculaAdminRow[], sufixo: string) {
+  const posicoesEspera = calcularPosicoesEspera(preMatriculasComCancelados.filter((p) => p.status !== "cancelado"));
+  const linhas = ordenarERenumerar(preMatriculasComCancelados).map((p) => ({
+    Senha: formatarSenha(p.numero_senha),
+    Situação: p.lista_espera ? `${posicoesEspera.get(p.id)}ª lista de espera` : "Intenção de matrícula",
+    Unidade: unidadeNome(p.unidade_id),
+    Turma: celulaTurma(p),
+    Aluno: p.aluno_nome,
+    Telefone: maskPhone(p.telefone1),
+    Responsável: p.responsavel_nome,
+  }));
 
   const ws = XLSX.utils.json_to_sheet(linhas);
-  ws["!cols"] = [
-    { wch: 8 },
-    { wch: 22 },
-    { wch: 16 },
-    { wch: 28 },
-    { wch: 24 },
-    { wch: 16 },
-    { wch: 24 },
-  ];
+  ws["!cols"] = [{ wch: 8 }, { wch: 22 }, { wch: 16 }, { wch: 28 }, { wch: 24 }, { wch: 16 }, { wch: 24 }];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Ordenado por senha");
   baixarWorkbook(wb, `ordenado-por-senha-seice-${sufixo}-${Date.now()}.xlsx`);
+}
+
+/** Mesma ideia, mas só com quem tem vaga garantida (sem lista de espera,
+ *  sem cancelados) — senha recontada do zero, só dentro dessa lista. */
+export function exportarPorSenhaIntencoesExcel(preMatriculasComCancelados: PreMatriculaAdminRow[], sufixo: string) {
+  const linhas = ordenarERenumerar(preMatriculasComCancelados.filter((p) => !p.lista_espera)).map((p) => ({
+    Senha: formatarSenha(p.numero_senha),
+    Unidade: unidadeNome(p.unidade_id),
+    Turma: celulaTurma(p),
+    Aluno: p.aluno_nome,
+    Telefone: maskPhone(p.telefone1),
+    Responsável: p.responsavel_nome,
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  ws["!cols"] = [{ wch: 8 }, { wch: 16 }, { wch: 28 }, { wch: 24 }, { wch: 16 }, { wch: 24 }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Ordenado por senha - Intenções");
+  baixarWorkbook(wb, `ordenado-por-senha-intencoes-seice-${sufixo}-${Date.now()}.xlsx`);
+}
+
+/** Mesma ideia, mas só com quem está na lista de espera (sem cancelados) —
+ *  senha recontada do zero, só dentro dessa lista. A coluna "Posição na
+ *  turma" é a fila de espera de cada turma (diferente da senha, que é
+ *  geral). */
+export function exportarPorSenhaListaEsperaExcel(preMatriculasComCancelados: PreMatriculaAdminRow[], sufixo: string) {
+  const filtrados = preMatriculasComCancelados.filter((p) => p.lista_espera);
+  const posicoesEspera = calcularPosicoesEspera(filtrados.filter((p) => p.status !== "cancelado"));
+  const linhas = ordenarERenumerar(filtrados).map((p) => ({
+    Senha: formatarSenha(p.numero_senha),
+    "Posição na turma": posicoesEspera.has(p.id) ? `${posicoesEspera.get(p.id)}ª` : "",
+    Unidade: unidadeNome(p.unidade_id),
+    Turma: celulaTurma(p),
+    Aluno: p.aluno_nome,
+    Telefone: maskPhone(p.telefone1),
+    Responsável: p.responsavel_nome,
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  ws["!cols"] = [{ wch: 8 }, { wch: 14 }, { wch: 16 }, { wch: 28 }, { wch: 24 }, { wch: 16 }, { wch: 24 }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Ordenado por senha - Espera");
+  baixarWorkbook(wb, `ordenado-por-senha-lista-espera-seice-${sufixo}-${Date.now()}.xlsx`);
 }
 
 export function exportarRelatorioCompletoExcel(turmas: TurmaAdminRow[]) {
