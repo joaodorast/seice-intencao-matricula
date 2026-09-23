@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Download, ListTree, TrendingUp } from "lucide-react";
+import { Download, ListOrdered, ListTree, TrendingUp } from "lucide-react";
 import { resumoTurmas } from "../../lib/labels";
 import type { PreMatriculaAdminRow, TurmaAdminRow } from "../../types";
 import { Button, Card, SectionDesc, SectionTitle } from "../ui";
 import ExportarRelatorioModal from "./ExportarRelatorioModal";
 import VagasPorTurma from "./VagasPorTurma";
 
-type TipoModal = "completo" | "intencoes" | "detalhado";
+type TipoModal = "completo" | "intencoes" | "detalhado" | "porsenha";
 
 export default function RelatoriosTab({
   turmas,
@@ -45,6 +45,9 @@ export default function RelatoriosTab({
         <div className="flex flex-wrap gap-2.5">
           <Button variant="ghost" onClick={() => abrirModal("detalhado")} className="shrink-0 !px-5">
             <ListTree size={17} /> Relatório detalhado
+          </Button>
+          <Button variant="ghost" onClick={() => abrirModal("porsenha")} className="shrink-0 !px-5">
+            <ListOrdered size={17} /> Ordenado por senha
           </Button>
           <Button onClick={() => abrirModal("completo")} className="shrink-0 !px-5">
             <Download size={17} /> Exportar relatório
