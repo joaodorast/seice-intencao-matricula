@@ -24,7 +24,7 @@ import Modal from "./Modal";
 
 const TIER_BADGE = { abertas: "success", poucas: "gold", ultimas: "danger" } as const;
 
-type Tipo = "completo" | "intencoes" | "detalhado" | "porsenha";
+type Tipo = "completo" | "intencoes" | "detalhado" | "porsenha" | "porsenhaintencoes" | "porsenhaespera";
 type Formato = "xlsx" | "pdf";
 
 function slugificar(txt: string): string {
@@ -179,6 +179,22 @@ export default function ExportarRelatorioModal({
           const { exportarPorSenhaPDF } = await import("../../lib/pdf");
           await exportarPorSenhaPDF(preMatriculasFiltradas, escopo);
         }
+      } else if (tipo === "porsenhaintencoes") {
+        if (formato === "xlsx") {
+          const { exportarPorSenhaIntencoesExcel } = await import("../../lib/excel");
+          exportarPorSenhaIntencoesExcel(preMatriculasFiltradas, sufixo);
+        } else {
+          const { exportarPorSenhaIntencoesPDF } = await import("../../lib/pdf");
+          await exportarPorSenhaIntencoesPDF(preMatriculasFiltradas, escopo);
+        }
+      } else if (tipo === "porsenhaespera") {
+        if (formato === "xlsx") {
+          const { exportarPorSenhaListaEsperaExcel } = await import("../../lib/excel");
+          exportarPorSenhaListaEsperaExcel(preMatriculasFiltradas, sufixo);
+        } else {
+          const { exportarPorSenhaListaEsperaPDF } = await import("../../lib/pdf");
+          await exportarPorSenhaListaEsperaPDF(preMatriculasFiltradas, escopo);
+        }
       } else {
         if (formato === "xlsx") {
           const { exportarIntencoesExcel } = await import("../../lib/excel");
@@ -199,7 +215,7 @@ export default function ExportarRelatorioModal({
     <Modal open={open} onClose={fecharEReiniciar} title="Exportar relatório" width="max-w-5xl">
       <div className="flex flex-col gap-5">
         {/* o que exportar: vagas por turma, ou a lista de intenções */}
-        <div className="inset-surface flex rounded-xl border border-seice-border p-1.5">
+        <div className="inset-surface flex flex-wrap gap-1 rounded-xl border border-seice-border p-1.5">
           <TipoTab ativo={tipo === "completo"} onClick={() => setTipo("completo")} icon={<Layers size={16} />}>
             Turmas
           </TipoTab>
@@ -211,6 +227,20 @@ export default function ExportarRelatorioModal({
           </TipoTab>
           <TipoTab ativo={tipo === "porsenha"} onClick={() => setTipo("porsenha")} icon={<ListOrdered size={16} />}>
             Por senha
+          </TipoTab>
+          <TipoTab
+            ativo={tipo === "porsenhaintencoes"}
+            onClick={() => setTipo("porsenhaintencoes")}
+            icon={<ListOrdered size={16} />}
+          >
+            Por senha · Intenções de matrícula
+          </TipoTab>
+          <TipoTab
+            ativo={tipo === "porsenhaespera"}
+            onClick={() => setTipo("porsenhaespera")}
+            icon={<ListOrdered size={16} />}
+          >
+            Por senha · Lista de espera
           </TipoTab>
         </div>
 
@@ -373,7 +403,7 @@ function TipoTab({
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-[14.5px] font-bold transition ${
+      className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-[14.5px] font-bold transition ${
         ativo ? "bg-seice-gold text-seice-gold-ink" : "text-seice-soft hover:bg-seice-chip"
       }`}
     >
