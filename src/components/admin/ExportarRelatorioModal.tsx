@@ -212,10 +212,10 @@ export default function ExportarRelatorioModal({
   }
 
   return (
-    <Modal open={open} onClose={fecharEReiniciar} title="Exportar relatório" width="max-w-5xl">
+    <Modal open={open} onClose={fecharEReiniciar} title="Exportar relatório" width="max-w-6xl">
       <div className="flex flex-col gap-5">
         {/* o que exportar: vagas por turma, ou a lista de intenções */}
-        <div className="inset-surface flex flex-wrap gap-1 rounded-xl border border-seice-border p-1.5">
+        <div className="inset-surface flex flex-nowrap gap-1 overflow-x-auto rounded-xl border border-seice-border p-1.5">
           <TipoTab ativo={tipo === "completo"} onClick={() => setTipo("completo")} icon={<Layers size={16} />}>
             Turmas
           </TipoTab>
@@ -403,7 +403,7 @@ function TipoTab({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-[14.5px] font-bold transition ${
+      className={`flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-[13.5px] font-bold transition ${
         ativo ? "bg-seice-gold text-seice-gold-ink" : "text-seice-soft hover:bg-seice-chip"
       }`}
     >
