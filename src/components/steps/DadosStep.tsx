@@ -187,8 +187,9 @@ export default function DadosStep({
         <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-seice-gold/40 bg-seice-gold-soft px-4 py-3">
           <Timer size={17} className="shrink-0 text-seice-gold" />
           <p className="text-[14.5px] leading-snug text-seice-ink">
-            <strong className="font-semibold">Esta turma está sem vagas no momento.</strong> Ao enviar, sua
-            intenção entra na lista de espera — se surgir uma desistência, a secretaria entra em contato.
+            <strong className="font-semibold">Esta turma está sem vagas no momento.</strong> Cadastre-se na Lista
+            de Espera 2027. A partir de 27 de outubro, caso haja vagas disponíveis, entraremos em contato
+            seguindo a ordem de inscrição.
           </p>
         </div>
       )}
