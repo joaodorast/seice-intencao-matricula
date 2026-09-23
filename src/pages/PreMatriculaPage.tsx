@@ -15,6 +15,7 @@ import { enviarComprovantePorEmail } from "../lib/emailComprovante";
 import { turnoLabel } from "../lib/format";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { supabase } from "../lib/supabaseClient";
+import { vagaVisivelParaResponsavel } from "../lib/vagasVisiveis";
 import { UNIDADES } from "../config";
 import type {
   Passo,
@@ -192,10 +193,17 @@ export default function PreMatriculaPage() {
       return;
     }
 
+    // a turma pode estar com vaga real no banco (conta como matrícula no
+    // painel da secretaria) mas escondida da contagem pública — nesse caso
+    // o responsável já viu "lista de espera" nos passos anteriores, então a
+    // tela final também precisa mostrar lista de espera pra ele, mesmo que
+    // o banco tenha processado como vaga garantida.
+    const listaEsperaParaResponsavel = !vagaVisivelParaResponsavel(turma!) || linha.lista_espera;
+
     setSubmetida({
       ...payload,
       numeroSenha: linha.numero_senha,
-      listaEspera: linha.lista_espera,
+      listaEspera: listaEsperaParaResponsavel,
       posicaoEspera: linha.posicao_espera ?? null,
       resumoTurma: `${serieGroup!.serie} — Turma ${turma!.codigo} (${turnoLabel(turma!.turno)})${
         turma!.curso ? " — " + turma!.curso : ""
