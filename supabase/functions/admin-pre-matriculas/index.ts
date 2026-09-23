@@ -3,10 +3,13 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 // Admin auth for the SEICE secretaria panel works without Supabase Auth:
 // the admin page sends a token in the `x-admin-token` header, this function
-// hashes it (SHA-256) and compares against the hash stored in
-// `public.app_config` (key = 'admin_token_hash'). That table has RLS enabled
-// with no policies, so only this function's service-role client can read it
-// - the plaintext token itself is never stored anywhere, only its hash.
+// hashes it (SHA-256) and compares against the hashes stored in
+// `public.app_config` (keys 'admin_token_hash' e 'staff_token_hash'). That
+// table has RLS enabled with no policies, so only this function's
+// service-role client can read it - the plaintext token itself is never
+// stored anywhere, only its hash. A token matching admin_token_hash unlocks
+// everything (including o reset de dados de teste); staff_token_hash unlocks
+// tudo, exceto o reset.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -40,18 +43,21 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   const token = req.headers.get("x-admin-token") ?? "";
-  const { data: cfg, error: cfgError } = await supabase
+  const { data: cfgRows, error: cfgError } = await supabase
     .from("app_config")
-    .select("value")
-    .eq("key", "admin_token_hash")
-    .maybeSingle();
+    .select("key, value")
+    .in("key", ["admin_token_hash", "staff_token_hash"]);
 
-  if (cfgError || !cfg) {
+  const adminHash = cfgRows?.find((r) => r.key === "admin_token_hash")?.value;
+  if (cfgError || !adminHash) {
     return json({ error: "Configuração de acesso indisponível" }, 500);
   }
+  const staffHash = cfgRows?.find((r) => r.key === "staff_token_hash")?.value;
 
   const tokenHash = token ? await sha256Hex(token) : "";
-  if (!token || tokenHash !== cfg.value) {
+  const isAdmin = !!token && tokenHash === adminHash;
+  const isStaff = !!token && !!staffHash && tokenHash === staffHash;
+  if (!isAdmin && !isStaff) {
     return json({ error: "Não autorizado" }, 401);
   }
 
@@ -91,6 +97,10 @@ Deno.serve(async (req: Request) => {
       // Botão "resetar dados de teste" da tela de Configurações: apaga as
       // intenções atuais e reinicia a senha sequencial em 01. A função no
       // banco (resetar_dados_teste) faz as duas coisas numa transação só.
+      // Só a senha do admin pode disparar isso — depois do incidente em que
+      // esse botão apagou dados reais de famílias, o token da equipe (staff)
+      // fica de fora dessa ação por segurança.
+      if (!isAdmin) return json({ error: "Não autorizado" }, 403);
       const { error } = await supabase.rpc("resetar_dados_teste");
       if (error) return json({ error: error.message }, 500);
       return json({ ok: true });
