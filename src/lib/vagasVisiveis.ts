@@ -16,7 +16,25 @@ const TURMAS_COM_VAGA_VISIVEL: { unidade: string; serie: string; turno: string }
   { unidade: "jardim-primavera", serie: "Maternal", turno: "T" },
 ];
 
-export function vagaVisivelParaResponsavel(turma: { unidade_id: string; serie: string; turno: string }): boolean {
+/**
+ * Mesma ideia acima, mas para casos em que duas turmas dividem a mesma
+ * série + turno (ex.: 1002 e 1003, ambas "1º ano" à tarde em Campos
+ * Elíseos) e só uma delas deve mostrar o número de vagas — aqui a turma é
+ * identificada pelo código exato, não dá pra usar série + turno.
+ */
+const TURMAS_COM_VAGA_VISIVEL_POR_CODIGO: { unidade: string; codigo: string }[] = [
+  { unidade: "campos-eliseos", codigo: "1003" },
+];
+
+export function vagaVisivelParaResponsavel(turma: {
+  unidade_id: string;
+  serie: string;
+  turno: string;
+  codigo?: string;
+}): boolean {
+  if (turma.codigo && TURMAS_COM_VAGA_VISIVEL_POR_CODIGO.some((t) => t.unidade === turma.unidade_id && t.codigo === turma.codigo)) {
+    return true;
+  }
   return TURMAS_COM_VAGA_VISIVEL.some(
     (t) => t.unidade === turma.unidade_id && t.serie === turma.serie && t.turno === turma.turno
   );
