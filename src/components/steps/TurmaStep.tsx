@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { turnoLabel } from "../../lib/format";
 import type { SerieGroup, Unidade } from "../../types";
 import { vagaVisivelParaResponsavel } from "../../lib/vagasVisiveis";
-import { BackBar, Badge, Button, Card, SectionDesc, SectionEyebrow, SectionTitle } from "../ui";
+import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
 const CURSO_ICON: Record<string, ReactNode> = {
   Informática: <Laptop size={13} />,
@@ -40,7 +40,6 @@ export default function TurmaStep({
       <Card>
         <SectionEyebrow>Passo 4 de 6</SectionEyebrow>
         <SectionTitle>Escolha a turma</SectionTitle>
-        <SectionDesc>Turno e vagas de cada turma — sem vaga também dá pra entrar na lista de espera.</SectionDesc>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {turmas.map((t, i) => (
