@@ -49,12 +49,6 @@ export default function RelatoriosTab({
           <Button variant="ghost" onClick={() => abrirModal("porsenha")} className="shrink-0 !px-5">
             <ListOrdered size={17} /> Ordenado por senha
           </Button>
-          <Button variant="ghost" onClick={() => abrirModal("porsenhaintencoes")} className="shrink-0 !px-5">
-            <ListOrdered size={17} /> Por senha · Intenções de matrícula
-          </Button>
-          <Button variant="ghost" onClick={() => abrirModal("porsenhaespera")} className="shrink-0 !px-5">
-            <ListOrdered size={17} /> Por senha · Lista de espera
-          </Button>
           <Button onClick={() => abrirModal("completo")} className="shrink-0 !px-5">
             <Download size={17} /> Exportar relatório
           </Button>
