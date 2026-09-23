@@ -193,11 +193,16 @@ export async function exportarIntencoesPDF(
  */
 export async function exportarRelatorioDetalhadoPDF(
   turmas: TurmaAdminRow[],
-  preMatriculas: PreMatriculaAdminRow[],
+  preMatriculasComCancelados: PreMatriculaAdminRow[],
   escopo = "Todas as unidades"
 ) {
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
+
+  // relatório de contato é pra ligar — quem cancelou não precisa ser
+  // chamado, então nem entra na lista (a página 1, de ocupação por turma,
+  // não usa esse array, então não é afetada)
+  const preMatriculas = preMatriculasComCancelados.filter((p) => p.status !== "cancelado");
 
   const porTurma = new Map<string, PreMatriculaAdminRow[]>();
   for (const p of preMatriculas) {
@@ -322,17 +327,37 @@ export async function exportarRelatorioDetalhadoPDF(
 }
 
 /**
- * Lista única, sem separar por turma — ordenada só pela senha (ordem de
- * chegada de todo mundo, misturando turmas diferentes de propósito). É a
- * ordem que a secretaria usa pra ligar: não importa a turma, importa quem
- * chegou primeiro.
+ * Tira quem cancelou (não precisa ligar pra quem já desistiu) e reconta a
+ * senha do zero, só dentro dessa lista (01, 02, 03...) — sem isso, a senha
+ * "de verdade" fica cheia de buraco depois de filtrar por tipo e tirar
+ * cancelados. Não mexe no registro real, só na numeração mostrada aqui.
  */
-export async function exportarPorSenhaPDF(preMatriculas: PreMatriculaAdminRow[], escopo = "Todas as unidades") {
+function ordenarERenumerar(preMatriculas: PreMatriculaAdminRow[]): PreMatriculaAdminRow[] {
+  return [...preMatriculas]
+    .filter((p) => p.status !== "cancelado")
+    .sort((a, b) => a.numero_senha - b.numero_senha)
+    .map((p, i) => ({ ...p, numero_senha: i + 1 }));
+}
+
+function celulaTurma(p: PreMatriculaAdminRow): string {
+  return p.turmas ? `${p.turmas.serie} · Turma ${p.turmas.codigo} (${turnoLabel(p.turmas.turno)})` : "—";
+}
+
+/**
+ * Lista única, sem separar por turma — ordenada só pela senha (ordem de
+ * chegada de todo mundo, misturando turmas diferentes de propósito, e
+ * misturando intenção confirmada com lista de espera). É a ordem que a
+ * secretaria usa pra ligar: não importa a turma, importa quem chegou
+ * primeiro. Quem cancelou não aparece.
+ */
+export async function exportarPorSenhaPDF(
+  preMatriculasComCancelados: PreMatriculaAdminRow[],
+  escopo = "Todas as unidades"
+) {
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
-  const posicoesEspera = calcularPosicoesEspera(preMatriculas);
-
-  const ordenados = [...preMatriculas].sort((a, b) => a.numero_senha - b.numero_senha);
+  const posicoesEspera = calcularPosicoesEspera(preMatriculasComCancelados.filter((p) => p.status !== "cancelado"));
+  const ordenados = ordenarERenumerar(preMatriculasComCancelados);
 
   cabecalho(doc, logo, "Ordenado por senha 2027", escopo, `${ordenados.length} registro(s)`);
 
@@ -342,7 +367,7 @@ export async function exportarPorSenhaPDF(preMatriculas: PreMatriculaAdminRow[],
     p.lista_espera
       ? { content: `${posicoesEspera.get(p.id)}ª lista de espera`, styles: { textColor: [161, 98, 7], fontStyle: "bold" } }
       : "Intenção de matrícula",
-    p.turmas ? `${p.turmas.serie} · Turma ${p.turmas.codigo} (${turnoLabel(p.turmas.turno)})` : "—",
+    celulaTurma(p),
     p.aluno_nome,
     maskPhone(p.telefone1),
     p.responsavel_nome,
@@ -357,6 +382,72 @@ export async function exportarPorSenhaPDF(preMatriculas: PreMatriculaAdminRow[],
 
   rodape(doc, escopo);
   doc.save(`ordenado-por-senha-seice-${Date.now()}.pdf`);
+}
+
+/** Mesma ideia, mas só com quem tem vaga garantida (sem lista de espera,
+ *  sem cancelados) — senha recontada do zero, só dentro dessa lista. */
+export async function exportarPorSenhaIntencoesPDF(
+  preMatriculasComCancelados: PreMatriculaAdminRow[],
+  escopo = "Todas as unidades"
+) {
+  const doc = new jsPDF({ orientation: "landscape" });
+  const logo = await carregarLogo();
+  const ordenados = ordenarERenumerar(preMatriculasComCancelados.filter((p) => !p.lista_espera));
+
+  cabecalho(doc, logo, "Ordenado por senha 2027 — Intenções", escopo, `${ordenados.length} registro(s)`);
+
+  const corpo = ordenados.map((p) => [
+    formatarSenha(p.numero_senha),
+    celulaTurma(p),
+    p.aluno_nome,
+    maskPhone(p.telefone1),
+    p.responsavel_nome,
+  ]);
+
+  autoTable(doc, {
+    ...estiloTabela(),
+    startY: 38,
+    head: [["Senha", "Turma", "Aluno", "Telefone", "Responsável"]],
+    body: corpo,
+  });
+
+  rodape(doc, escopo);
+  doc.save(`ordenado-por-senha-intencoes-seice-${Date.now()}.pdf`);
+}
+
+/** Mesma ideia, mas só com quem está na lista de espera (sem cancelados) —
+ *  senha recontada do zero, só dentro dessa lista. A coluna "Posição" é a
+ *  fila de espera de cada turma (diferente da senha, que é geral). */
+export async function exportarPorSenhaListaEsperaPDF(
+  preMatriculasComCancelados: PreMatriculaAdminRow[],
+  escopo = "Todas as unidades"
+) {
+  const doc = new jsPDF({ orientation: "landscape" });
+  const logo = await carregarLogo();
+  const filtrados = preMatriculasComCancelados.filter((p) => p.lista_espera);
+  const posicoesEspera = calcularPosicoesEspera(filtrados.filter((p) => p.status !== "cancelado"));
+  const ordenados = ordenarERenumerar(filtrados);
+
+  cabecalho(doc, logo, "Ordenado por senha 2027 — Lista de espera", escopo, `${ordenados.length} registro(s)`);
+
+  const corpo = ordenados.map((p) => [
+    formatarSenha(p.numero_senha),
+    posicoesEspera.has(p.id) ? `${posicoesEspera.get(p.id)}ª` : "—",
+    celulaTurma(p),
+    p.aluno_nome,
+    maskPhone(p.telefone1),
+    p.responsavel_nome,
+  ]);
+
+  autoTable(doc, {
+    ...estiloTabela(),
+    startY: 38,
+    head: [["Senha", "Posição na turma", "Turma", "Aluno", "Telefone", "Responsável"]],
+    body: corpo,
+  });
+
+  rodape(doc, escopo);
+  doc.save(`ordenado-por-senha-lista-espera-seice-${Date.now()}.pdf`);
 }
 
 export async function exportarRelatorioCompletoPDF(turmas: TurmaAdminRow[], escopo = "Todas as unidades") {
