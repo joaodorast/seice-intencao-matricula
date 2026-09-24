@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import { NIVEIS } from "../../config";
 import { turnoLabel } from "../../lib/format";
-import { ordenarTurmas, unidadeCurta } from "../../lib/labels";
+import { ordenarTurmas, STATUS_INFO, unidadeCurta } from "../../lib/labels";
 import { vagaStatus } from "../../lib/vagas";
-import type { PreMatriculaAdminRow, TurmaAdminRow } from "../../types";
+import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow } from "../../types";
 import { Badge } from "../ui";
 import Modal from "./Modal";
 
@@ -26,6 +26,11 @@ const TIER_BADGE = { abertas: "success", poucas: "gold", ultimas: "danger" } as 
 
 type Tipo = "completo" | "intencoes" | "detalhado" | "porsenha" | "porsenhaintencoes" | "porsenhaespera";
 type Formato = "xlsx" | "pdf";
+
+// por padrão o relatório não traz quem já cancelou — a pessoa pode marcar de
+// volta se quiser ver mesmo assim
+const TODOS_OS_STATUS: StatusPreMatricula[] = ["pendente", "contatado", "matriculado", "cancelado"];
+const STATUS_PADRAO: StatusPreMatricula[] = ["pendente", "contatado", "matriculado"];
 
 function slugificar(txt: string): string {
   return txt
@@ -66,6 +71,7 @@ export default function ExportarRelatorioModal({
   }, [open]);
   const [todas, setTodas] = useState(true);
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
+  const [statusAtivos, setStatusAtivos] = useState<Set<StatusPreMatricula>>(new Set(STATUS_PADRAO));
   const [busca, setBusca] = useState("");
   const [gerando, setGerando] = useState<Formato | null>(null);
   const [baixado, setBaixado] = useState<Formato | null>(null);
@@ -112,12 +118,27 @@ export default function ExportarRelatorioModal({
     setSelecionadas(new Set());
   }
 
+  function alternarStatus(status: StatusPreMatricula) {
+    setStatusAtivos((atual) => {
+      const novo = new Set(atual);
+      if (novo.has(status)) novo.delete(status);
+      else novo.add(status);
+      return novo;
+    });
+  }
+
   const listaSelecionadas = todas ? [] : turmasOrdenadas.filter((t) => selecionadas.has(t.id));
   const turmasFiltradas = todas ? turmas : listaSelecionadas;
   const idsFiltrados = new Set(turmasFiltradas.map((t) => t.id));
-  const preMatriculasFiltradas = todas
-    ? preMatriculas
-    : preMatriculas.filter((p) => idsFiltrados.has(p.turma_id));
+  const preMatriculasDaTurma = todas ? preMatriculas : preMatriculas.filter((p) => idsFiltrados.has(p.turma_id));
+  const preMatriculasFiltradas = preMatriculasDaTurma.filter((p) => statusAtivos.has(p.status));
+  // conta quantos registros cada status tem (só pelo recorte de turma, antes
+  // do filtro de status) — pra mostrar o número ao lado de cada opção e a
+  // pessoa já ver na hora quantos vai marcar/desmarcar
+  const contagemPorStatus = new Map<StatusPreMatricula, number>();
+  for (const p of preMatriculasDaTurma) {
+    contagemPorStatus.set(p.status, (contagemPorStatus.get(p.status) ?? 0) + 1);
+  }
 
   const rotuloSelecao = todas
     ? `Todas as turmas — ${escopo}`
@@ -142,13 +163,16 @@ export default function ExportarRelatorioModal({
     setTimeout(() => {
       setTipo(tipoInicial);
       escolherTodas();
+      setStatusAtivos(new Set(STATUS_PADRAO));
       setBusca("");
       setBaixado(null);
     }, 200);
   }
 
-  // impede exportar um recorte vazio (0 turmas marcadas)
-  const podeExportar = todas || listaSelecionadas.length > 0;
+  // impede exportar um recorte vazio (0 turmas marcadas, ou nenhum status
+  // marcado quando o relatório depende de pré-matrículas — "Turmas" é o
+  // único tipo que não usa esse filtro, então não trava por causa dele)
+  const podeExportar = (todas || listaSelecionadas.length > 0) && (tipo === "completo" || statusAtivos.size > 0);
 
   async function exportar(formato: Formato) {
     if (!podeExportar) return;
@@ -350,6 +374,65 @@ export default function ExportarRelatorioModal({
               )}
             </div>
 
+            {tipo !== "completo" && (
+              <div className="rounded-2xl border border-seice-border-strong bg-seice-panel p-3.5">
+                <div className="mb-2.5 flex items-center justify-between">
+                  <span className="text-[13px] font-bold text-seice-ink">Filtrar por status</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setStatusAtivos((atual) =>
+                        atual.size === TODOS_OS_STATUS.length ? new Set() : new Set(TODOS_OS_STATUS)
+                      )
+                    }
+                    className="text-[12px] font-bold text-seice-gold hover:underline"
+                  >
+                    {statusAtivos.size === TODOS_OS_STATUS.length ? "Desmarcar tudo" : "Marcar tudo"}
+                  </button>
+                </div>
+                <p className="mb-3 text-[12.5px] leading-snug text-seice-muted">
+                  Só quem tiver o status marcado abaixo sai no relatório. Desmarque "Contatado", por exemplo, pra
+                  não ver de novo quem já foi chamado.
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  {TODOS_OS_STATUS.map((s) => {
+                    const ativo = statusAtivos.has(s);
+                    const qtd = contagemPorStatus.get(s) ?? 0;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => alternarStatus(s)}
+                        disabled={qtd === 0}
+                        className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left text-[14px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                          ativo
+                            ? "border-seice-gold bg-seice-gold/10 text-seice-ink"
+                            : "border-seice-border text-seice-muted hover:border-seice-border-strong hover:text-seice-ink"
+                        }`}
+                      >
+                        {ativo ? (
+                          <SquareCheck size={18} strokeWidth={2.2} className="shrink-0 text-seice-gold" />
+                        ) : (
+                          <Square size={17} className="shrink-0" />
+                        )}
+                        <span className="flex-1">{STATUS_INFO[s]?.label ?? s}</span>
+                        <span
+                          className={`inset-surface rounded-full px-2 py-0.5 text-[12px] font-extrabold tabular-nums ${
+                            ativo ? "text-seice-gold" : "text-seice-muted"
+                          }`}
+                        >
+                          {qtd}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {statusAtivos.size === 0 && (
+                  <p className="mt-2.5 text-[12.5px] font-semibold text-seice-danger">Marque ao menos um status.</p>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-2.5">
               <MiniNumero label="Turmas" value={turmasFiltradas.length} />
               <MiniNumero label="Ofertadas" value={totalOfertadas} />
@@ -378,7 +461,11 @@ export default function ExportarRelatorioModal({
                 onClick={() => exportar("xlsx")}
               />
               {!podeExportar && (
-                <p className="text-center text-[12.5px] text-seice-danger">Selecione ao menos uma turma.</p>
+                <p className="text-center text-[12.5px] text-seice-danger">
+                  {statusAtivos.size === 0 && tipo !== "completo"
+                    ? "Marque ao menos um status."
+                    : "Selecione ao menos uma turma."}
+                </p>
               )}
             </div>
           </div>
