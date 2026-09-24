@@ -114,18 +114,41 @@ export default function OverviewTab({
           (intenção) e quantas estão na lista de espera.
         </SectionDesc>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {STATUS_ORDER.map((s) => (
-            <div key={s} className={`rounded-xl px-4 py-3 ${STATUS_INFO[s].badge}`}>
-              <div className="text-[22.5px] font-extrabold leading-none tabular-nums">{porStatus[s]}</div>
-              <div className="mt-1 text-[13px] font-bold uppercase tracking-wide opacity-80">
-                {STATUS_INFO[s].label}
+          {STATUS_ORDER.map((s) => {
+            const intencao = porStatusIntencao[s];
+            const espera = porStatusEspera[s];
+            const totalDoStatus = intencao + espera;
+            const pctIntencao = totalDoStatus > 0 ? Math.round((intencao / totalDoStatus) * 100) : 0;
+            return (
+              <div key={s} className={`rounded-xl px-4 py-3 ${STATUS_INFO[s].badge}`}>
+                <div className="text-[22.5px] font-extrabold leading-none tabular-nums">{porStatus[s]}</div>
+                <div className="mt-1 text-[13px] font-bold uppercase tracking-wide opacity-80">
+                  {STATUS_INFO[s].label}
+                </div>
+
+                {/* barrinha mostrando a proporção intenção × espera dentro
+                    desse status, pra não precisar fazer conta de cabeça */}
+                {totalDoStatus > 0 && (
+                  <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-black/20">
+                    <div className="h-full bg-current opacity-90" style={{ width: `${pctIntencao}%` }} />
+                  </div>
+                )}
+
+                <div className="mt-2 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-[12.5px] font-bold opacity-90">
+                    <CheckCircle2 size={13} className="shrink-0" />
+                    <span className="tabular-nums">{intencao}</span>
+                    <span className="font-semibold opacity-75">com vaga garantida</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[12.5px] font-bold opacity-90">
+                    <Clock size={13} className="shrink-0" />
+                    <span className="tabular-nums">{espera}</span>
+                    <span className="font-semibold opacity-75">em lista de espera</span>
+                  </div>
+                </div>
               </div>
-              <div className="mt-1.5 text-[12px] font-semibold opacity-70">
-                {porStatusIntencao[s]} {porStatusIntencao[s] === 1 ? "intenção" : "intenções"} · {porStatusEspera[s]}{" "}
-                espera
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Card>
 
