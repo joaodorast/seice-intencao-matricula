@@ -55,22 +55,22 @@ function cabecalho(doc: jsPDF, logo: string | null, titulo: string, escopo: stri
   } else {
     doc.setTextColor(...BRANCO);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(15);
+    doc.setFontSize(17);
     doc.text("COLÉGIO SEICE", MARGEM, 18);
   }
 
   doc.setTextColor(...BRANCO);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
+  doc.setFontSize(15);
   doc.text(titulo, largura - MARGEM, 14, { align: "right" });
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
+  doc.setFontSize(11);
   doc.setTextColor(255, 200, 0);
   doc.text(escopo, largura - MARGEM, 20.5, { align: "right" });
 
   doc.setTextColor(200, 205, 212);
-  doc.setFontSize(8.5);
+  doc.setFontSize(9.5);
   doc.text(resumo, largura - MARGEM, 26, { align: "right" });
 }
 
@@ -84,22 +84,22 @@ function indicadores(doc: jsPDF, y: number, itens: { rotulo: string; valor: stri
   itens.forEach((item, i) => {
     const x = MARGEM + i * (largCaixa + gap);
     doc.setFillColor(...CINZA_ZEBRA);
-    doc.roundedRect(x, y, largCaixa, 16, 2, 2, "F");
+    doc.roundedRect(x, y, largCaixa, 19, 2, 2, "F");
     doc.setFillColor(...DOURADO);
-    doc.rect(x, y, 1.6, 16, "F");
+    doc.rect(x, y, 1.6, 19, "F");
 
     doc.setTextColor(...CINZA_TEXTO);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.text(item.rotulo.toUpperCase(), x + 5, y + 6);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text(item.rotulo.toUpperCase(), x + 5, y + 7);
 
     doc.setTextColor(...GRAFITE);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text(item.valor, x + 5, y + 13);
+    doc.setFontSize(16);
+    doc.text(item.valor, x + 5, y + 15.5);
   });
 
-  return y + 16;
+  return y + 19;
 }
 
 /**
@@ -111,11 +111,11 @@ function indicadores(doc: jsPDF, y: number, itens: { rotulo: string; valor: stri
 function legenda(doc: jsPDF, y: number, texto: string): number {
   const largura = doc.internal.pageSize.getWidth() - MARGEM * 2;
   doc.setFont("helvetica", "italic");
-  doc.setFontSize(9);
+  doc.setFontSize(10.5);
   doc.setTextColor(...CINZA_TEXTO);
   const linhas = doc.splitTextToSize(texto, largura) as string[];
   doc.text(linhas, MARGEM, y);
-  return y + linhas.length * 4.3 + 3;
+  return y + linhas.length * 5 + 3;
 }
 
 function rodape(doc: jsPDF, escopo: string) {
@@ -128,24 +128,73 @@ function rodape(doc: jsPDF, escopo: string) {
     doc.setLineWidth(0.4);
     doc.line(MARGEM, altura - 12, largura - MARGEM, altura - 12);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
+    doc.setFontSize(9);
     doc.setTextColor(...CINZA_TEXTO);
     doc.text(`Colégio SEICE · ${escopo} · gerado em ${new Date().toLocaleString("pt-BR")}`, MARGEM, altura - 7);
     doc.text(`Página ${i} de ${paginas}`, largura - MARGEM, altura - 7, { align: "right" });
   }
 }
 
+// cor de fundo + cor do texto de cada status — assim dá pra reconhecer o
+// status de bate-olho, sem nem precisar ler a palavra (a mesma lógica de
+// "semáforo" que o painel já usa: cinza é neutro, azul é "em andamento",
+// verde é "resolvido bem", vermelho é "não vai acontecer")
+const COR_STATUS: Record<StatusPreMatricula, { fundo: RGB; texto: RGB }> = {
+  pendente: { fundo: [229, 231, 235], texto: [55, 65, 81] },
+  contatado: { fundo: [219, 234, 254], texto: [29, 78, 216] },
+  matriculado: { fundo: [220, 252, 231], texto: [21, 128, 61] },
+  cancelado: { fundo: [254, 226, 226], texto: [185, 28, 28] },
+};
+
+/**
+ * Legendinha visual com quadradinhos coloridos + nome de cada status, tipo
+ * as legendas de mapa — dá pra entender o significado das cores da tabela
+ * só olhando, sem precisar ler uma linha de texto explicando. Devolve a
+ * posição Y onde a tabela deve começar.
+ */
+function legendaCores(doc: jsPDF, y: number): number {
+  const itens: { rotulo: string; cor: RGB }[] = [
+    { rotulo: "Pendente", cor: COR_STATUS.pendente.texto },
+    { rotulo: "Contatado", cor: COR_STATUS.contatado.texto },
+    { rotulo: "Matriculado", cor: COR_STATUS.matriculado.texto },
+    { rotulo: "Cancelado", cor: COR_STATUS.cancelado.texto },
+  ];
+  let x = MARGEM;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  for (const item of itens) {
+    doc.setFillColor(...item.cor);
+    doc.roundedRect(x, y - 3.2, 3.5, 3.5, 0.7, 0.7, "F");
+    doc.setTextColor(...item.cor);
+    doc.text(item.rotulo, x + 5, y);
+    x += 5 + doc.getTextWidth(item.rotulo) + 8;
+  }
+  return y + 8;
+}
+
+/** Célula de tabela com o status já colorido (fundo + texto), pronta pra
+ *  entrar direto no corpo de uma autoTable. */
+function celulaStatus(status: string): { content: string; styles: Record<string, unknown> } {
+  const cor = COR_STATUS[status as StatusPreMatricula];
+  const rotulo = STATUS_INFO[status as StatusPreMatricula]?.label ?? status;
+  if (!cor) return { content: rotulo, styles: {} };
+  return {
+    content: rotulo,
+    styles: { fillColor: cor.fundo, textColor: cor.texto, fontStyle: "bold", halign: "center" },
+  };
+}
+
 function estiloTabela() {
   return {
     theme: "grid" as const,
     styles: {
-      fontSize: 8.5,
-      cellPadding: 2.6,
+      fontSize: 10,
+      cellPadding: 3.2,
       textColor: GRAFITE_CLARO,
       lineColor: [226, 229, 234] as RGB,
       lineWidth: 0.2,
     },
-    headStyles: { fillColor: GRAFITE, textColor: BRANCO, fontStyle: "bold" as const, fontSize: 8.5 },
+    headStyles: { fillColor: GRAFITE, textColor: BRANCO, fontStyle: "bold" as const, fontSize: 10 },
     alternateRowStyles: { fillColor: CINZA_ZEBRA },
     margin: { left: MARGEM, right: MARGEM },
   };
@@ -164,7 +213,7 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
     r.turmas ? `${r.turmas.serie} · ${r.turmas.codigo} · ${turnoLabel(r.turmas.turno)}` : "-",
     r.responsavel_nome,
     maskPhone(r.telefone1),
-    STATUS_INFO[r.status]?.label ?? r.status,
+    celulaStatus(r.status),
     posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª` : "— (já tem vaga)",
   ]);
 }
@@ -202,10 +251,11 @@ export async function exportarIntencoesPDF(
       "se a matrícula foi confirmada (Matriculado) ou se ainda falta ligar (Pendente). A última coluna mostra " +
       "a posição na fila de espera de quem não tem vaga garantida (\"—\" para quem já tem vaga)."
   );
+  const y2b = legendaCores(doc, y2);
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: y2,
+    startY: y2b,
     head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "Telefone", "Status", "Posição na fila de espera"]],
     body: linhasIntencoes(registros),
   });
@@ -321,7 +371,7 @@ export async function exportarRelatorioDetalhadoPDF(
   type CelulaContato =
     | string
     | number
-    | { content: string; colSpan: number; styles: Record<string, unknown> };
+    | { content: string; colSpan?: number; styles: Record<string, unknown> };
   const posicoesEsperaContatos = calcularPosicoesEspera(preMatriculas);
 
   function paginaDeContatos(
@@ -354,7 +404,7 @@ export async function exportarRelatorioDetalhadoPDF(
           p.aluno_nome,
           maskPhone(p.telefone1),
           p.responsavel_nome,
-          STATUS_INFO[p.status]?.label ?? p.status,
+          celulaStatus(p.status),
         ]);
       }
     }
@@ -369,9 +419,10 @@ export async function exportarRelatorioDetalhadoPDF(
       resumoFiltro ? `${totalAlunos} aluno(s) · ${resumoFiltro}` : `${totalAlunos} aluno(s)`
     );
     const yTabela = legenda(doc, 38, subtitulo);
+    const yTabelaB = legendaCores(doc, yTabela);
     autoTable(doc, {
       ...estiloTabela(),
-      startY: yTabela,
+      startY: yTabelaB,
       head: [cabecalhos],
       body: corpo,
     });
@@ -451,26 +502,27 @@ export async function exportarPorSenhaPDF(
     38,
     "Lista única com TODO MUNDO junto, sem separar por turma — nem importa se tem vaga garantida ou está na " +
       "lista de espera. A ordem é de quem chegou primeiro pra quem chegou por último. Use essa lista pra ligar " +
-      "em ordem, de cima pra baixo. A coluna \"Situação\" mostra se a pessoa já tem vaga (\"Intenção de " +
-      "matrícula\") ou está esperando (\"lista de espera\", com a posição na turma dela)."
+      "em ordem, de cima pra baixo. A coluna \"Situação\" mostra se a pessoa já tem vaga (verde, \"Vaga " +
+      "garantida\") ou está esperando (dourado, \"Lista de espera\", com a posição dela na turma)."
   );
+  const yTabelaB = legendaCores(doc, yTabela);
 
   type Celula = string | { content: string; styles: Record<string, unknown> };
   const corpo: Celula[][] = ordenados.map((p) => [
     formatarSenha(p.numero_senha),
     p.lista_espera
-      ? { content: `${posicoesEspera.get(p.id)}ª lista de espera`, styles: { textColor: [161, 98, 7], fontStyle: "bold" } }
-      : "Intenção de matrícula",
+      ? { content: `${posicoesEspera.get(p.id)}ª · Lista de espera`, styles: { textColor: [161, 98, 7], fontStyle: "bold" } }
+      : { content: "Vaga garantida", styles: { textColor: [21, 128, 61], fontStyle: "bold" } },
     celulaTurma(p),
     p.aluno_nome,
     maskPhone(p.telefone1),
     p.responsavel_nome,
-    STATUS_INFO[p.status]?.label ?? p.status,
+    celulaStatus(p.status),
   ]);
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: yTabela,
+    startY: yTabelaB,
     head: [["Senha", "Situação", "Turma", "Aluno", "Telefone", "Responsável", "Status"]],
     body: corpo,
   });
@@ -506,6 +558,7 @@ export async function exportarPorSenhaIntencoesPDF(
       "primeiro pra quem chegou por último — comece a ligar de cima pra baixo. A coluna \"Status\" mostra se a " +
       "secretaria já ligou (Contatado) ou ainda precisa ligar (Pendente)."
   );
+  const yTabelaIntB = legendaCores(doc, yTabelaInt);
 
   const corpo = ordenados.map((p) => [
     formatarSenha(p.numero_senha),
@@ -513,12 +566,12 @@ export async function exportarPorSenhaIntencoesPDF(
     p.aluno_nome,
     maskPhone(p.telefone1),
     p.responsavel_nome,
-    STATUS_INFO[p.status]?.label ?? p.status,
+    celulaStatus(p.status),
   ]);
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: yTabelaInt,
+    startY: yTabelaIntB,
     head: [["Senha", "Turma", "Aluno", "Telefone", "Responsável", "Status"]],
     body: corpo,
   });
@@ -558,6 +611,7 @@ export async function exportarPorSenhaListaEsperaPDF(
       "desistir daquela turma específica. A coluna \"Status\" mostra se a secretaria já ligou (Contatado) ou " +
       "ainda precisa ligar (Pendente)."
   );
+  const yTabelaEspB = legendaCores(doc, yTabelaEsp);
 
   const corpo = ordenados.map((p) => [
     formatarSenha(p.numero_senha),
@@ -566,12 +620,12 @@ export async function exportarPorSenhaListaEsperaPDF(
     p.aluno_nome,
     maskPhone(p.telefone1),
     p.responsavel_nome,
-    STATUS_INFO[p.status]?.label ?? p.status,
+    celulaStatus(p.status),
   ]);
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: yTabelaEsp,
+    startY: yTabelaEspB,
     head: [["Senha", "Posição na turma", "Turma", "Aluno", "Telefone", "Responsável", "Status"]],
     body: corpo,
   });
