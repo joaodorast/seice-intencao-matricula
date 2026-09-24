@@ -301,111 +301,6 @@ export default function ExportarRelatorioModal({
           </TipoTab>
         </div>
 
-        {tipo !== "completo" && (
-          <div className="flex flex-col gap-4 rounded-2xl border border-seice-border-strong bg-seice-panel p-3.5 lg:flex-row lg:items-start lg:gap-6">
-            {/* filtro de status — em linha, largura cheia, pra dar pra ver
-                os 4 status de uma vez, sem precisar rolar nada */}
-            <div className="min-w-0 flex-1">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="text-[13px] font-bold text-seice-ink">Filtrar por status</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setStatusAtivos((atual) =>
-                      atual.size === TODOS_OS_STATUS.length ? new Set() : new Set(TODOS_OS_STATUS)
-                    )
-                  }
-                  className="text-[12px] font-bold text-seice-gold hover:underline"
-                >
-                  {statusAtivos.size === TODOS_OS_STATUS.length ? "Desmarcar tudo" : "Marcar tudo"}
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {TODOS_OS_STATUS.map((s) => {
-                  const ativo = statusAtivos.has(s);
-                  const qtd = contagemPorStatus.get(s) ?? 0;
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => alternarStatus(s)}
-                      disabled={qtd === 0}
-                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[13.5px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${
-                        ativo
-                          ? "border-seice-gold bg-seice-gold/10 text-seice-ink"
-                          : "border-seice-border text-seice-muted hover:border-seice-border-strong hover:text-seice-ink"
-                      }`}
-                    >
-                      {ativo ? (
-                        <SquareCheck size={16} strokeWidth={2.2} className="shrink-0 text-seice-gold" />
-                      ) : (
-                        <Square size={15} className="shrink-0" />
-                      )}
-                      {STATUS_INFO[s]?.label ?? s}
-                      <span
-                        className={`inset-surface rounded-full px-2 py-0.5 text-[12px] font-extrabold tabular-nums ${
-                          ativo ? "text-seice-gold" : "text-seice-muted"
-                        }`}
-                      >
-                        {qtd}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              {statusAtivos.size === 0 && (
-                <p className="mt-2 text-[12.5px] font-semibold text-seice-danger">Marque ao menos um status.</p>
-              )}
-            </div>
-
-            {/* período — do lado do status em telas largas, embaixo no
-                celular */}
-            <div className="min-w-0 shrink-0 lg:w-64 lg:border-l lg:border-seice-border lg:pl-6">
-              <span className="mb-2 flex items-center gap-1.5 text-[13px] font-bold text-seice-ink">
-                <Calendar size={14} className="text-seice-muted" /> Por período
-              </span>
-              <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-                <label className="block w-full min-w-0 flex-1">
-                  <span className="mb-1 block text-[11.5px] font-bold uppercase tracking-wide text-seice-muted">
-                    A partir de
-                  </span>
-                  <input
-                    type="date"
-                    value={dataInicio}
-                    max={dataFim || undefined}
-                    onChange={(e) => setDataInicio(e.target.value)}
-                    className="inset-surface block w-full min-w-0 rounded-lg border border-seice-border-strong px-2.5 py-2 text-[13.5px] text-seice-ink outline-none focus:border-seice-gold"
-                  />
-                </label>
-                <label className="block w-full min-w-0 flex-1">
-                  <span className="mb-1 block text-[11.5px] font-bold uppercase tracking-wide text-seice-muted">
-                    Até
-                  </span>
-                  <input
-                    type="date"
-                    value={dataFim}
-                    min={dataInicio || undefined}
-                    onChange={(e) => setDataFim(e.target.value)}
-                    className="inset-surface block w-full min-w-0 rounded-lg border border-seice-border-strong px-2.5 py-2 text-[13.5px] text-seice-ink outline-none focus:border-seice-gold"
-                  />
-                </label>
-              </div>
-              {(dataInicio || dataFim) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDataInicio("");
-                    setDataFim("");
-                  }}
-                  className="mt-2 text-[12px] font-bold text-seice-gold hover:underline"
-                >
-                  Limpar datas
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
           {/* escolha das turmas — cartões grandes, seleção múltipla */}
           <div className="flex min-h-0 min-w-0 flex-col gap-3">
@@ -514,6 +409,104 @@ export default function ExportarRelatorioModal({
                 </div>
               )}
             </div>
+
+            {tipo !== "completo" && (
+              <div className="min-w-0 rounded-2xl border border-seice-border-strong bg-seice-panel p-3.5">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-[13px] font-bold text-seice-ink">Filtrar por status</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setStatusAtivos((atual) =>
+                        atual.size === TODOS_OS_STATUS.length ? new Set() : new Set(TODOS_OS_STATUS)
+                      )
+                    }
+                    className="shrink-0 text-[12px] font-bold text-seice-gold hover:underline"
+                  >
+                    {statusAtivos.size === TODOS_OS_STATUS.length ? "Desmarcar tudo" : "Marcar tudo"}
+                  </button>
+                </div>
+                {/* chips lado a lado (2 por linha) em vez de uma linha cheia
+                    por status — cabe tudo (os 4) sem cortar nada nessa
+                    coluna estreita */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  {TODOS_OS_STATUS.map((s) => {
+                    const ativo = statusAtivos.has(s);
+                    const qtd = contagemPorStatus.get(s) ?? 0;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => alternarStatus(s)}
+                        disabled={qtd === 0}
+                        className={`flex min-w-0 items-center gap-1.5 rounded-xl border px-2.5 py-2 text-left text-[13px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                          ativo
+                            ? "border-seice-gold bg-seice-gold/10 text-seice-ink"
+                            : "border-seice-border text-seice-muted hover:border-seice-border-strong hover:text-seice-ink"
+                        }`}
+                      >
+                        {ativo ? (
+                          <SquareCheck size={15} strokeWidth={2.2} className="shrink-0 text-seice-gold" />
+                        ) : (
+                          <Square size={14} className="shrink-0" />
+                        )}
+                        <span className="min-w-0 flex-1 truncate">{STATUS_INFO[s]?.label ?? s}</span>
+                        <span className={`shrink-0 text-[11.5px] tabular-nums ${ativo ? "text-seice-gold" : "text-seice-muted"}`}>
+                          {qtd}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {statusAtivos.size === 0 && (
+                  <p className="mt-2 text-[12.5px] font-semibold text-seice-danger">Marque ao menos um status.</p>
+                )}
+
+                <div className="mt-3 border-t border-seice-border pt-3">
+                  <span className="mb-1.5 flex items-center gap-1.5 text-[13px] font-bold text-seice-ink">
+                    <Calendar size={14} className="text-seice-muted" /> Por período
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="block min-w-0">
+                      <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-seice-muted">
+                        De
+                      </span>
+                      <input
+                        type="date"
+                        value={dataInicio}
+                        max={dataFim || undefined}
+                        onChange={(e) => setDataInicio(e.target.value)}
+                        className="inset-surface block w-full min-w-0 rounded-lg border border-seice-border-strong px-2 py-1.5 text-[12.5px] text-seice-ink outline-none focus:border-seice-gold"
+                      />
+                    </label>
+                    <label className="block min-w-0">
+                      <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-seice-muted">
+                        Até
+                      </span>
+                      <input
+                        type="date"
+                        value={dataFim}
+                        min={dataInicio || undefined}
+                        onChange={(e) => setDataFim(e.target.value)}
+                        className="inset-surface block w-full min-w-0 rounded-lg border border-seice-border-strong px-2 py-1.5 text-[12.5px] text-seice-ink outline-none focus:border-seice-gold"
+                      />
+                    </label>
+                  </div>
+                  {(dataInicio || dataFim) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDataInicio("");
+                        setDataFim("");
+                      }}
+                      className="mt-2 text-[12px] font-bold text-seice-gold hover:underline"
+                    >
+                      Limpar datas
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-2.5">
               <MiniNumero label="Turmas" value={turmasFiltradas.length} />
