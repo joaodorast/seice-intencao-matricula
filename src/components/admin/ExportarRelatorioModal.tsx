@@ -206,6 +206,7 @@ export default function ExportarRelatorioModal({
     if (!podeExportar) return;
     setGerando(formato);
     setBaixado(null);
+    const filtroStatus = [...statusAtivos];
     try {
       if (tipo === "completo") {
         if (formato === "xlsx") {
@@ -221,7 +222,7 @@ export default function ExportarRelatorioModal({
           exportarRelatorioDetalhadoExcel(turmasFiltradas, preMatriculasFiltradas);
         } else {
           const { exportarRelatorioDetalhadoPDF } = await import("../../lib/pdf");
-          await exportarRelatorioDetalhadoPDF(turmasFiltradas, preMatriculasFiltradas, escopo);
+          await exportarRelatorioDetalhadoPDF(turmasFiltradas, preMatriculasFiltradas, escopo, filtroStatus);
         }
       } else if (tipo === "porsenha") {
         if (formato === "xlsx") {
@@ -229,7 +230,7 @@ export default function ExportarRelatorioModal({
           exportarPorSenhaExcel(preMatriculasFiltradas, sufixo);
         } else {
           const { exportarPorSenhaPDF } = await import("../../lib/pdf");
-          await exportarPorSenhaPDF(preMatriculasFiltradas, escopo);
+          await exportarPorSenhaPDF(preMatriculasFiltradas, escopo, filtroStatus);
         }
       } else if (tipo === "porsenhaintencoes") {
         if (formato === "xlsx") {
@@ -237,7 +238,7 @@ export default function ExportarRelatorioModal({
           exportarPorSenhaIntencoesExcel(preMatriculasFiltradas, sufixo);
         } else {
           const { exportarPorSenhaIntencoesPDF } = await import("../../lib/pdf");
-          await exportarPorSenhaIntencoesPDF(preMatriculasFiltradas, escopo);
+          await exportarPorSenhaIntencoesPDF(preMatriculasFiltradas, escopo, filtroStatus);
         }
       } else if (tipo === "porsenhaespera") {
         if (formato === "xlsx") {
@@ -245,7 +246,7 @@ export default function ExportarRelatorioModal({
           exportarPorSenhaListaEsperaExcel(preMatriculasFiltradas, sufixo);
         } else {
           const { exportarPorSenhaListaEsperaPDF } = await import("../../lib/pdf");
-          await exportarPorSenhaListaEsperaPDF(preMatriculasFiltradas, escopo);
+          await exportarPorSenhaListaEsperaPDF(preMatriculasFiltradas, escopo, filtroStatus);
         }
       } else {
         if (formato === "xlsx") {
@@ -253,7 +254,7 @@ export default function ExportarRelatorioModal({
           exportarIntencoesExcel(preMatriculasFiltradas, sufixo);
         } else {
           const { exportarIntencoesPDF } = await import("../../lib/pdf");
-          await exportarIntencoesPDF(preMatriculasFiltradas, sufixo, escopo);
+          await exportarIntencoesPDF(preMatriculasFiltradas, sufixo, escopo, filtroStatus);
         }
       }
       setBaixado(formato);
