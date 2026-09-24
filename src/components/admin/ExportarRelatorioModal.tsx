@@ -269,7 +269,7 @@ export default function ExportarRelatorioModal({
   }
 
   return (
-    <Modal open={open} onClose={fecharEReiniciar} title="Exportar relatório" width="max-w-6xl">
+    <Modal open={open} onClose={fecharEReiniciar} title="Exportar relatório" width="max-w-[92rem]">
       <div className="flex flex-col gap-5">
         {/* o que exportar: vagas por turma, ou a lista de intenções */}
         <div className="inset-surface flex flex-nowrap gap-1 overflow-x-auto rounded-xl border border-seice-border p-1.5">
@@ -301,7 +301,7 @@ export default function ExportarRelatorioModal({
           </TipoTab>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
           {/* escolha das turmas — cartões grandes, seleção múltipla */}
           <div className="flex min-w-0 flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -324,7 +324,7 @@ export default function ExportarRelatorioModal({
               </button>
             </div>
 
-            <div className="grid max-h-[30rem] grid-cols-1 gap-2.5 overflow-y-auto rounded-2xl border border-seice-border bg-seice-panel p-3 sm:grid-cols-2">
+            <div className="grid max-h-[42rem] grid-cols-1 gap-2.5 overflow-y-auto rounded-2xl border border-seice-border bg-seice-panel p-3 sm:grid-cols-2 xl:grid-cols-3">
               <CartaoTurma
                 ativo={todas}
                 onClick={escolherTodas}
@@ -341,7 +341,7 @@ export default function ExportarRelatorioModal({
               )}
 
               {NIVEIS.filter((n) => gruposPorNivel.has(n.key)).map((n) => (
-                <div key={n.key} className="col-span-full grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                <div key={n.key} className="col-span-full grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
                   <div className="col-span-full mt-1.5 px-1 text-[12.5px] font-bold uppercase tracking-wide text-seice-muted first:mt-0">
                     {n.label}
                   </div>
@@ -604,7 +604,7 @@ function CartaoTurma({
       onClick={onClick}
       className={`card-surface flex items-start gap-3 rounded-xl border p-3.5 text-left transition ${
         ativo ? "border-seice-gold ring-1 ring-inset ring-seice-gold" : "border-seice-border hover:border-seice-border-strong"
-      } ${destaque ? "sm:col-span-2" : ""}`}
+      } ${destaque ? "sm:col-span-2 xl:col-span-3" : ""}`}
     >
       <span
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${
