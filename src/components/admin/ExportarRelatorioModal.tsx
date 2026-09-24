@@ -392,7 +392,7 @@ export default function ExportarRelatorioModal({
             </div>
 
             {tipo !== "completo" && (
-              <div className="rounded-2xl border border-seice-border-strong bg-seice-panel p-3.5">
+              <div className="min-w-0 overflow-hidden rounded-2xl border border-seice-border-strong bg-seice-panel p-3.5">
                 <div className="mb-2.5 flex items-center justify-between">
                   <span className="text-[13px] font-bold text-seice-ink">Filtrar por status</span>
                   <button
@@ -452,8 +452,8 @@ export default function ExportarRelatorioModal({
                   <span className="mb-2 flex items-center gap-1.5 text-[13px] font-bold text-seice-ink">
                     <Calendar size={14} className="text-seice-muted" /> Período (recebido em)
                   </span>
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1">
+                  <div className="flex flex-col gap-2">
+                    <label className="block w-full min-w-0">
                       <span className="mb-1 block text-[11.5px] font-bold uppercase tracking-wide text-seice-muted">
                         De
                       </span>
@@ -462,10 +462,10 @@ export default function ExportarRelatorioModal({
                         value={dataInicio}
                         max={dataFim || undefined}
                         onChange={(e) => setDataInicio(e.target.value)}
-                        className="inset-surface w-full rounded-lg border border-seice-border-strong px-2.5 py-2 text-[13.5px] text-seice-ink outline-none focus:border-seice-gold"
+                        className="inset-surface block w-full min-w-0 rounded-lg border border-seice-border-strong px-2.5 py-2 text-[13.5px] text-seice-ink outline-none focus:border-seice-gold"
                       />
                     </label>
-                    <label className="flex-1">
+                    <label className="block w-full min-w-0">
                       <span className="mb-1 block text-[11.5px] font-bold uppercase tracking-wide text-seice-muted">
                         Até
                       </span>
@@ -474,7 +474,7 @@ export default function ExportarRelatorioModal({
                         value={dataFim}
                         min={dataInicio || undefined}
                         onChange={(e) => setDataFim(e.target.value)}
-                        className="inset-surface w-full rounded-lg border border-seice-border-strong px-2.5 py-2 text-[13.5px] text-seice-ink outline-none focus:border-seice-gold"
+                        className="inset-surface block w-full min-w-0 rounded-lg border border-seice-border-strong px-2.5 py-2 text-[13.5px] text-seice-ink outline-none focus:border-seice-gold"
                       />
                     </label>
                   </div>
