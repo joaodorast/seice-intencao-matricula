@@ -3,9 +3,9 @@ import autoTable from "jspdf-autotable";
 import { NIVEL_LABELS } from "../config";
 import logoUrl from "../assets/seice-logo.png";
 import { calcularPosicoesEspera, formatarSenha, maskPhone, turnoLabel } from "./format";
-import { STATUS_INFO, ordenarTurmas, unidadeNome } from "./labels";
+import { descricaoFiltroStatus, STATUS_INFO, ordenarTurmas, unidadeNome } from "./labels";
 import { vagaStatus } from "./vagas";
-import type { PreMatriculaAdminRow, TurmaAdminRow } from "../types";
+import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow } from "../types";
 
 // Carregado sob demanda (import dinâmico nos componentes): jsPDF e a tabela não
 // pesam no carregamento normal do painel.
@@ -156,14 +156,22 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
 export async function exportarIntencoesPDF(
   registros: PreMatriculaAdminRow[],
   sufixo: string,
-  escopo = "Todas as unidades"
+  escopo = "Todas as unidades",
+  filtroStatus: StatusPreMatricula[] = []
 ) {
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
 
   const porStatus = (status: string) => registros.filter((r) => r.status === status).length;
 
-  cabecalho(doc, logo, "Intenções de matrícula 2027", escopo, `${registros.length} registro(s)`);
+  const resumoFiltro = descricaoFiltroStatus(filtroStatus);
+  cabecalho(
+    doc,
+    logo,
+    "Intenções de matrícula 2027",
+    escopo,
+    resumoFiltro ? `${registros.length} registro(s) · ${resumoFiltro}` : `${registros.length} registro(s)`
+  );
   const y = indicadores(doc, 38, [
     { rotulo: "Total", valor: String(registros.length) },
     { rotulo: "Pendentes", valor: String(porStatus("pendente")) },
@@ -194,7 +202,8 @@ export async function exportarIntencoesPDF(
 export async function exportarRelatorioDetalhadoPDF(
   turmas: TurmaAdminRow[],
   preMatriculas: PreMatriculaAdminRow[],
-  escopo = "Todas as unidades"
+  escopo = "Todas as unidades",
+  filtroStatus: StatusPreMatricula[] = []
 ) {
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
@@ -293,7 +302,14 @@ export async function exportarRelatorioDetalhadoPDF(
     }
 
     doc.addPage();
-    cabecalho(doc, logo, `Relatório detalhado 2027 — ${titulo}`, escopo, `${totalAlunos} aluno(s)`);
+    const resumoFiltro = descricaoFiltroStatus(filtroStatus);
+    cabecalho(
+      doc,
+      logo,
+      `Relatório detalhado 2027 — ${titulo}`,
+      escopo,
+      resumoFiltro ? `${totalAlunos} aluno(s) · ${resumoFiltro}` : `${totalAlunos} aluno(s)`
+    );
     autoTable(doc, {
       ...estiloTabela(),
       startY: 38,
@@ -348,13 +364,24 @@ function celulaTurma(p: PreMatriculaAdminRow): string {
  * secretaria usa pra ligar: não importa a turma, importa quem chegou
  * primeiro. Respeita o filtro de status escolhido na tela de exportação.
  */
-export async function exportarPorSenhaPDF(preMatriculas: PreMatriculaAdminRow[], escopo = "Todas as unidades") {
+export async function exportarPorSenhaPDF(
+  preMatriculas: PreMatriculaAdminRow[],
+  escopo = "Todas as unidades",
+  filtroStatus: StatusPreMatricula[] = []
+) {
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
   const posicoesEspera = calcularPosicoesEspera(preMatriculas);
   const ordenados = ordenarERenumerar(preMatriculas);
 
-  cabecalho(doc, logo, "Ordenado por senha 2027", escopo, `${ordenados.length} registro(s)`);
+  const resumoFiltro = descricaoFiltroStatus(filtroStatus);
+  cabecalho(
+    doc,
+    logo,
+    "Ordenado por senha 2027",
+    escopo,
+    resumoFiltro ? `${ordenados.length} registro(s) · ${resumoFiltro}` : `${ordenados.length} registro(s)`
+  );
 
   type Celula = string | { content: string; styles: Record<string, unknown> };
   const corpo: Celula[][] = ordenados.map((p) => [
@@ -384,13 +411,21 @@ export async function exportarPorSenhaPDF(preMatriculas: PreMatriculaAdminRow[],
  *  status escolhido na tela de exportação. */
 export async function exportarPorSenhaIntencoesPDF(
   preMatriculas: PreMatriculaAdminRow[],
-  escopo = "Todas as unidades"
+  escopo = "Todas as unidades",
+  filtroStatus: StatusPreMatricula[] = []
 ) {
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
   const ordenados = ordenarERenumerar(preMatriculas.filter((p) => !p.lista_espera));
 
-  cabecalho(doc, logo, "Ordenado por senha 2027 — Intenções", escopo, `${ordenados.length} registro(s)`);
+  const resumoFiltro = descricaoFiltroStatus(filtroStatus);
+  cabecalho(
+    doc,
+    logo,
+    "Ordenado por senha 2027 — Intenções",
+    escopo,
+    resumoFiltro ? `${ordenados.length} registro(s) · ${resumoFiltro}` : `${ordenados.length} registro(s)`
+  );
 
   const corpo = ordenados.map((p) => [
     formatarSenha(p.numero_senha),
@@ -417,7 +452,8 @@ export async function exportarPorSenhaIntencoesPDF(
  *  escolhido na tela de exportação. */
 export async function exportarPorSenhaListaEsperaPDF(
   preMatriculas: PreMatriculaAdminRow[],
-  escopo = "Todas as unidades"
+  escopo = "Todas as unidades",
+  filtroStatus: StatusPreMatricula[] = []
 ) {
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
@@ -425,7 +461,14 @@ export async function exportarPorSenhaListaEsperaPDF(
   const posicoesEspera = calcularPosicoesEspera(filtrados);
   const ordenados = ordenarERenumerar(filtrados);
 
-  cabecalho(doc, logo, "Ordenado por senha 2027 — Lista de espera", escopo, `${ordenados.length} registro(s)`);
+  const resumoFiltro = descricaoFiltroStatus(filtroStatus);
+  cabecalho(
+    doc,
+    logo,
+    "Ordenado por senha 2027 — Lista de espera",
+    escopo,
+    resumoFiltro ? `${ordenados.length} registro(s) · ${resumoFiltro}` : `${ordenados.length} registro(s)`
+  );
 
   const corpo = ordenados.map((p) => [
     formatarSenha(p.numero_senha),
