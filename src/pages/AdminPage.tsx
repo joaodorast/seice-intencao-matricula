@@ -29,7 +29,7 @@ import { listarTurmas } from "../lib/adminTurmasApi";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { STATUS_INFO, unidadeCurta } from "../lib/labels";
 import { calcularPosicoesEspera, calcularPosicoesIntencao } from "../lib/format";
-import { buscarConta, EMAIL_COM_CONFIGURACOES, type Conta } from "../lib/contas";
+import { buscarConta, EMAIL_COM_CONFIGURACOES, soVePorSenha, type Conta } from "../lib/contas";
 import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow, Unidade } from "../types";
 
 const TOKEN_KEY = "seice_admin_token";
@@ -583,7 +583,12 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
               />
             )}
             {aba === "relatorios" && (
-              <RelatoriosTab turmas={turmas} preMatriculas={registros} escopo={escopoLabelCurto(unidadeFixa?.slug)} />
+              <RelatoriosTab
+                turmas={turmas}
+                preMatriculas={registros}
+                escopo={escopoLabelCurto(unidadeFixa?.slug)}
+                somentePorSenha={soVePorSenha(conta?.email)}
+              />
             )}
             {aba === "configuracoes" && conta?.email === EMAIL_COM_CONFIGURACOES && (
               <ConfiguracoesTab token={token} onReset={() => carregar()} />
