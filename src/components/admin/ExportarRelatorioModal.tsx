@@ -449,13 +449,17 @@ export default function ExportarRelatorioModal({
                 )}
 
                 <div className="mt-3.5 border-t border-seice-border pt-3.5">
-                  <span className="mb-2 flex items-center gap-1.5 text-[13px] font-bold text-seice-ink">
-                    <Calendar size={14} className="text-seice-muted" /> Período (recebido em)
+                  <span className="mb-1 flex items-center gap-1.5 text-[13px] font-bold text-seice-ink">
+                    <Calendar size={14} className="text-seice-muted" /> Filtrar por data de recebimento
                   </span>
+                  <p className="mb-3 text-[12.5px] leading-snug text-seice-muted">
+                    Opcional. Só entram no relatório os registros recebidos dentro do período escolhido abaixo. Se
+                    deixar em branco, entram registros de qualquer data.
+                  </p>
                   <div className="flex flex-col gap-2">
                     <label className="block w-full min-w-0">
                       <span className="mb-1 block text-[11.5px] font-bold uppercase tracking-wide text-seice-muted">
-                        De
+                        A partir de que dia
                       </span>
                       <input
                         type="date"
@@ -467,7 +471,7 @@ export default function ExportarRelatorioModal({
                     </label>
                     <label className="block w-full min-w-0">
                       <span className="mb-1 block text-[11.5px] font-bold uppercase tracking-wide text-seice-muted">
-                        Até
+                        Até que dia
                       </span>
                       <input
                         type="date"
@@ -487,7 +491,7 @@ export default function ExportarRelatorioModal({
                       }}
                       className="mt-2 text-[12px] font-bold text-seice-gold hover:underline"
                     >
-                      Limpar período
+                      Limpar datas e voltar a trazer tudo
                     </button>
                   )}
                 </div>
