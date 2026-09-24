@@ -78,6 +78,10 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   const [statusExport, setStatusExport] = useState<Set<StatusPreMatricula>>(
     new Set<StatusPreMatricula>(["pendente", "contatado", "matriculado"])
   );
+  // período (data de recebimento) pro mesmo filtro de exportação — opcional,
+  // pode usar só "de", só "até" ou os dois
+  const [dataInicioExport, setDataInicioExport] = useState("");
+  const [dataFimExport, setDataFimExport] = useState("");
   const [registros, setRegistros] = useState<PreMatriculaAdminRow[]>([]);
   const [turmas, setTurmas] = useState<TurmaAdminRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -269,10 +273,21 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   const registrosIntencoes = registrosIntencoesTodos.filter(combinaBusca);
   const registrosListaEspera = registrosListaEsperaTodos.filter(combinaBusca);
 
+  function dentroDoPeriodoExport(criadoEm: string): boolean {
+    if (!dataInicioExport && !dataFimExport) return true;
+    const data = new Date(criadoEm);
+    if (dataInicioExport && data < new Date(`${dataInicioExport}T00:00:00`)) return false;
+    if (dataFimExport && data > new Date(`${dataFimExport}T23:59:59.999`)) return false;
+    return true;
+  }
+
   // contagem por status pro filtro de exportação da aba atual — atualiza
-  // sozinha conforme a busca muda, pra pessoa já ver quantos tem de cada
+  // sozinha conforme a busca ou o período mudam, pra pessoa já ver quantos
+  // tem de cada
   const contagemStatusExport = new Map<StatusPreMatricula, number>();
-  for (const r of aba === "listaEspera" ? registrosListaEspera : registrosIntencoes) {
+  for (const r of (aba === "listaEspera" ? registrosListaEspera : registrosIntencoes).filter((r) =>
+    dentroDoPeriodoExport(r.criado_em)
+  )) {
     contagemStatusExport.set(r.status, (contagemStatusExport.get(r.status) ?? 0) + 1);
   }
 
@@ -400,7 +415,9 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                 variant="ghost"
                 disabled={statusExport.size === 0}
                 onClick={async () => {
-                  const registrosParaExportar = registrosDaUnidade.filter(combinaBusca).filter((r) => statusExport.has(r.status));
+                  const registrosParaExportar = registrosDaUnidade
+                    .filter(combinaBusca)
+                    .filter((r) => statusExport.has(r.status) && dentroDoPeriodoExport(r.criado_em));
                   if (aba === "listaEspera") {
                     const { exportarPorSenhaListaEsperaPDF } = await import("../lib/pdf");
                     await exportarPorSenhaListaEsperaPDF(registrosParaExportar, escopoLabel);
@@ -417,7 +434,9 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                 variant="ghost"
                 disabled={statusExport.size === 0}
                 onClick={async () => {
-                  const registrosParaExportar = registrosDaUnidade.filter(combinaBusca).filter((r) => statusExport.has(r.status));
+                  const registrosParaExportar = registrosDaUnidade
+                    .filter(combinaBusca)
+                    .filter((r) => statusExport.has(r.status) && dentroDoPeriodoExport(r.criado_em));
                   const sufixo = `${sufixoExport}-${aba === "listaEspera" ? "lista-espera" : "intencoes"}`;
                   if (aba === "listaEspera") {
                     const { exportarPorSenhaListaEsperaExcel } = await import("../lib/excel");
@@ -470,6 +489,34 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                   </button>
                 );
               })}
+              <span className="ml-2 shrink-0 text-[12.5px] font-bold text-seice-ink">Período:</span>
+              <input
+                type="date"
+                value={dataInicioExport}
+                max={dataFimExport || undefined}
+                onChange={(e) => setDataInicioExport(e.target.value)}
+                className="inset-surface rounded-lg border border-seice-border-strong px-2.5 py-1.5 text-[12.5px] text-seice-ink outline-none focus:border-seice-gold"
+              />
+              <span className="text-[12.5px] text-seice-muted">até</span>
+              <input
+                type="date"
+                value={dataFimExport}
+                min={dataInicioExport || undefined}
+                onChange={(e) => setDataFimExport(e.target.value)}
+                className="inset-surface rounded-lg border border-seice-border-strong px-2.5 py-1.5 text-[12.5px] text-seice-ink outline-none focus:border-seice-gold"
+              />
+              {(dataInicioExport || dataFimExport) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDataInicioExport("");
+                    setDataFimExport("");
+                  }}
+                  className="text-[12px] font-bold text-seice-gold hover:underline"
+                >
+                  Limpar
+                </button>
+              )}
             </div>
           </div>
         )}
