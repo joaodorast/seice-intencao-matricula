@@ -489,7 +489,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                   </button>
                 );
               })}
-              <span className="ml-2 shrink-0 text-[12.5px] font-bold text-seice-ink">Recebido entre:</span>
+              <span className="ml-2 shrink-0 text-[12.5px] font-bold text-seice-ink">Por período:</span>
               <label className="flex items-center gap-1.5">
                 <span className="text-[12.5px] text-seice-muted">a partir de</span>
                 <input
