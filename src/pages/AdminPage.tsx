@@ -12,6 +12,8 @@ import {
   School,
   Search,
   Settings2,
+  Square,
+  SquareCheck,
 } from "lucide-react";
 import LoginForm from "../components/admin/LoginForm";
 import PreMatriculaTable from "../components/admin/PreMatriculaTable";
@@ -70,6 +72,12 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   const [aba, setAba] = useState<AbaAdmin>("visao");
   const [unidadeFiltro, setUnidadeFiltro] = useState<string>(escopoSlug ?? "todas");
   const [busca, setBusca] = useState("");
+  // filtro de status pros botões de exportar PDF/Excel dessas duas abas — por
+  // padrão não traz quem já cancelou; a pessoa pode desmarcar "Contatado"
+  // pra não ver de novo quem já foi chamado, por exemplo
+  const [statusExport, setStatusExport] = useState<Set<StatusPreMatricula>>(
+    new Set<StatusPreMatricula>(["pendente", "contatado", "matriculado"])
+  );
   const [registros, setRegistros] = useState<PreMatriculaAdminRow[]>([]);
   const [turmas, setTurmas] = useState<TurmaAdminRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -261,6 +269,13 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   const registrosIntencoes = registrosIntencoesTodos.filter(combinaBusca);
   const registrosListaEspera = registrosListaEsperaTodos.filter(combinaBusca);
 
+  // contagem por status pro filtro de exportação da aba atual — atualiza
+  // sozinha conforme a busca muda, pra pessoa já ver quantos tem de cada
+  const contagemStatusExport = new Map<StatusPreMatricula, number>();
+  for (const r of aba === "listaEspera" ? registrosListaEspera : registrosIntencoes) {
+    contagemStatusExport.set(r.status, (contagemStatusExport.get(r.status) ?? 0) + 1);
+  }
+
   if (!token) {
     return <LoginForm onLogin={handleLogin} unidade={unidadeFixa?.nome} />;
   }
@@ -363,56 +378,99 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
         )}
 
         {(aba === "prematriculas" || aba === "listaEspera") && (
-          <div className="mb-4 flex flex-wrap items-center gap-2.5">
-            <div className="relative min-w-55 flex-1">
-              <Search
-                size={15}
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-seice-muted"
-              />
-              <input
-                type="text"
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar por aluno, responsável, série ou turma..."
-                className="inset-surface w-full rounded-xl border border-seice-border-strong py-2.5 pl-9 pr-3.5 text-[15px] text-seice-ink outline-none placeholder:text-seice-muted focus:border-seice-gold focus:ring-4 focus:ring-seice-gold/20"
-              />
+          <div className="mb-4 flex flex-col gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="relative min-w-55 flex-1">
+                <Search
+                  size={15}
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-seice-muted"
+                />
+                <input
+                  type="text"
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  placeholder="Buscar por aluno, responsável, série ou turma..."
+                  className="inset-surface w-full rounded-xl border border-seice-border-strong py-2.5 pl-9 pr-3.5 text-[15px] text-seice-ink outline-none placeholder:text-seice-muted focus:border-seice-gold focus:ring-4 focus:ring-seice-gold/20"
+                />
+              </div>
+              <Button variant="dark" onClick={() => carregar()} className="!px-4 !py-2.5">
+                <RefreshCw size={14} /> Atualizar
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={statusExport.size === 0}
+                onClick={async () => {
+                  const registrosParaExportar = registrosDaUnidade.filter(combinaBusca).filter((r) => statusExport.has(r.status));
+                  if (aba === "listaEspera") {
+                    const { exportarPorSenhaListaEsperaPDF } = await import("../lib/pdf");
+                    await exportarPorSenhaListaEsperaPDF(registrosParaExportar, escopoLabel);
+                  } else {
+                    const { exportarPorSenhaIntencoesPDF } = await import("../lib/pdf");
+                    await exportarPorSenhaIntencoesPDF(registrosParaExportar, escopoLabel);
+                  }
+                }}
+                className="!px-4 !py-2.5"
+              >
+                <Download size={14} /> PDF
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={statusExport.size === 0}
+                onClick={async () => {
+                  const registrosParaExportar = registrosDaUnidade.filter(combinaBusca).filter((r) => statusExport.has(r.status));
+                  const sufixo = `${sufixoExport}-${aba === "listaEspera" ? "lista-espera" : "intencoes"}`;
+                  if (aba === "listaEspera") {
+                    const { exportarPorSenhaListaEsperaExcel } = await import("../lib/excel");
+                    exportarPorSenhaListaEsperaExcel(registrosParaExportar, sufixo);
+                  } else {
+                    const { exportarPorSenhaIntencoesExcel } = await import("../lib/excel");
+                    exportarPorSenhaIntencoesExcel(registrosParaExportar, sufixo);
+                  }
+                }}
+                className="!px-4 !py-2.5"
+              >
+                <Download size={14} /> Excel
+              </Button>
             </div>
-            <Button variant="dark" onClick={() => carregar()} className="!px-4 !py-2.5">
-              <RefreshCw size={14} /> Atualizar
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={async () => {
-                const registrosParaExportar = registrosDaUnidade.filter(combinaBusca);
-                if (aba === "listaEspera") {
-                  const { exportarPorSenhaListaEsperaPDF } = await import("../lib/pdf");
-                  await exportarPorSenhaListaEsperaPDF(registrosParaExportar, escopoLabel);
-                } else {
-                  const { exportarPorSenhaIntencoesPDF } = await import("../lib/pdf");
-                  await exportarPorSenhaIntencoesPDF(registrosParaExportar, escopoLabel);
-                }
-              }}
-              className="!px-4 !py-2.5"
-            >
-              <Download size={14} /> PDF
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={async () => {
-                const registrosParaExportar = registrosDaUnidade.filter(combinaBusca);
-                const sufixo = `${sufixoExport}-${aba === "listaEspera" ? "lista-espera" : "intencoes"}`;
-                if (aba === "listaEspera") {
-                  const { exportarPorSenhaListaEsperaExcel } = await import("../lib/excel");
-                  exportarPorSenhaListaEsperaExcel(registrosParaExportar, sufixo);
-                } else {
-                  const { exportarPorSenhaIntencoesExcel } = await import("../lib/excel");
-                  exportarPorSenhaIntencoesExcel(registrosParaExportar, sufixo);
-                }
-              }}
-              className="!px-4 !py-2.5"
-            >
-              <Download size={14} /> Excel
-            </Button>
+
+            {/* filtro de status pro que sai no PDF/Excel — os cartões da
+                tabela abaixo continuam mostrando todo mundo, esse filtro é
+                só pros dois botões de exportar acima */}
+            <div className="inset-surface flex flex-wrap items-center gap-1.5 rounded-xl border border-seice-border p-2">
+              <span className="mr-1 shrink-0 text-[12.5px] font-bold text-seice-ink">Exportar com status:</span>
+              {(["pendente", "contatado", "matriculado", "cancelado"] as StatusPreMatricula[]).map((s) => {
+                const ativo = statusExport.has(s);
+                const qtd = contagemStatusExport.get(s) ?? 0;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    disabled={qtd === 0}
+                    onClick={() =>
+                      setStatusExport((atual) => {
+                        const novo = new Set(atual);
+                        if (novo.has(s)) novo.delete(s);
+                        else novo.add(s);
+                        return novo;
+                      })
+                    }
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                      ativo
+                        ? "border-seice-gold bg-seice-gold/10 text-seice-ink"
+                        : "border-seice-border-strong text-seice-muted hover:text-seice-ink"
+                    }`}
+                  >
+                    {ativo ? (
+                      <SquareCheck size={14} strokeWidth={2.2} className="text-seice-gold" />
+                    ) : (
+                      <Square size={13} />
+                    )}
+                    {STATUS_INFO[s]?.label ?? s}
+                    <span className={`tabular-nums ${ativo ? "text-seice-gold" : "text-seice-muted"}`}>({qtd})</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
