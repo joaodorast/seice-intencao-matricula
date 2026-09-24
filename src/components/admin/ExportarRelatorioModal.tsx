@@ -147,24 +147,28 @@ export default function ExportarRelatorioModal({
     (p) => dentroDoPeriodo(p.criado_em)
   );
   const preMatriculasFiltradas = preMatriculasDaTurma.filter((p) => statusAtivos.has(p.status));
-  // conta quantos registros cada status tem (só pelo recorte de turma, antes
-  // do filtro de status) — pra mostrar o número ao lado de cada opção e a
-  // pessoa já ver na hora quantos vai marcar/desmarcar
+
+  // os relatórios "Por senha · Intenções" e "Por senha · Lista de espera"
+  // recortam mais um pouco (só quem não tá/tá na lista de espera) — a
+  // contagem por status (chips) e o total exibido precisam refletir só esse
+  // recorte, senão mostra "Contatado: 33" mesmo quando só 1 desses 33 é
+  // lista de espera de verdade, confundindo quem tá vendo o filtro
+  const preMatriculasDoTipo =
+    tipo === "porsenhaintencoes"
+      ? preMatriculasDaTurma.filter((p) => !p.lista_espera)
+      : tipo === "porsenhaespera"
+      ? preMatriculasDaTurma.filter((p) => p.lista_espera)
+      : preMatriculasDaTurma;
+
+  // conta quantos registros cada status tem (só pelo recorte de turma +
+  // tipo de relatório, antes do filtro de status) — pra mostrar o número ao
+  // lado de cada opção e a pessoa já ver na hora quantos vai marcar/desmarcar
   const contagemPorStatus = new Map<StatusPreMatricula, number>();
-  for (const p of preMatriculasDaTurma) {
+  for (const p of preMatriculasDoTipo) {
     contagemPorStatus.set(p.status, (contagemPorStatus.get(p.status) ?? 0) + 1);
   }
 
-  // os relatórios "Por senha · Intenções" e "Por senha · Lista de espera"
-  // recortam mais um pouco (só quem não tá/tá na lista de espera) — sem
-  // isso o número mostrado na tela ficava igual nos dois tipos, mesmo eles
-  // trazendo gente diferente no PDF/Excel
-  const totalNoRelatorio =
-    tipo === "porsenhaintencoes"
-      ? preMatriculasFiltradas.filter((p) => !p.lista_espera).length
-      : tipo === "porsenhaespera"
-      ? preMatriculasFiltradas.filter((p) => p.lista_espera).length
-      : preMatriculasFiltradas.length;
+  const totalNoRelatorio = preMatriculasDoTipo.filter((p) => statusAtivos.has(p.status)).length;
 
   const rotuloSelecao = todas
     ? `Todas as turmas — ${escopo}`
