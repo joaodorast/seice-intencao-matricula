@@ -47,6 +47,8 @@ function slugificar(txt: string): string {
  * turma ou várias de uma vez — e baixa em PDF ou Excel já com esse recorte,
  * sem precisar sair filtrando na tela antes.
  */
+const TIPOS_POR_SENHA: Tipo[] = ["porsenha", "porsenhaintencoes", "porsenhaespera"];
+
 export default function ExportarRelatorioModal({
   open,
   onClose,
@@ -54,6 +56,7 @@ export default function ExportarRelatorioModal({
   preMatriculas,
   escopo,
   tipoInicial = "completo",
+  somentePorSenha = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -61,13 +64,20 @@ export default function ExportarRelatorioModal({
   preMatriculas: PreMatriculaAdminRow[];
   escopo: string;
   tipoInicial?: Tipo;
+  /** Pedido da direção: Priscilla, Edson e Bia só podem exportar os
+   *  relatórios "Por senha" — as outras abas nem aparecem pra essas contas. */
+  somentePorSenha?: boolean;
 }) {
-  const [tipo, setTipo] = useState<Tipo>(tipoInicial);
+  const tipoInicialSeguro =
+    somentePorSenha && !TIPOS_POR_SENHA.includes(tipoInicial) ? "porsenha" : tipoInicial;
+  const [tipo, setTipo] = useState<Tipo>(tipoInicialSeguro);
 
   // o botão "Relatório detalhado" da tela abre o modal já nesse tipo — sem
-  // isso, reabrir o modal por ali sempre voltava pra aba "Turmas"
+  // isso, reabrir o modal por ali sempre voltava pra aba "Turmas". Contas
+  // restritas a "Por senha" nunca recebem um tipo fora da lista permitida,
+  // mesmo que algo tente abrir o modal com outro tipoInicial.
   useEffect(() => {
-    if (open) setTipo(tipoInicial);
+    if (open) setTipo(tipoInicialSeguro);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
   const [todas, setTodas] = useState(true);
@@ -273,15 +283,19 @@ export default function ExportarRelatorioModal({
       <div className="flex flex-col gap-5">
         {/* o que exportar: vagas por turma, ou a lista de intenções */}
         <div className="inset-surface flex flex-nowrap gap-1 overflow-x-auto rounded-xl border border-seice-border p-1.5">
-          <TipoTab ativo={tipo === "completo"} onClick={() => setTipo("completo")} icon={<Layers size={16} />}>
-            Turmas
-          </TipoTab>
-          <TipoTab ativo={tipo === "intencoes"} onClick={() => setTipo("intencoes")} icon={<FileText size={16} />}>
-            Intenções
-          </TipoTab>
-          <TipoTab ativo={tipo === "detalhado"} onClick={() => setTipo("detalhado")} icon={<ListTree size={16} />}>
-            Detalhado
-          </TipoTab>
+          {!somentePorSenha && (
+            <>
+              <TipoTab ativo={tipo === "completo"} onClick={() => setTipo("completo")} icon={<Layers size={16} />}>
+                Turmas
+              </TipoTab>
+              <TipoTab ativo={tipo === "intencoes"} onClick={() => setTipo("intencoes")} icon={<FileText size={16} />}>
+                Intenções
+              </TipoTab>
+              <TipoTab ativo={tipo === "detalhado"} onClick={() => setTipo("detalhado")} icon={<ListTree size={16} />}>
+                Detalhado
+              </TipoTab>
+            </>
+          )}
           <TipoTab ativo={tipo === "porsenha"} onClick={() => setTipo("porsenha")} icon={<ListOrdered size={16} />}>
             Por senha
           </TipoTab>
