@@ -138,12 +138,19 @@ export default function OverviewTab({
                   <div className="flex items-center gap-1.5 text-[12.5px] font-bold opacity-90">
                     <CheckCircle2 size={13} className="shrink-0" />
                     <span className="tabular-nums">{intencao}</span>
-                    <span className="font-semibold opacity-75">com vaga garantida</span>
+                    {/* pra cancelado, "com vaga garantida" soaria como se a
+                        vaga ainda estivesse de pé — no passado deixa claro
+                        que é de onde essas pessoas vieram antes de cancelar */}
+                    <span className="font-semibold opacity-75">
+                      {s === "cancelado" ? "eram intenção com vaga" : "com vaga garantida"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-[12.5px] font-bold opacity-90">
                     <Clock size={13} className="shrink-0" />
                     <span className="tabular-nums">{espera}</span>
-                    <span className="font-semibold opacity-75">em lista de espera</span>
+                    <span className="font-semibold opacity-75">
+                      {s === "cancelado" ? "eram lista de espera" : "em lista de espera"}
+                    </span>
                   </div>
                 </div>
               </div>
