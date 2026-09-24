@@ -12,14 +12,18 @@ export default function RelatoriosTab({
   turmas,
   preMatriculas,
   escopo = "Todas as unidades",
+  somentePorSenha = false,
 }: {
   turmas: TurmaAdminRow[];
   preMatriculas: PreMatriculaAdminRow[];
   /** Painel atual: "Todas as unidades", "SEICE CE" ou "SEICE JP". */
   escopo?: string;
+  /** Pedido da direção: Priscilla, Edson e Bia só podem exportar os
+   *  relatórios "Por senha" — sem acesso a Turmas, Intenções nem Detalhado. */
+  somentePorSenha?: boolean;
 }) {
   const [modalAberto, setModalAberto] = useState(false);
-  const [tipoModal, setTipoModal] = useState<TipoModal>("completo");
+  const [tipoModal, setTipoModal] = useState<TipoModal>(somentePorSenha ? "porsenha" : "completo");
 
   function abrirModal(tipo: TipoModal) {
     setTipoModal(tipo);
@@ -43,33 +47,59 @@ export default function RelatoriosTab({
           </p>
         </div>
         <div className="flex flex-wrap gap-2.5">
-          <Button variant="ghost" onClick={() => abrirModal("detalhado")} className="shrink-0 !px-5">
-            <ListTree size={17} /> Relatório detalhado
-          </Button>
-          <Button variant="ghost" onClick={() => abrirModal("porsenha")} className="shrink-0 !px-5">
-            <ListOrdered size={17} /> Ordenado por senha
-          </Button>
-          <Button onClick={() => abrirModal("completo")} className="shrink-0 !px-5">
-            <Download size={17} /> Exportar relatório
-          </Button>
+          {somentePorSenha ? (
+            <Button onClick={() => abrirModal("porsenha")} className="shrink-0 !px-5">
+              <ListOrdered size={17} /> Ordenado por senha
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => abrirModal("detalhado")} className="shrink-0 !px-5">
+                <ListTree size={17} /> Relatório detalhado
+              </Button>
+              <Button variant="ghost" onClick={() => abrirModal("porsenha")} className="shrink-0 !px-5">
+                <ListOrdered size={17} /> Ordenado por senha
+              </Button>
+              <Button onClick={() => abrirModal("completo")} className="shrink-0 !px-5">
+                <Download size={17} /> Exportar relatório
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      <Card className="flex flex-col items-center gap-3 border-dashed !py-10 text-center">
-        <span className="icon-tile flex h-12 w-12 items-center justify-center rounded-2xl">
-          <Download size={22} />
-        </span>
-        <div>
-          <div className="text-[16.5px] font-bold text-seice-ink">Tudo em um único lugar</div>
-          <p className="mx-auto mt-1 max-w-sm text-[14px] text-seice-muted">
-            Vagas por turma, a lista de intenções ou o relatório detalhado (turma + alunos + telefone), em PDF ou
-            Excel — para todas as turmas ou para uma turma específica.
-          </p>
-        </div>
-        <Button variant="ghost" onClick={() => abrirModal("completo")} className="mt-1">
-          <Download size={16} /> Abrir exportação
-        </Button>
-      </Card>
+      {somentePorSenha ? (
+        <Card className="flex flex-col items-center gap-3 border-dashed !py-10 text-center">
+          <span className="icon-tile flex h-12 w-12 items-center justify-center rounded-2xl">
+            <ListOrdered size={22} />
+          </span>
+          <div>
+            <div className="text-[16.5px] font-bold text-seice-ink">Relatórios por ordem de chegada</div>
+            <p className="mx-auto mt-1 max-w-sm text-[14px] text-seice-muted">
+              Escolha entre todo mundo junto, só quem tem vaga garantida ou só a lista de espera — sempre em
+              PDF ou Excel, ordenado por quem chegou primeiro.
+            </p>
+          </div>
+          <Button variant="ghost" onClick={() => abrirModal("porsenha")} className="mt-1">
+            <Download size={16} /> Abrir exportação
+          </Button>
+        </Card>
+      ) : (
+        <Card className="flex flex-col items-center gap-3 border-dashed !py-10 text-center">
+          <span className="icon-tile flex h-12 w-12 items-center justify-center rounded-2xl">
+            <Download size={22} />
+          </span>
+          <div>
+            <div className="text-[16.5px] font-bold text-seice-ink">Tudo em um único lugar</div>
+            <p className="mx-auto mt-1 max-w-sm text-[14px] text-seice-muted">
+              Vagas por turma, a lista de intenções ou o relatório detalhado (turma + alunos + telefone), em
+              PDF ou Excel — para todas as turmas ou para uma turma específica.
+            </p>
+          </div>
+          <Button variant="ghost" onClick={() => abrirModal("completo")} className="mt-1">
+            <Download size={16} /> Abrir exportação
+          </Button>
+        </Card>
+      )}
 
       <Card>
         <div className="mb-5 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-2.5">
@@ -99,6 +129,7 @@ export default function RelatoriosTab({
         preMatriculas={preMatriculas}
         escopo={escopo}
         tipoInicial={tipoModal}
+        somentePorSenha={somentePorSenha}
       />
     </div>
   );
