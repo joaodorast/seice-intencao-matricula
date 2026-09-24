@@ -489,22 +489,27 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                   </button>
                 );
               })}
-              <span className="ml-2 shrink-0 text-[12.5px] font-bold text-seice-ink">Período:</span>
-              <input
-                type="date"
-                value={dataInicioExport}
-                max={dataFimExport || undefined}
-                onChange={(e) => setDataInicioExport(e.target.value)}
-                className="inset-surface rounded-lg border border-seice-border-strong px-2.5 py-1.5 text-[12.5px] text-seice-ink outline-none focus:border-seice-gold"
-              />
-              <span className="text-[12.5px] text-seice-muted">até</span>
-              <input
-                type="date"
-                value={dataFimExport}
-                min={dataInicioExport || undefined}
-                onChange={(e) => setDataFimExport(e.target.value)}
-                className="inset-surface rounded-lg border border-seice-border-strong px-2.5 py-1.5 text-[12.5px] text-seice-ink outline-none focus:border-seice-gold"
-              />
+              <span className="ml-2 shrink-0 text-[12.5px] font-bold text-seice-ink">Recebido entre:</span>
+              <label className="flex items-center gap-1.5">
+                <span className="text-[12.5px] text-seice-muted">a partir de</span>
+                <input
+                  type="date"
+                  value={dataInicioExport}
+                  max={dataFimExport || undefined}
+                  onChange={(e) => setDataInicioExport(e.target.value)}
+                  className="inset-surface rounded-lg border border-seice-border-strong px-2.5 py-1.5 text-[12.5px] text-seice-ink outline-none focus:border-seice-gold"
+                />
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-[12.5px] text-seice-muted">até</span>
+                <input
+                  type="date"
+                  value={dataFimExport}
+                  min={dataInicioExport || undefined}
+                  onChange={(e) => setDataFimExport(e.target.value)}
+                  className="inset-surface rounded-lg border border-seice-border-strong px-2.5 py-1.5 text-[12.5px] text-seice-ink outline-none focus:border-seice-gold"
+                />
+              </label>
               {(dataInicioExport || dataFimExport) && (
                 <button
                   type="button"
