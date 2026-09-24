@@ -32,3 +32,15 @@ export function buscarConta(email: string): Conta | null {
 
 /** Só essa conta enxerga a tela de Configurações (reset dos dados de teste). */
 export const EMAIL_COM_CONFIGURACOES = "admin@seice.com.br";
+
+/**
+ * Essas contas só podem exportar os relatórios "Por senha" (o combinado, o
+ * de intenções e o de lista de espera) — não têm acesso aos relatórios de
+ * Turmas, Intenções (completo) nem Detalhado. Pedido explícito da direção.
+ */
+const EMAILS_SO_POR_SENHA = ["priscilla@seice.com.br", "edson@seice.com.br", "bia@seice.com.br"];
+
+export function soVePorSenha(email: string | undefined | null): boolean {
+  if (!email) return false;
+  return EMAILS_SO_POR_SENHA.includes(email.trim().toLowerCase());
+}
