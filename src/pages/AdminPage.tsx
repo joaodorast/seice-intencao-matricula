@@ -270,9 +270,6 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
     .filter((r) => r.lista_espera)
     .sort((a, b) => a.numero_senha - b.numero_senha)
     .map((r, i) => ({ ...r, numero_senha: i + 1 }));
-  const registrosIntencoes = registrosIntencoesTodos.filter(combinaBusca);
-  const registrosListaEspera = registrosListaEsperaTodos.filter(combinaBusca);
-
   function dentroDoPeriodoExport(criadoEm: string): boolean {
     if (!dataInicioExport && !dataFimExport) return true;
     const data = new Date(criadoEm);
@@ -281,13 +278,24 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
     return true;
   }
 
-  // contagem por status pro filtro de exportação da aba atual — atualiza
-  // sozinha conforme a busca ou o período mudam, pra pessoa já ver quantos
-  // tem de cada
+  // busca + período sempre filtram a tela; o filtro de status (chips
+  // "Exportar com status") também — apesar do nome, ele agora filtra a
+  // tela inteira (cartões visíveis) e não só o PDF/Excel, pra secretaria
+  // conseguir, por exemplo, esconder da tela quem já foi Contatado
+  const registrosIntencoesTodos2 = registrosIntencoesTodos.filter(
+    (r) => combinaBusca(r) && dentroDoPeriodoExport(r.criado_em)
+  );
+  const registrosListaEsperaTodos2 = registrosListaEsperaTodos.filter(
+    (r) => combinaBusca(r) && dentroDoPeriodoExport(r.criado_em)
+  );
+  const registrosIntencoes = registrosIntencoesTodos2.filter((r) => statusExport.has(r.status));
+  const registrosListaEspera = registrosListaEsperaTodos2.filter((r) => statusExport.has(r.status));
+
+  // contagem por status pro filtro — conta em cima de busca+período, sem
+  // aplicar o próprio filtro de status, pra não sumir a contagem de quem
+  // tá desmarcado (senão a pessoa nunca mais consegue ver o número de volta)
   const contagemStatusExport = new Map<StatusPreMatricula, number>();
-  for (const r of (aba === "listaEspera" ? registrosListaEspera : registrosIntencoes).filter((r) =>
-    dentroDoPeriodoExport(r.criado_em)
-  )) {
+  for (const r of aba === "listaEspera" ? registrosListaEsperaTodos2 : registrosIntencoesTodos2) {
     contagemStatusExport.set(r.status, (contagemStatusExport.get(r.status) ?? 0) + 1);
   }
 
@@ -415,9 +423,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                 variant="ghost"
                 disabled={statusExport.size === 0}
                 onClick={async () => {
-                  const registrosParaExportar = registrosDaUnidade
-                    .filter(combinaBusca)
-                    .filter((r) => statusExport.has(r.status) && dentroDoPeriodoExport(r.criado_em));
+                  const registrosParaExportar = aba === "listaEspera" ? registrosListaEspera : registrosIntencoes;
                   const filtroStatus = [...statusExport];
                   if (aba === "listaEspera") {
                     const { exportarPorSenhaListaEsperaPDF } = await import("../lib/pdf");
@@ -435,9 +441,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                 variant="ghost"
                 disabled={statusExport.size === 0}
                 onClick={async () => {
-                  const registrosParaExportar = registrosDaUnidade
-                    .filter(combinaBusca)
-                    .filter((r) => statusExport.has(r.status) && dentroDoPeriodoExport(r.criado_em));
+                  const registrosParaExportar = aba === "listaEspera" ? registrosListaEspera : registrosIntencoes;
                   const sufixo = `${sufixoExport}-${aba === "listaEspera" ? "lista-espera" : "intencoes"}`;
                   if (aba === "listaEspera") {
                     const { exportarPorSenhaListaEsperaExcel } = await import("../lib/excel");
@@ -453,9 +457,9 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
               </Button>
             </div>
 
-            {/* filtro de status pro que sai no PDF/Excel — os cartões da
-                tabela abaixo continuam mostrando todo mundo, esse filtro é
-                só pros dois botões de exportar acima */}
+            {/* filtro de status + período: filtra a tela (os cartões
+                abaixo) e também o que sai no PDF/Excel — os dois sempre
+                em sincronia com o que está marcado aqui */}
             <div className="inset-surface flex flex-wrap items-center gap-1.5 rounded-xl border border-seice-border p-2">
               <span className="mr-1 shrink-0 text-[12.5px] font-bold text-seice-ink">Exportar com status:</span>
               {(["pendente", "contatado", "matriculado", "cancelado"] as StatusPreMatricula[]).map((s) => {
