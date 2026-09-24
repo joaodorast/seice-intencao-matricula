@@ -303,7 +303,7 @@ export default function ExportarRelatorioModal({
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
           {/* escolha das turmas — cartões grandes, seleção múltipla */}
-          <div className="flex min-h-0 min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2.5">
               <div className="relative flex-1">
                 <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-seice-muted" />
@@ -324,7 +324,7 @@ export default function ExportarRelatorioModal({
               </button>
             </div>
 
-            <div className="grid min-h-[20rem] flex-1 grid-cols-1 gap-2.5 overflow-y-auto rounded-2xl border border-seice-border bg-seice-panel p-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid max-h-[42rem] grid-cols-1 gap-2.5 overflow-y-auto rounded-2xl border border-seice-border bg-seice-panel p-3 sm:grid-cols-2 xl:grid-cols-3">
               <CartaoTurma
                 ativo={todas}
                 onClick={escolherTodas}
@@ -367,11 +367,8 @@ export default function ExportarRelatorioModal({
             </div>
           </div>
 
-          {/* resumo da seleção + exportar — os filtros rolam por dentro
-              desse card quando não cabem, mas os botões de baixar ficam
-              fora dessa área de rolagem, sempre visíveis sem precisar rolar */}
-          <div className="card-surface flex max-h-[85vh] flex-col gap-4 rounded-2xl border border-seice-border p-4">
-            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
+          {/* resumo da seleção + exportar */}
+          <div className="card-surface flex flex-col gap-4 rounded-2xl border border-seice-border p-4">
             <div>
               <div className="mb-2.5 text-[12.5px] font-bold uppercase tracking-wide text-seice-muted">
                 Seleção
@@ -514,9 +511,8 @@ export default function ExportarRelatorioModal({
               <MiniNumero label="Livres" value={totalLivres} destaque />
               <MiniNumero label="No relatório" value={totalNoRelatorio} />
             </div>
-            </div>
 
-            <div className="flex shrink-0 flex-col gap-2.5 border-t border-seice-border pt-4">
+            <div className="mt-auto flex flex-col gap-2.5 border-t border-seice-border pt-4">
               <BotaoExportar
                 formato="pdf"
                 rotulo="Baixar em PDF"
