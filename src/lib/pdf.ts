@@ -217,10 +217,19 @@ export async function exportarRelatorioDetalhadoPDF(
     if (!porTurma.has(p.turma_id)) porTurma.set(p.turma_id, []);
     porTurma.get(p.turma_id)!.push(p);
   }
+  // uma turma com "Sem oferta" (0 vagas cadastradas) ainda pode ter gente na
+  // lista de espera — o formulário público aceita a inscrição mesmo sem
+  // vaga nenhuma. Contar isso aqui também evita o estranhamento de ver
+  // "Sem oferta" numa turma que aparece com gente pra contatar na página 2.
+  const esperaPorTurma = new Map<string, number>();
+  for (const p of preMatriculas) {
+    if (p.lista_espera) esperaPorTurma.set(p.turma_id, (esperaPorTurma.get(p.turma_id) ?? 0) + 1);
+  }
 
   const ofertadas = turmas.reduce((acc, t) => acc + t.vagas_planilha, 0);
   const livres = turmas.reduce((acc, t) => acc + t.vagas_restantes, 0);
   const preenchidas = ofertadas - livres;
+  const totalEmEspera = preMatriculas.filter((p) => p.lista_espera).length;
 
   // página 1 — ocupação por turma (igual ao relatório de turmas)
   cabecalho(doc, logo, "Relatório detalhado 2027 — Vagas por turma", escopo, `${turmas.length} turma(s)`);
@@ -229,18 +238,20 @@ export async function exportarRelatorioDetalhadoPDF(
     { rotulo: "Vagas ofertadas", valor: String(ofertadas) },
     { rotulo: "Preenchidas", valor: String(preenchidas) },
     { rotulo: "Livres", valor: String(livres) },
+    { rotulo: "Em espera", valor: String(totalEmEspera) },
   ]);
 
-  type CelulaTurma = string | number | { content: string; colSpan: number; styles: Record<string, unknown> };
+  type CelulaTurma = string | number | { content: string; colSpan?: number; styles: Record<string, unknown> };
   const corpoTurmas: CelulaTurma[][] = [];
   let grupoAtual = "";
   for (const t of ordenarTurmas(turmas)) {
     const grupo = `${unidadeNome(t.unidade_id)}  ·  ${NIVEL_LABELS[t.nivel] ?? t.nivel}`;
     if (grupo !== grupoAtual) {
-      corpoTurmas.push([{ content: grupo, colSpan: 8, styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" } }]);
+      corpoTurmas.push([{ content: grupo, colSpan: 9, styles: { fillColor: [255, 244, 204], textColor: GRAFITE, fontStyle: "bold" } }]);
       grupoAtual = grupo;
     }
     const status = vagaStatus(t.vagas_restantes, t.vagas_planilha);
+    const espera = esperaPorTurma.get(t.id) ?? 0;
     corpoTurmas.push([
       t.serie,
       t.codigo,
@@ -249,19 +260,27 @@ export async function exportarRelatorioDetalhadoPDF(
       t.vagas_planilha,
       Math.max(t.vagas_planilha - t.vagas_restantes, 0),
       t.vagas_restantes,
-      t.vagas_planilha === 0 ? "Sem oferta" : status.label,
+      espera > 0
+        ? { content: String(espera), styles: { textColor: [161, 98, 7], fontStyle: "bold" } }
+        : "0",
+      t.vagas_planilha === 0
+        ? espera > 0
+          ? "Sem oferta · com espera"
+          : "Sem oferta"
+        : status.label,
     ]);
   }
 
   autoTable(doc, {
     ...estiloTabela(),
     startY: y1 + 6,
-    head: [["Série", "Turma", "Turno", "Curso", "Ofertadas", "Preenchidas", "Livres", "Situação"]],
+    head: [["Série", "Turma", "Turno", "Curso", "Ofertadas", "Preenchidas", "Livres", "Espera", "Situação"]],
     body: corpoTurmas,
     columnStyles: {
       4: { halign: "center" },
       5: { halign: "center" },
       6: { halign: "center", fontStyle: "bold", textColor: GRAFITE },
+      7: { halign: "center" },
     },
   });
 
