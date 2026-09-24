@@ -151,14 +151,13 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
 }
 
 /**
- * Tira quem cancelou e reconta a senha do zero, só dentro dessa lista (01,
- * 02, 03...) — sem isso, a senha "de verdade" fica cheia de buraco depois
- * de filtrar por tipo e tirar cancelados. Não mexe no registro real, só na
- * numeração mostrada no relatório.
+ * Reconta a senha do zero, só dentro da lista já filtrada por status (01,
+ * 02, 03...) — sem isso, a senha "de verdade" fica cheia de buraco depois de
+ * filtrar por tipo/status. Não mexe no registro real, só na numeração
+ * mostrada no relatório.
  */
 function ordenarERenumerar(preMatriculas: PreMatriculaAdminRow[]): PreMatriculaAdminRow[] {
   return [...preMatriculas]
-    .filter((p) => p.status !== "cancelado")
     .sort((a, b) => a.numero_senha - b.numero_senha)
     .map((p, i) => ({ ...p, numero_senha: i + 1 }));
 }
@@ -171,11 +170,11 @@ function celulaTurma(p: PreMatriculaAdminRow): string {
  * Lista única, sem separar por turma — ordenada só pela senha, misturando
  * turmas e tipos (intenção + lista de espera) de propósito. É a ordem que a
  * secretaria usa pra ligar: não importa a turma, importa quem chegou
- * primeiro. Quem cancelou não aparece.
+ * primeiro. Respeita o filtro de status escolhido na tela de exportação.
  */
-export function exportarPorSenhaExcel(preMatriculasComCancelados: PreMatriculaAdminRow[], sufixo: string) {
-  const posicoesEspera = calcularPosicoesEspera(preMatriculasComCancelados.filter((p) => p.status !== "cancelado"));
-  const linhas = ordenarERenumerar(preMatriculasComCancelados).map((p) => ({
+export function exportarPorSenhaExcel(preMatriculas: PreMatriculaAdminRow[], sufixo: string) {
+  const posicoesEspera = calcularPosicoesEspera(preMatriculas);
+  const linhas = ordenarERenumerar(preMatriculas).map((p) => ({
     Senha: formatarSenha(p.numero_senha),
     Situação: p.lista_espera ? `${posicoesEspera.get(p.id)}ª lista de espera` : "Intenção de matrícula",
     Unidade: unidadeNome(p.unidade_id),
@@ -193,10 +192,11 @@ export function exportarPorSenhaExcel(preMatriculasComCancelados: PreMatriculaAd
   baixarWorkbook(wb, `ordenado-por-senha-seice-${sufixo}-${Date.now()}.xlsx`);
 }
 
-/** Mesma ideia, mas só com quem tem vaga garantida (sem lista de espera,
- *  sem cancelados) — senha recontada do zero, só dentro dessa lista. */
-export function exportarPorSenhaIntencoesExcel(preMatriculasComCancelados: PreMatriculaAdminRow[], sufixo: string) {
-  const linhas = ordenarERenumerar(preMatriculasComCancelados.filter((p) => !p.lista_espera)).map((p) => ({
+/** Mesma ideia, mas só com quem tem vaga garantida (sem lista de espera) —
+ *  senha recontada do zero, só dentro dessa lista. Respeita o filtro de
+ *  status escolhido na tela de exportação. */
+export function exportarPorSenhaIntencoesExcel(preMatriculas: PreMatriculaAdminRow[], sufixo: string) {
+  const linhas = ordenarERenumerar(preMatriculas.filter((p) => !p.lista_espera)).map((p) => ({
     Senha: formatarSenha(p.numero_senha),
     Unidade: unidadeNome(p.unidade_id),
     Turma: celulaTurma(p),
@@ -213,13 +213,13 @@ export function exportarPorSenhaIntencoesExcel(preMatriculasComCancelados: PreMa
   baixarWorkbook(wb, `ordenado-por-senha-intencoes-seice-${sufixo}-${Date.now()}.xlsx`);
 }
 
-/** Mesma ideia, mas só com quem está na lista de espera (sem cancelados) —
- *  senha recontada do zero, só dentro dessa lista. A coluna "Posição na
- *  turma" é a fila de espera de cada turma (diferente da senha, que é
- *  geral). */
-export function exportarPorSenhaListaEsperaExcel(preMatriculasComCancelados: PreMatriculaAdminRow[], sufixo: string) {
-  const filtrados = preMatriculasComCancelados.filter((p) => p.lista_espera);
-  const posicoesEspera = calcularPosicoesEspera(filtrados.filter((p) => p.status !== "cancelado"));
+/** Mesma ideia, mas só com quem está na lista de espera — senha recontada do
+ *  zero, só dentro dessa lista. A coluna "Posição na turma" é a fila de
+ *  espera de cada turma (diferente da senha, que é geral). Respeita o
+ *  filtro de status escolhido na tela de exportação. */
+export function exportarPorSenhaListaEsperaExcel(preMatriculas: PreMatriculaAdminRow[], sufixo: string) {
+  const filtrados = preMatriculas.filter((p) => p.lista_espera);
+  const posicoesEspera = calcularPosicoesEspera(filtrados);
   const linhas = ordenarERenumerar(filtrados).map((p) => ({
     Senha: formatarSenha(p.numero_senha),
     "Posição na turma": posicoesEspera.has(p.id) ? `${posicoesEspera.get(p.id)}ª` : "",
