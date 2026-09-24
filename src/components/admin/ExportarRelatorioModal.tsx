@@ -301,7 +301,7 @@ export default function ExportarRelatorioModal({
           </TipoTab>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px] lg:items-start">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
           {/* escolha das turmas — cartões grandes, seleção múltipla */}
           <div className="flex min-w-0 flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -367,11 +367,8 @@ export default function ExportarRelatorioModal({
             </div>
           </div>
 
-          {/* resumo da seleção + exportar — fica "grudado" no topo ao rolar
-              (só nesse lado; a lista de turmas ao lado continua com rolagem
-              própria), assim os botões de baixar ficam sempre visíveis sem
-              precisar rolar o modal inteiro */}
-          <div className="card-surface flex max-h-[calc(75vh-4rem)] flex-col gap-4 self-start overflow-y-auto rounded-2xl border border-seice-border p-4 lg:sticky lg:top-16">
+          {/* resumo da seleção + exportar */}
+          <div className="card-surface flex flex-col gap-4 rounded-2xl border border-seice-border p-4">
             <div>
               <div className="mb-2.5 text-[12.5px] font-bold uppercase tracking-wide text-seice-muted">
                 Seleção
