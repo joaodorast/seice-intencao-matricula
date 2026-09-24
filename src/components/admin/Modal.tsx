@@ -31,7 +31,7 @@ export default function Modal({
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.16 }}
             onClick={(e) => e.stopPropagation()}
-            className={`max-h-[88vh] w-full ${width} overflow-y-auto rounded-3xl border border-seice-border bg-seice-surface shadow-[0_32px_80px_-24px_rgba(0,0,0,0.85)]`}
+            className={`max-h-[94vh] w-full ${width} overflow-y-auto rounded-3xl border border-seice-border bg-seice-surface shadow-[0_32px_80px_-24px_rgba(0,0,0,0.85)]`}
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-seice-border bg-seice-surface/95 px-6 py-4 backdrop-blur-sm">
               <h3 className="font-display text-[19px] font-semibold text-seice-ink">{title}</h3>
