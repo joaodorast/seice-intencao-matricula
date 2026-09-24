@@ -155,6 +155,17 @@ export default function ExportarRelatorioModal({
     contagemPorStatus.set(p.status, (contagemPorStatus.get(p.status) ?? 0) + 1);
   }
 
+  // os relatórios "Por senha · Intenções" e "Por senha · Lista de espera"
+  // recortam mais um pouco (só quem não tá/tá na lista de espera) — sem
+  // isso o número mostrado na tela ficava igual nos dois tipos, mesmo eles
+  // trazendo gente diferente no PDF/Excel
+  const totalNoRelatorio =
+    tipo === "porsenhaintencoes"
+      ? preMatriculasFiltradas.filter((p) => !p.lista_espera).length
+      : tipo === "porsenhaespera"
+      ? preMatriculasFiltradas.filter((p) => p.lista_espera).length
+      : preMatriculasFiltradas.length;
+
   const rotuloSelecao = todas
     ? `Todas as turmas — ${escopo}`
     : listaSelecionadas.length === 1
@@ -450,7 +461,7 @@ export default function ExportarRelatorioModal({
 
                 <div className="mt-3.5 border-t border-seice-border pt-3.5">
                   <span className="mb-1 flex items-center gap-1.5 text-[13px] font-bold text-seice-ink">
-                    <Calendar size={14} className="text-seice-muted" /> Filtrar por data de recebimento
+                    <Calendar size={14} className="text-seice-muted" /> Por período
                   </span>
                   <p className="mb-3 text-[12.5px] leading-snug text-seice-muted">
                     Opcional. Só entram no relatório os registros recebidos dentro do período escolhido abaixo. Se
@@ -502,7 +513,7 @@ export default function ExportarRelatorioModal({
               <MiniNumero label="Turmas" value={turmasFiltradas.length} />
               <MiniNumero label="Ofertadas" value={totalOfertadas} />
               <MiniNumero label="Livres" value={totalLivres} destaque />
-              <MiniNumero label="Intenções" value={preMatriculasFiltradas.length} />
+              <MiniNumero label="No relatório" value={totalNoRelatorio} />
             </div>
 
             <div className="mt-auto flex flex-col gap-2.5 border-t border-seice-border pt-4">
