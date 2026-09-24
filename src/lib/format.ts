@@ -28,11 +28,19 @@ export function formatarSenha(numero: number): string {
   return String(numero).padStart(2, "0");
 }
 
-type RegistroComTurma = { id: string; turma_id: string; lista_espera: boolean; criado_em: string };
+type RegistroComTurma = {
+  id: string;
+  turma_id: string;
+  lista_espera: boolean;
+  criado_em: string;
+  status: string;
+};
 
 /** Agrupa por turma e numera por ordem de chegada (quem se inscreveu
  *  primeiro fica em 1º) — usado tanto pra lista de espera quanto pra
- *  intenções confirmadas, cada uma com sua própria fila por turma. */
+ *  intenções confirmadas, cada uma com sua própria fila por turma. Quem
+ *  cancelou nunca entra nessa conta — um cancelamento não pode "segurar" a
+ *  posição de ninguém nem ser contado como se ainda estivesse esperando. */
 function calcularPosicoesPorTurma<T extends RegistroComTurma>(
   registros: T[],
   incluir: (r: T) => boolean
@@ -40,7 +48,7 @@ function calcularPosicoesPorTurma<T extends RegistroComTurma>(
   const posicoes = new Map<string, number>();
   const porTurma = new Map<string, T[]>();
   for (const r of registros) {
-    if (!incluir(r)) continue;
+    if (r.status === "cancelado" || !incluir(r)) continue;
     const lista = porTurma.get(r.turma_id) ?? [];
     lista.push(r);
     porTurma.set(r.turma_id, lista);
