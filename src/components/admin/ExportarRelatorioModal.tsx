@@ -367,8 +367,11 @@ export default function ExportarRelatorioModal({
             </div>
           </div>
 
-          {/* resumo da seleção + exportar */}
-          <div className="card-surface flex flex-col gap-4 rounded-2xl border border-seice-border p-4">
+          {/* resumo da seleção + exportar — os filtros rolam por dentro
+              desse card quando não cabem, mas os botões de baixar ficam
+              fora dessa área de rolagem, sempre visíveis sem precisar rolar */}
+          <div className="card-surface flex max-h-[78vh] flex-col gap-4 rounded-2xl border border-seice-border p-4">
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
             <div>
               <div className="mb-2.5 text-[12.5px] font-bold uppercase tracking-wide text-seice-muted">
                 Seleção
@@ -520,8 +523,9 @@ export default function ExportarRelatorioModal({
               <MiniNumero label="Livres" value={totalLivres} destaque />
               <MiniNumero label="No relatório" value={totalNoRelatorio} />
             </div>
+            </div>
 
-            <div className="mt-auto flex flex-col gap-2.5 border-t border-seice-border pt-4">
+            <div className="flex shrink-0 flex-col gap-2.5 border-t border-seice-border pt-4">
               <BotaoExportar
                 formato="pdf"
                 rotulo="Baixar em PDF"
