@@ -78,6 +78,14 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
     porTurma.get(p.turma_id)!.push(p);
   }
   const posicoesEspera = calcularPosicoesEspera(preMatriculas);
+  // uma turma com 0 vagas ofertadas ainda pode ter gente na lista de espera
+  // (o formulário público aceita a inscrição mesmo sem vaga) — contar isso
+  // por turma evita o estranhamento de ver "0 vagas" numa turma que tem
+  // gente esperando
+  const esperaPorTurma = new Map<string, number>();
+  for (const p of preMatriculas) {
+    if (p.lista_espera) esperaPorTurma.set(p.turma_id, (esperaPorTurma.get(p.turma_id) ?? 0) + 1);
+  }
 
   const linhas: Record<string, string | number>[] = [];
   for (const t of ordenarTurmas(turmas)) {
@@ -91,6 +99,7 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
       "Vagas ofertadas": t.vagas_planilha,
       "Vagas ocupadas": preenchidas,
       "Vagas livres": t.vagas_restantes,
+      "Turma em lista de espera": esperaPorTurma.get(t.id) ?? 0,
     };
     const alunos = porTurma.get(t.id) ?? [];
     if (alunos.length === 0) {
@@ -136,6 +145,7 @@ export function exportarRelatorioDetalhadoExcel(turmas: TurmaAdminRow[], preMatr
     { wch: 15 },
     { wch: 14 },
     { wch: 12 },
+    { wch: 14 },
     { wch: 8 },
     { wch: 24 },
     { wch: 24 },
