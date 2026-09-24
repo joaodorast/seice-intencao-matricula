@@ -61,16 +61,16 @@ function cabecalho(doc: jsPDF, logo: string | null, titulo: string, escopo: stri
 
   doc.setTextColor(...BRANCO);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
+  doc.setFontSize(16.5);
   doc.text(titulo, largura - MARGEM, 14, { align: "right" });
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
+  doc.setFontSize(12);
   doc.setTextColor(255, 200, 0);
   doc.text(escopo, largura - MARGEM, 20.5, { align: "right" });
 
   doc.setTextColor(200, 205, 212);
-  doc.setFontSize(9.5);
+  doc.setFontSize(10.5);
   doc.text(resumo, largura - MARGEM, 26, { align: "right" });
 }
 
@@ -84,38 +84,59 @@ function indicadores(doc: jsPDF, y: number, itens: { rotulo: string; valor: stri
   itens.forEach((item, i) => {
     const x = MARGEM + i * (largCaixa + gap);
     doc.setFillColor(...CINZA_ZEBRA);
-    doc.roundedRect(x, y, largCaixa, 19, 2, 2, "F");
+    doc.roundedRect(x, y, largCaixa, 21, 2, 2, "F");
     doc.setFillColor(...DOURADO);
-    doc.rect(x, y, 1.6, 19, "F");
+    doc.rect(x, y, 1.8, 21, "F");
 
     doc.setTextColor(...CINZA_TEXTO);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.text(item.rotulo.toUpperCase(), x + 5, y + 7);
+    doc.setFontSize(9.5);
+    doc.text(item.rotulo.toUpperCase(), x + 5, y + 7.5);
 
     doc.setTextColor(...GRAFITE);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(item.valor, x + 5, y + 15.5);
+    doc.setFontSize(18);
+    doc.text(item.valor, x + 5, y + 17);
   });
 
-  return y + 19;
+  return y + 21;
 }
 
 /**
- * Frase curta e simples embaixo dos números do topo, explicando em
- * português bem direto o que a tabela abaixo mostra e como usar — pra
- * qualquer pessoa que abrir o PDF entender sem precisar perguntar pra
- * ninguém. Devolve a posição Y onde a tabela deve começar.
+ * Caixa de destaque (fundo dourado bem claro, com uma faixa dourada na
+ * lateral) com o título "COMO LER ESTA PÁGINA" e uma explicação em
+ * português bem direto do que a tabela abaixo mostra e como usar — pra
+ * qualquer pessoa que abrir o PDF entender sozinha, sem precisar perguntar
+ * pra ninguém. É visualmente parecida com os avisos que já aparecem no
+ * site público, então quem já usa o site reconhece o "formato de aviso" na
+ * hora. Devolve a posição Y onde a tabela deve começar.
  */
 function legenda(doc: jsPDF, y: number, texto: string): number {
-  const largura = doc.internal.pageSize.getWidth() - MARGEM * 2;
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(10.5);
-  doc.setTextColor(...CINZA_TEXTO);
-  const linhas = doc.splitTextToSize(texto, largura) as string[];
-  doc.text(linhas, MARGEM, y);
-  return y + linhas.length * 5 + 3;
+  const largura = doc.internal.pageSize.getWidth();
+  const larguraTexto = largura - MARGEM * 2 - 10;
+  const FUNDO_AVISO: RGB = [255, 249, 224];
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11.5);
+  const linhas = doc.splitTextToSize(texto, larguraTexto) as string[];
+  const alturaCaixa = 8 + linhas.length * 5.4 + 5;
+
+  doc.setFillColor(...FUNDO_AVISO);
+  doc.roundedRect(MARGEM, y, largura - MARGEM * 2, alturaCaixa, 2, 2, "F");
+  doc.setFillColor(...DOURADO);
+  doc.rect(MARGEM, y, 2, alturaCaixa, "F");
+
+  doc.setTextColor(161, 118, 0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.text("COMO LER ESTA PÁGINA", MARGEM + 7, y + 8);
+
+  doc.setTextColor(60, 50, 10);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11.5);
+  doc.text(linhas, MARGEM + 7, y + 15);
+
+  return y + alturaCaixa + 6;
 }
 
 function rodape(doc: jsPDF, escopo: string) {
@@ -128,7 +149,7 @@ function rodape(doc: jsPDF, escopo: string) {
     doc.setLineWidth(0.4);
     doc.line(MARGEM, altura - 12, largura - MARGEM, altura - 12);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setTextColor(...CINZA_TEXTO);
     doc.text(`Colégio SEICE · ${escopo} · gerado em ${new Date().toLocaleString("pt-BR")}`, MARGEM, altura - 7);
     doc.text(`Página ${i} de ${paginas}`, largura - MARGEM, altura - 7, { align: "right" });
@@ -159,17 +180,24 @@ function legendaCores(doc: jsPDF, y: number): number {
     { rotulo: "Matriculado", cor: COR_STATUS.matriculado.texto },
     { rotulo: "Cancelado", cor: COR_STATUS.cancelado.texto },
   ];
-  let x = MARGEM;
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(8.5);
+  doc.setTextColor(...CINZA_TEXTO);
+  doc.text("SIGNIFICADO DAS CORES:", MARGEM, y);
+
+  let x = MARGEM;
+  const y2 = y + 6;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
   for (const item of itens) {
     doc.setFillColor(...item.cor);
-    doc.roundedRect(x, y - 3.2, 3.5, 3.5, 0.7, 0.7, "F");
+    doc.roundedRect(x, y2 - 3.6, 4, 4, 0.8, 0.8, "F");
     doc.setTextColor(...item.cor);
-    doc.text(item.rotulo, x + 5, y);
-    x += 5 + doc.getTextWidth(item.rotulo) + 8;
+    doc.text(item.rotulo, x + 5.5, y2);
+    x += 5.5 + doc.getTextWidth(item.rotulo) + 9;
   }
-  return y + 8;
+  return y2 + 8;
 }
 
 /** Célula de tabela com o status já colorido (fundo + texto), pronta pra
@@ -188,13 +216,13 @@ function estiloTabela() {
   return {
     theme: "grid" as const,
     styles: {
-      fontSize: 10,
-      cellPadding: 3.2,
+      fontSize: 11,
+      cellPadding: 3.6,
       textColor: GRAFITE_CLARO,
       lineColor: [226, 229, 234] as RGB,
       lineWidth: 0.2,
     },
-    headStyles: { fillColor: GRAFITE, textColor: BRANCO, fontStyle: "bold" as const, fontSize: 10 },
+    headStyles: { fillColor: GRAFITE, textColor: BRANCO, fontStyle: "bold" as const, fontSize: 11 },
     alternateRowStyles: { fillColor: CINZA_ZEBRA },
     margin: { left: MARGEM, right: MARGEM },
   };
