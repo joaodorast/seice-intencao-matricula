@@ -23,6 +23,18 @@ export const STATUS_INFO: Record<StatusPreMatricula, { label: string; badge: str
   },
 };
 
+/**
+ * Texto curto pra mostrar no cabeçalho do PDF/Excel qual status foi
+ * escolhido no filtro ("Status: Contatado", "Status: Pendente, Contatado"),
+ * pra quem abre o relatório já saber o que está vendo sem precisar
+ * adivinhar. Quando os 4 estão marcados (ou nenhum foi passado), não filtrou
+ * nada de verdade, então não mostra nada.
+ */
+export function descricaoFiltroStatus(selecionados: StatusPreMatricula[]): string {
+  if (selecionados.length === 0 || selecionados.length >= STATUS_ORDER.length) return "";
+  return `Status: ${selecionados.map((s) => STATUS_INFO[s]?.label ?? s).join(", ")}`;
+}
+
 export function unidadeNome(slug: string): string {
   return UNIDADES.find((u) => u.slug === slug)?.nome ?? slug;
 }
