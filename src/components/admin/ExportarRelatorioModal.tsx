@@ -303,7 +303,7 @@ export default function ExportarRelatorioModal({
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
           {/* escolha das turmas — cartões grandes, seleção múltipla */}
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-h-0 min-w-0 flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2.5">
               <div className="relative flex-1">
                 <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-seice-muted" />
@@ -324,7 +324,7 @@ export default function ExportarRelatorioModal({
               </button>
             </div>
 
-            <div className="grid max-h-[42rem] grid-cols-1 gap-2.5 overflow-y-auto rounded-2xl border border-seice-border bg-seice-panel p-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid min-h-[20rem] flex-1 grid-cols-1 gap-2.5 overflow-y-auto rounded-2xl border border-seice-border bg-seice-panel p-3 sm:grid-cols-2 xl:grid-cols-3">
               <CartaoTurma
                 ativo={todas}
                 onClick={escolherTodas}
