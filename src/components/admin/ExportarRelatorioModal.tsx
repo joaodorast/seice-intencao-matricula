@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  Calendar,
   Check,
   FileSpreadsheet,
   FileText,
@@ -72,6 +73,8 @@ export default function ExportarRelatorioModal({
   const [todas, setTodas] = useState(true);
   const [selecionadas, setSelecionadas] = useState<Set<string>>(new Set());
   const [statusAtivos, setStatusAtivos] = useState<Set<StatusPreMatricula>>(new Set(STATUS_PADRAO));
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
   const [busca, setBusca] = useState("");
   const [gerando, setGerando] = useState<Formato | null>(null);
   const [baixado, setBaixado] = useState<Formato | null>(null);
@@ -127,10 +130,22 @@ export default function ExportarRelatorioModal({
     });
   }
 
+  // período (data de recebimento) — os dois campos são opcionais e podem ser
+  // usados junto ou separado (só "de", só "até", ou os dois)
+  function dentroDoPeriodo(criadoEm: string): boolean {
+    if (!dataInicio && !dataFim) return true;
+    const data = new Date(criadoEm);
+    if (dataInicio && data < new Date(`${dataInicio}T00:00:00`)) return false;
+    if (dataFim && data > new Date(`${dataFim}T23:59:59.999`)) return false;
+    return true;
+  }
+
   const listaSelecionadas = todas ? [] : turmasOrdenadas.filter((t) => selecionadas.has(t.id));
   const turmasFiltradas = todas ? turmas : listaSelecionadas;
   const idsFiltrados = new Set(turmasFiltradas.map((t) => t.id));
-  const preMatriculasDaTurma = todas ? preMatriculas : preMatriculas.filter((p) => idsFiltrados.has(p.turma_id));
+  const preMatriculasDaTurma = (todas ? preMatriculas : preMatriculas.filter((p) => idsFiltrados.has(p.turma_id))).filter(
+    (p) => dentroDoPeriodo(p.criado_em)
+  );
   const preMatriculasFiltradas = preMatriculasDaTurma.filter((p) => statusAtivos.has(p.status));
   // conta quantos registros cada status tem (só pelo recorte de turma, antes
   // do filtro de status) — pra mostrar o número ao lado de cada opção e a
@@ -164,6 +179,8 @@ export default function ExportarRelatorioModal({
       setTipo(tipoInicial);
       escolherTodas();
       setStatusAtivos(new Set(STATUS_PADRAO));
+      setDataInicio("");
+      setDataFim("");
       setBusca("");
       setBaixado(null);
     }, 200);
@@ -430,6 +447,50 @@ export default function ExportarRelatorioModal({
                 {statusAtivos.size === 0 && (
                   <p className="mt-2.5 text-[12.5px] font-semibold text-seice-danger">Marque ao menos um status.</p>
                 )}
+
+                <div className="mt-3.5 border-t border-seice-border pt-3.5">
+                  <span className="mb-2 flex items-center gap-1.5 text-[13px] font-bold text-seice-ink">
+                    <Calendar size={14} className="text-seice-muted" /> Período (recebido em)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <label className="flex-1">
+                      <span className="mb-1 block text-[11.5px] font-bold uppercase tracking-wide text-seice-muted">
+                        De
+                      </span>
+                      <input
+                        type="date"
+                        value={dataInicio}
+                        max={dataFim || undefined}
+                        onChange={(e) => setDataInicio(e.target.value)}
+                        className="inset-surface w-full rounded-lg border border-seice-border-strong px-2.5 py-2 text-[13.5px] text-seice-ink outline-none focus:border-seice-gold"
+                      />
+                    </label>
+                    <label className="flex-1">
+                      <span className="mb-1 block text-[11.5px] font-bold uppercase tracking-wide text-seice-muted">
+                        Até
+                      </span>
+                      <input
+                        type="date"
+                        value={dataFim}
+                        min={dataInicio || undefined}
+                        onChange={(e) => setDataFim(e.target.value)}
+                        className="inset-surface w-full rounded-lg border border-seice-border-strong px-2.5 py-2 text-[13.5px] text-seice-ink outline-none focus:border-seice-gold"
+                      />
+                    </label>
+                  </div>
+                  {(dataInicio || dataFim) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDataInicio("");
+                        setDataFim("");
+                      }}
+                      className="mt-2 text-[12px] font-bold text-seice-gold hover:underline"
+                    >
+                      Limpar período
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
