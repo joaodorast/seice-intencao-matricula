@@ -418,12 +418,13 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                   const registrosParaExportar = registrosDaUnidade
                     .filter(combinaBusca)
                     .filter((r) => statusExport.has(r.status) && dentroDoPeriodoExport(r.criado_em));
+                  const filtroStatus = [...statusExport];
                   if (aba === "listaEspera") {
                     const { exportarPorSenhaListaEsperaPDF } = await import("../lib/pdf");
-                    await exportarPorSenhaListaEsperaPDF(registrosParaExportar, escopoLabel);
+                    await exportarPorSenhaListaEsperaPDF(registrosParaExportar, escopoLabel, filtroStatus);
                   } else {
                     const { exportarPorSenhaIntencoesPDF } = await import("../lib/pdf");
-                    await exportarPorSenhaIntencoesPDF(registrosParaExportar, escopoLabel);
+                    await exportarPorSenhaIntencoesPDF(registrosParaExportar, escopoLabel, filtroStatus);
                   }
                 }}
                 className="!px-4 !py-2.5"
