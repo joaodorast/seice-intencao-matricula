@@ -102,6 +102,22 @@ function indicadores(doc: jsPDF, y: number, itens: { rotulo: string; valor: stri
   return y + 16;
 }
 
+/**
+ * Frase curta e simples embaixo dos números do topo, explicando em
+ * português bem direto o que a tabela abaixo mostra e como usar — pra
+ * qualquer pessoa que abrir o PDF entender sem precisar perguntar pra
+ * ninguém. Devolve a posição Y onde a tabela deve começar.
+ */
+function legenda(doc: jsPDF, y: number, texto: string): number {
+  const largura = doc.internal.pageSize.getWidth() - MARGEM * 2;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9);
+  doc.setTextColor(...CINZA_TEXTO);
+  const linhas = doc.splitTextToSize(texto, largura) as string[];
+  doc.text(linhas, MARGEM, y);
+  return y + linhas.length * 4.3 + 3;
+}
+
 function rodape(doc: jsPDF, escopo: string) {
   const paginas = doc.getNumberOfPages();
   const largura = doc.internal.pageSize.getWidth();
@@ -149,7 +165,7 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
     r.responsavel_nome,
     maskPhone(r.telefone1),
     STATUS_INFO[r.status]?.label ?? r.status,
-    posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª` : r.lista_espera ? "Sim" : "Não",
+    posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª` : "— (já tem vaga)",
   ]);
 }
 
@@ -179,11 +195,18 @@ export async function exportarIntencoesPDF(
     { rotulo: "Matriculados", valor: String(porStatus("matriculado")) },
     { rotulo: "Cancelados", valor: String(porStatus("cancelado")) },
   ]);
+  const y2 = legenda(
+    doc,
+    y + 6,
+    "Cada linha é um pedido de matrícula que chegou. \"Status\" mostra se a secretaria já ligou (Contatado), " +
+      "se a matrícula foi confirmada (Matriculado) ou se ainda falta ligar (Pendente). A última coluna mostra " +
+      "a posição na fila de espera de quem não tem vaga garantida (\"—\" para quem já tem vaga)."
+  );
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: y + 6,
-    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "Telefone", "Status", "Posição na espera"]],
+    startY: y2,
+    head: [["Senha", "Recebido em", "Unidade", "Aluno", "Turma", "Responsável", "Telefone", "Status", "Posição na fila de espera"]],
     body: linhasIntencoes(registros),
   });
 
@@ -240,6 +263,14 @@ export async function exportarRelatorioDetalhadoPDF(
     { rotulo: "Livres", valor: String(livres) },
     { rotulo: "Em espera", valor: String(totalEmEspera) },
   ]);
+  const y1b = legenda(
+    doc,
+    y1 + 6,
+    "Esta página mostra uma linha por turma: \"Ofertadas\" é quantas vagas a turma tem no total, \"Preenchidas\" " +
+      "é quantas já foram usadas, \"Livres\" é quanto ainda sobra. \"Espera\" mostra quantas famílias estão " +
+      "esperando uma vaga surgir nessa turma — pode ter gente esperando mesmo numa turma \"Sem oferta\" (0 " +
+      "vagas), porque o formulário aceita inscrição de espera mesmo sem vaga nenhuma cadastrada."
+  );
 
   type CelulaTurma = string | number | { content: string; colSpan?: number; styles: Record<string, unknown> };
   const corpoTurmas: CelulaTurma[][] = [];
@@ -273,7 +304,7 @@ export async function exportarRelatorioDetalhadoPDF(
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: y1 + 6,
+    startY: y1b,
     head: [["Série", "Turma", "Turno", "Curso", "Ofertadas", "Preenchidas", "Livres", "Espera", "Situação"]],
     body: corpoTurmas,
     columnStyles: {
@@ -295,6 +326,7 @@ export async function exportarRelatorioDetalhadoPDF(
 
   function paginaDeContatos(
     titulo: string,
+    subtitulo: string,
     cabecalhos: string[],
     porTurmaFiltrado: (alunos: PreMatriculaAdminRow[]) => PreMatriculaAdminRow[],
     colunasExtras: (p: PreMatriculaAdminRow) => CelulaContato[]
@@ -316,7 +348,14 @@ export async function exportarRelatorioDetalhadoPDF(
         },
       ]);
       for (const p of alunos) {
-        corpo.push([...colunasExtras(p), turmaNome, p.aluno_nome, maskPhone(p.telefone1), p.responsavel_nome]);
+        corpo.push([
+          ...colunasExtras(p),
+          turmaNome,
+          p.aluno_nome,
+          maskPhone(p.telefone1),
+          p.responsavel_nome,
+          STATUS_INFO[p.status]?.label ?? p.status,
+        ]);
       }
     }
 
@@ -329,9 +368,10 @@ export async function exportarRelatorioDetalhadoPDF(
       escopo,
       resumoFiltro ? `${totalAlunos} aluno(s) · ${resumoFiltro}` : `${totalAlunos} aluno(s)`
     );
+    const yTabela = legenda(doc, 38, subtitulo);
     autoTable(doc, {
       ...estiloTabela(),
-      startY: 38,
+      startY: yTabela,
       head: [cabecalhos],
       body: corpo,
     });
@@ -340,7 +380,9 @@ export async function exportarRelatorioDetalhadoPDF(
   // página 2 — só intenções de matrícula normais (vaga garantida), por senha
   paginaDeContatos(
     "Contatos — Intenção de matrícula",
-    ["Senha", "Turma", "Aluno", "Telefone", "Responsável"],
+    "Lista de quem JÁ TEM vaga garantida, separada por turma. É pra secretaria ligar confirmando a matrícula. " +
+      "Dentro de cada turma, a ordem é por \"Senha\": quem chegou primeiro (senha menor) aparece primeiro.",
+    ["Senha", "Turma", "Aluno", "Telefone", "Responsável", "Status"],
     (alunos) => alunos.filter((p) => !p.lista_espera).sort((a, b) => a.numero_senha - b.numero_senha),
     (p) => [formatarSenha(p.numero_senha)]
   );
@@ -348,7 +390,10 @@ export async function exportarRelatorioDetalhadoPDF(
   // página 3 — só lista de espera, por posição (quem chegou primeiro no topo)
   paginaDeContatos(
     "Contatos — Lista de espera",
-    ["Posição", "Senha", "Turma", "Aluno", "Telefone", "Responsável"],
+    "Lista de quem AINDA NÃO TEM vaga e está esperando uma surgir, separada por turma. A coluna \"Posição\" " +
+      "mostra a ordem de prioridade dentro daquela turma: \"1ª\" é o próximo a ser chamado se alguém desistir " +
+      "daquela turma, \"2ª\" é o seguinte, e assim por diante.",
+    ["Posição", "Senha", "Turma", "Aluno", "Telefone", "Responsável", "Status"],
     (alunos) =>
       alunos
         .filter((p) => p.lista_espera)
@@ -401,6 +446,14 @@ export async function exportarPorSenhaPDF(
     escopo,
     resumoFiltro ? `${ordenados.length} registro(s) · ${resumoFiltro}` : `${ordenados.length} registro(s)`
   );
+  const yTabela = legenda(
+    doc,
+    38,
+    "Lista única com TODO MUNDO junto, sem separar por turma — nem importa se tem vaga garantida ou está na " +
+      "lista de espera. A ordem é de quem chegou primeiro pra quem chegou por último. Use essa lista pra ligar " +
+      "em ordem, de cima pra baixo. A coluna \"Situação\" mostra se a pessoa já tem vaga (\"Intenção de " +
+      "matrícula\") ou está esperando (\"lista de espera\", com a posição na turma dela)."
+  );
 
   type Celula = string | { content: string; styles: Record<string, unknown> };
   const corpo: Celula[][] = ordenados.map((p) => [
@@ -412,12 +465,13 @@ export async function exportarPorSenhaPDF(
     p.aluno_nome,
     maskPhone(p.telefone1),
     p.responsavel_nome,
+    STATUS_INFO[p.status]?.label ?? p.status,
   ]);
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: 38,
-    head: [["Senha", "Situação", "Turma", "Aluno", "Telefone", "Responsável"]],
+    startY: yTabela,
+    head: [["Senha", "Situação", "Turma", "Aluno", "Telefone", "Responsável", "Status"]],
     body: corpo,
   });
 
@@ -445,6 +499,13 @@ export async function exportarPorSenhaIntencoesPDF(
     escopo,
     resumoFiltro ? `${ordenados.length} registro(s) · ${resumoFiltro}` : `${ordenados.length} registro(s)`
   );
+  const yTabelaInt = legenda(
+    doc,
+    38,
+    "Todo mundo aqui JÁ TEM vaga garantida (ninguém está na lista de espera). A ordem é de quem chegou " +
+      "primeiro pra quem chegou por último — comece a ligar de cima pra baixo. A coluna \"Status\" mostra se a " +
+      "secretaria já ligou (Contatado) ou ainda precisa ligar (Pendente)."
+  );
 
   const corpo = ordenados.map((p) => [
     formatarSenha(p.numero_senha),
@@ -452,12 +513,13 @@ export async function exportarPorSenhaIntencoesPDF(
     p.aluno_nome,
     maskPhone(p.telefone1),
     p.responsavel_nome,
+    STATUS_INFO[p.status]?.label ?? p.status,
   ]);
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: 38,
-    head: [["Senha", "Turma", "Aluno", "Telefone", "Responsável"]],
+    startY: yTabelaInt,
+    head: [["Senha", "Turma", "Aluno", "Telefone", "Responsável", "Status"]],
     body: corpo,
   });
 
@@ -488,6 +550,14 @@ export async function exportarPorSenhaListaEsperaPDF(
     escopo,
     resumoFiltro ? `${ordenados.length} registro(s) · ${resumoFiltro}` : `${ordenados.length} registro(s)`
   );
+  const yTabelaEsp = legenda(
+    doc,
+    38,
+    "Todo mundo aqui está ESPERANDO uma vaga surgir (ninguém tem vaga garantida ainda). \"Posição na turma\" " +
+      "mostra a prioridade dentro da turma de cada um: \"1ª\" é a próxima pessoa a ser chamada se alguém " +
+      "desistir daquela turma específica. A coluna \"Status\" mostra se a secretaria já ligou (Contatado) ou " +
+      "ainda precisa ligar (Pendente)."
+  );
 
   const corpo = ordenados.map((p) => [
     formatarSenha(p.numero_senha),
@@ -496,12 +566,13 @@ export async function exportarPorSenhaListaEsperaPDF(
     p.aluno_nome,
     maskPhone(p.telefone1),
     p.responsavel_nome,
+    STATUS_INFO[p.status]?.label ?? p.status,
   ]);
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: 38,
-    head: [["Senha", "Posição na turma", "Turma", "Aluno", "Telefone", "Responsável"]],
+    startY: yTabelaEsp,
+    head: [["Senha", "Posição na turma", "Turma", "Aluno", "Telefone", "Responsável", "Status"]],
     body: corpo,
   });
 
@@ -526,6 +597,12 @@ export async function exportarRelatorioCompletoPDF(turmas: TurmaAdminRow[], esco
     { rotulo: "Livres", valor: String(livres) },
     { rotulo: "Ocupação", valor: `${ocupacao}%` },
   ]);
+  const yTabelaCompleto = legenda(
+    doc,
+    y + 6,
+    "Esta página mostra uma linha por turma: \"Ofertadas\" é quantas vagas a turma tem no total, " +
+      "\"Preenchidas\" é quantas já foram usadas, \"Livres\" é quanto ainda sobra pra preencher."
+  );
 
   // uma linha por turma, com uma faixa de título a cada troca de unidade/nível
   type Celula = string | number | { content: string; colSpan: number; styles: { fillColor: RGB; textColor: RGB; fontStyle: "bold" } };
@@ -552,7 +629,7 @@ export async function exportarRelatorioCompletoPDF(turmas: TurmaAdminRow[], esco
 
   autoTable(doc, {
     ...estiloTabela(),
-    startY: y + 6,
+    startY: yTabelaCompleto,
     head: [["Série", "Turma", "Turno", "Curso", "Ofertadas", "Preenchidas", "Livres", "Situação"]],
     body: corpo,
     columnStyles: {
