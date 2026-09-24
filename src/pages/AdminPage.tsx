@@ -465,7 +465,6 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                   <button
                     key={s}
                     type="button"
-                    disabled={qtd === 0}
                     onClick={() =>
                       setStatusExport((atual) => {
                         const novo = new Set(atual);
@@ -474,7 +473,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                         return novo;
                       })
                     }
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] font-bold transition ${
                       ativo
                         ? "border-seice-gold bg-seice-gold/10 text-seice-ink"
                         : "border-seice-border-strong text-seice-muted hover:text-seice-ink"
