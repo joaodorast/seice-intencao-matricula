@@ -28,10 +28,23 @@ export default function OverviewTab({
   const totalVagasRestantes = turmas.reduce((acc, t) => acc + t.vagas_restantes, 0);
   const totalOcupadas = totalVagasOfertadas - totalVagasRestantes;
   const totalIntencoes = preMatriculas.length;
-  const totalListaEspera = preMatriculas.filter((p) => p.lista_espera).length;
+  // não conta quem cancelou — do contrário "Em lista de espera" fica maior
+  // que devia e a conta "ocupadas + espera + cancelados = recebidas" não
+  // bate mais (ocupadas já exclui cancelado do mesmo jeito, via vagas_restantes)
+  const totalListaEspera = preMatriculas.filter((p) => p.lista_espera && p.status !== "cancelado").length;
 
   const porStatus = Object.fromEntries(
     STATUS_ORDER.map((s) => [s, preMatriculas.filter((p) => p.status === s).length])
+  ) as Record<StatusPreMatricula, number>;
+  // o número de cada status ali embaixo mistura intenção confirmada e lista
+  // de espera — pra não confundir quem olha (ex.: "120 pendentes" parecendo
+  // um monte de vaga sem contato, quando na real 76 desses nem ocupam vaga),
+  // mostra o tanto de cada um separado embaixo do número grande
+  const porStatusIntencao = Object.fromEntries(
+    STATUS_ORDER.map((s) => [s, preMatriculas.filter((p) => p.status === s && !p.lista_espera).length])
+  ) as Record<StatusPreMatricula, number>;
+  const porStatusEspera = Object.fromEntries(
+    STATUS_ORDER.map((s) => [s, preMatriculas.filter((p) => p.status === s && p.lista_espera).length])
   ) as Record<StatusPreMatricula, number>;
 
   // chavinha: liga (padrão) esconde quem já deixou de ser pendente dessa
@@ -96,13 +109,20 @@ export default function OverviewTab({
 
       <Card>
         <SectionTitle>Status das intenções de matrícula</SectionTitle>
-        <SectionDesc>Distribuição de todas as solicitações recebidas.</SectionDesc>
+        <SectionDesc>
+          Distribuição de todas as solicitações recebidas — o número de baixo separa quantas têm vaga garantida
+          (intenção) e quantas estão na lista de espera.
+        </SectionDesc>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {STATUS_ORDER.map((s) => (
             <div key={s} className={`rounded-xl px-4 py-3 ${STATUS_INFO[s].badge}`}>
               <div className="text-[22.5px] font-extrabold leading-none tabular-nums">{porStatus[s]}</div>
               <div className="mt-1 text-[13px] font-bold uppercase tracking-wide opacity-80">
                 {STATUS_INFO[s].label}
+              </div>
+              <div className="mt-1.5 text-[12px] font-semibold opacity-70">
+                {porStatusIntencao[s]} {porStatusIntencao[s] === 1 ? "intenção" : "intenções"} · {porStatusEspera[s]}{" "}
+                espera
               </div>
             </div>
           ))}
