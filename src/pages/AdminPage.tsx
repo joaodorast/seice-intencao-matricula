@@ -594,7 +594,12 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
               />
             )}
             {aba === "configuracoes" && conta?.email === EMAIL_COM_CONFIGURACOES && (
-              <ConfiguracoesTab token={token} onReset={() => carregar()} />
+              <ConfiguracoesTab
+                token={token}
+                turmas={turmas}
+                onReset={() => carregar()}
+                onAtualizarTurma={(t) => setTurmas((atual) => atual.map((x) => (x.id === t.id ? t : x)))}
+              />
             )}
           </>
         )}
