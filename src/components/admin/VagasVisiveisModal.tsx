@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Eye, EyeOff, Search } from "lucide-react";
-import { NIVEIS } from "../../config";
+import { Eye, EyeOff, LayoutGrid, Search } from "lucide-react";
+import { NIVEIS, UNIDADES } from "../../config";
 import { turnoLabel } from "../../lib/format";
 import { ordenarTurmas, unidadeCurta } from "../../lib/labels";
 import { atualizarTurma } from "../../lib/adminTurmasApi";
@@ -12,7 +12,8 @@ import Modal from "./Modal";
  * de vagas no site público ou se aquela turma sempre aparece como "Lista
  * de espera" pra ele — mesmo que ainda tenha vaga real sobrando. Cada
  * clique salva na hora (sem botão de "salvar tudo" no final), então o
- * efeito é imediato no site.
+ * efeito é imediato no site. Dá pra filtrar por unidade e marcar/desmarcar
+ * todas as turmas visíveis de uma vez.
  */
 export default function VagasVisiveisModal({
   open,
@@ -30,10 +31,16 @@ export default function VagasVisiveisModal({
   onAtualizarTurma: (turma: TurmaAdminRow) => void;
 }) {
   const [busca, setBusca] = useState("");
-  const [salvando, setSalvando] = useState<string | null>(null);
+  const [unidadeAtiva, setUnidadeAtiva] = useState<string>("todas");
+  const [salvando, setSalvando] = useState<Set<string>>(new Set());
+  const [salvandoEmMassa, setSalvandoEmMassa] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  const turmasOrdenadas = useMemo(() => ordenarTurmas(turmas), [turmas]);
+  const turmasDaUnidade = useMemo(
+    () => (unidadeAtiva === "todas" ? turmas : turmas.filter((t) => t.unidade_id === unidadeAtiva)),
+    [turmas, unidadeAtiva]
+  );
+  const turmasOrdenadas = useMemo(() => ordenarTurmas(turmasDaUnidade), [turmasDaUnidade]);
   const turmasVisiveis = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     if (!termo) return turmasOrdenadas;
@@ -55,26 +62,60 @@ export default function VagasVisiveisModal({
     return grupos;
   }, [turmasVisiveis]);
 
-  const totalVisiveis = turmas.filter((t) => t.mostrar_vagas).length;
+  const totalVisiveisGeral = turmas.filter((t) => t.mostrar_vagas).length;
+  const todasVisiveisNoRecorte = turmasVisiveis.length > 0 && turmasVisiveis.every((t) => t.mostrar_vagas);
 
-  async function alternar(turma: TurmaAdminRow) {
-    const novoValor = !turma.mostrar_vagas;
-    setSalvando(turma.id);
-    setErro(null);
+  async function salvarUma(turma: TurmaAdminRow, novoValor: boolean) {
+    setSalvando((atual) => new Set(atual).add(turma.id));
     // otimista: muda na hora, e desfaz se a chamada falhar
     onAtualizarTurma({ ...turma, mostrar_vagas: novoValor });
     try {
       await atualizarTurma(token, turma.id, { mostrar_vagas: novoValor });
     } catch (e) {
       onAtualizarTurma(turma);
-      setErro(e instanceof Error ? e.message : "Não foi possível salvar essa alteração.");
+      throw e;
     } finally {
-      setSalvando(null);
+      setSalvando((atual) => {
+        const novo = new Set(atual);
+        novo.delete(turma.id);
+        return novo;
+      });
     }
   }
 
+  async function alternar(turma: TurmaAdminRow) {
+    setErro(null);
+    try {
+      await salvarUma(turma, !turma.mostrar_vagas);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Não foi possível salvar essa alteração.");
+    }
+  }
+
+  async function marcarTodas(valor: boolean) {
+    setErro(null);
+    setSalvandoEmMassa(true);
+    const alvo = turmasVisiveis.filter((t) => t.mostrar_vagas !== valor);
+    try {
+      await Promise.all(alvo.map((t) => salvarUma(t, valor)));
+    } catch {
+      setErro("Algumas turmas não foram salvas. Confira a lista e tente de novo nas que ficaram com Lista de espera.");
+    } finally {
+      setSalvandoEmMassa(false);
+    }
+  }
+
+  function fecharEReiniciar() {
+    onClose();
+    setTimeout(() => {
+      setBusca("");
+      setUnidadeAtiva("todas");
+      setErro(null);
+    }, 200);
+  }
+
   return (
-    <Modal open={open} onClose={onClose} title="Vagas visíveis pro responsável" width="max-w-4xl">
+    <Modal open={open} onClose={fecharEReiniciar} title="Vagas visíveis pro responsável" width="max-w-[68rem]">
       <div className="flex flex-col gap-4">
         <p className="text-[14.5px] leading-relaxed text-seice-muted">
           Escolha, turma por turma, se o responsável vê a{" "}
@@ -83,6 +124,18 @@ export default function VagasVisiveisModal({
           tenha vaga real sobrando. Cada clique já salva na hora, sem precisar publicar o site de novo.
         </p>
 
+        {/* filtro por unidade — separa Campos Elíseos de Jardim Primavera */}
+        <div className="inset-surface flex flex-wrap gap-1 rounded-xl border border-seice-border p-1.5">
+          <AbaUnidade ativo={unidadeAtiva === "todas"} onClick={() => setUnidadeAtiva("todas")} icon={<LayoutGrid size={15} />}>
+            Todas as unidades
+          </AbaUnidade>
+          {UNIDADES.map((u) => (
+            <AbaUnidade key={u.slug} ativo={unidadeAtiva === u.slug} onClick={() => setUnidadeAtiva(u.slug)}>
+              {u.nome}
+            </AbaUnidade>
+          ))}
+        </div>
+
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="relative flex-1">
             <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-seice-muted" />
@@ -90,13 +143,28 @@ export default function VagasVisiveisModal({
               type="text"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar por série, código, curso ou unidade..."
+              placeholder="Buscar por série, código ou curso..."
               className="inset-surface w-full rounded-xl border border-seice-border-strong py-2.5 pl-10 pr-3.5 text-[14.5px] text-seice-ink outline-none placeholder:text-seice-muted focus:border-seice-gold"
             />
           </div>
+
+          <button
+            type="button"
+            disabled={salvandoEmMassa || turmasVisiveis.length === 0}
+            onClick={() => marcarTodas(!todasVisiveisNoRecorte)}
+            className="raised-surface inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border border-seice-border-strong px-3.5 py-2.5 text-[13.5px] font-bold text-seice-ink transition hover:border-seice-gold/40 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {todasVisiveisNoRecorte ? <EyeOff size={15} /> : <Eye size={15} />}
+            {salvandoEmMassa
+              ? "Salvando..."
+              : todasVisiveisNoRecorte
+              ? `Pôr em lista de espera (${turmasVisiveis.length})`
+              : `Mostrar vagas em todas (${turmasVisiveis.length})`}
+          </button>
+
           <div className="inset-surface flex shrink-0 items-center gap-1.5 rounded-xl border border-seice-border px-3.5 py-2.5 text-[13.5px] font-bold text-seice-ink">
             <Eye size={15} className="text-seice-gold" />
-            {totalVisiveis} de {turmas.length} mostrando vagas
+            {totalVisiveisGeral} de {turmas.length} mostrando vagas
           </div>
         </div>
 
@@ -106,29 +174,51 @@ export default function VagasVisiveisModal({
           </div>
         )}
 
-        <div className="flex max-h-[60vh] flex-col gap-2.5 overflow-y-auto pr-1">
+        <div className="grid max-h-[60vh] grid-cols-1 gap-2.5 overflow-y-auto pr-1 lg:grid-cols-2">
           {turmasVisiveis.length === 0 && (
-            <p className="py-10 text-center text-[14px] text-seice-muted">Nenhuma turma encontrada para "{busca}".</p>
+            <p className="col-span-full py-10 text-center text-[14px] text-seice-muted">
+              Nenhuma turma encontrada para "{busca}".
+            </p>
           )}
 
           {NIVEIS.filter((n) => gruposPorNivel.has(n.key)).map((n) => (
-            <div key={n.key} className="flex flex-col gap-2">
-              <div className="mt-1.5 px-1 text-[12.5px] font-bold uppercase tracking-wide text-seice-muted first:mt-0">
+            <div key={n.key} className="col-span-full grid grid-cols-1 gap-2.5 lg:grid-cols-2">
+              <div className="col-span-full mt-1.5 px-1 text-[12.5px] font-bold uppercase tracking-wide text-seice-muted first:mt-0">
                 {n.label}
               </div>
               {gruposPorNivel.get(n.key)!.map((t) => (
-                <LinhaTurma
-                  key={t.id}
-                  turma={t}
-                  salvando={salvando === t.id}
-                  onToggle={() => alternar(t)}
-                />
+                <LinhaTurma key={t.id} turma={t} salvando={salvando.has(t.id)} onToggle={() => alternar(t)} />
               ))}
             </div>
           ))}
         </div>
       </div>
     </Modal>
+  );
+}
+
+function AbaUnidade({
+  ativo,
+  onClick,
+  icon,
+  children,
+}: {
+  ativo: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2.5 text-[13.5px] font-bold transition ${
+        ativo ? "bg-seice-gold text-seice-gold-ink" : "text-seice-soft hover:bg-seice-chip"
+      }`}
+    >
+      {icon}
+      {children}
+    </button>
   );
 }
 
