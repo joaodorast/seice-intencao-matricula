@@ -29,6 +29,10 @@ export interface TurmaDisponivel {
   capacidade: number;
   vagas_planilha: number;
   vagas_restantes: number;
+  /** Controla se o número de vagas aparece pro responsável no site público
+   *  (true) ou se essa turma sempre mostra "Lista de espera" (false) —
+   *  configurável pelo admin na tela de Configurações. */
+  mostrar_vagas: boolean;
 }
 
 export interface SerieGroup {
@@ -74,6 +78,7 @@ export interface TurmaAdminRow {
   vagas_planilha: number;
   pre_matriculas_recebidas: number;
   vagas_restantes: number;
+  mostrar_vagas: boolean;
   criado_em?: string;
 }
 
@@ -90,6 +95,7 @@ export interface TurmaFormValues {
   matriculados: number;
   vagas_planilha: number;
   ano_letivo: number;
+  mostrar_vagas?: boolean;
 }
 
 export interface PreMatriculaAdminRow {
