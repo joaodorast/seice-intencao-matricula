@@ -17,11 +17,15 @@ export default function ConfiguracoesTab({
   turmas,
   onReset,
   onAtualizarTurma,
+  onAtualizarVarias,
 }: {
   token: string;
   turmas: TurmaAdminRow[];
   onReset: () => void;
   onAtualizarTurma: (turma: TurmaAdminRow) => void;
+  /** Atualiza várias turmas de uma vez (usado pelo "marcar todas") — um só
+   *  re-render em vez de um por turma. */
+  onAtualizarVarias: (ids: Set<string>, mostrar_vagas: boolean) => void;
 }) {
   const [confirmando, setConfirmando] = useState(false);
   const [resetando, setResetando] = useState(false);
@@ -121,6 +125,7 @@ export default function ConfiguracoesTab({
         token={token}
         turmas={turmas}
         onAtualizarTurma={onAtualizarTurma}
+        onAtualizarVarias={onAtualizarVarias}
       />
     </div>
   );
