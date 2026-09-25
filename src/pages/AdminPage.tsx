@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
@@ -84,6 +84,18 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   const [dataFimExport, setDataFimExport] = useState("");
   const [registros, setRegistros] = useState<PreMatriculaAdminRow[]>([]);
   const [turmas, setTurmas] = useState<TurmaAdminRow[]>([]);
+  // referências estáveis (só dependem do setTurmas, que nunca muda) — sem
+  // isso, cada re-render da página criava funções novas e desfazia a
+  // memoização das linhas do modal de vagas visíveis
+  const atualizarTurmaNaLista = useCallback(
+    (t: TurmaAdminRow) => setTurmas((atual) => atual.map((x) => (x.id === t.id ? t : x))),
+    []
+  );
+  const atualizarVariasNaLista = useCallback(
+    (ids: Set<string>, mostrar_vagas: boolean) =>
+      setTurmas((atual) => atual.map((x) => (ids.has(x.id) ? { ...x, mostrar_vagas } : x))),
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   // aviso curto depois de mudar o status de alguém: a intenção continua com
@@ -598,7 +610,8 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                 token={token}
                 turmas={turmas}
                 onReset={() => carregar()}
-                onAtualizarTurma={(t) => setTurmas((atual) => atual.map((x) => (x.id === t.id ? t : x)))}
+                onAtualizarTurma={atualizarTurmaNaLista}
+                onAtualizarVarias={atualizarVariasNaLista}
               />
             )}
           </>
