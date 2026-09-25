@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { RotateCcw, Settings2 } from "lucide-react";
+import { Eye, RotateCcw, Settings2 } from "lucide-react";
 import { resetarDadosTeste } from "../../lib/adminApi";
+import type { TurmaAdminRow } from "../../types";
 import { Button, Card } from "../ui";
 import ConfirmModal from "./ConfirmModal";
+import VagasVisiveisModal from "./VagasVisiveisModal";
 
 /**
  * Tela só pra quem loga como admin@seice.com.br. O botão de reset é pensado
@@ -10,11 +12,23 @@ import ConfirmModal from "./ConfirmModal";
  * matrícula atuais (não mexe em turmas nem no resto da configuração) e
  * reinicia a senha sequencial em 01 — não é um "apagar tudo do sistema".
  */
-export default function ConfiguracoesTab({ token, onReset }: { token: string; onReset: () => void }) {
+export default function ConfiguracoesTab({
+  token,
+  turmas,
+  onReset,
+  onAtualizarTurma,
+}: {
+  token: string;
+  turmas: TurmaAdminRow[];
+  onReset: () => void;
+  onAtualizarTurma: (turma: TurmaAdminRow) => void;
+}) {
   const [confirmando, setConfirmando] = useState(false);
   const [resetando, setResetando] = useState(false);
   const [feito, setFeito] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [modalVagasAberto, setModalVagasAberto] = useState(false);
+  const totalMostrandoVagas = turmas.filter((t) => t.mostrar_vagas).length;
 
   async function resetar() {
     setResetando(true);
@@ -37,6 +51,29 @@ export default function ConfiguracoesTab({ token, onReset }: { token: string; on
         <h2 className="font-display text-[22.5px] font-semibold tracking-tight text-seice-ink">Configurações</h2>
         <p className="text-[15px] text-seice-muted">Ferramentas administrativas do painel geral.</p>
       </div>
+
+      <Card className="flex flex-col gap-4">
+        <div className="flex items-start gap-3.5">
+          <span className="icon-tile-soft flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+            <Eye size={20} />
+          </span>
+          <div>
+            <div className="text-[16.5px] font-bold text-seice-ink">Vagas visíveis pro responsável</div>
+            <p className="mt-1 text-[14.5px] leading-relaxed text-seice-muted">
+              Escolha, turma por turma, se o responsável vê a quantidade de vagas no site público ou se ela
+              sempre aparece como "Lista de espera" pra ele. Hoje{" "}
+              <strong className="text-seice-ink">
+                {totalMostrandoVagas} de {turmas.length}
+              </strong>{" "}
+              turmas mostram o número de vagas.
+            </p>
+          </div>
+        </div>
+
+        <Button variant="dark" className="!self-start" onClick={() => setModalVagasAberto(true)}>
+          <Eye size={16} /> Configurar vagas visíveis
+        </Button>
+      </Card>
 
       <Card className="flex flex-col gap-4">
         <div className="flex items-start gap-3.5">
@@ -76,6 +113,14 @@ export default function ConfiguracoesTab({ token, onReset }: { token: string; on
         message="Isso vai apagar TODAS as intenções de matrícula cadastradas até agora (de teste ou não) e reiniciar a senha para 01. Essa ação não pode ser desfeita."
         confirmLabel="Sim, resetar"
         onConfirm={resetar}
+      />
+
+      <VagasVisiveisModal
+        open={modalVagasAberto}
+        onClose={() => setModalVagasAberto(false)}
+        token={token}
+        turmas={turmas}
+        onAtualizarTurma={onAtualizarTurma}
       />
     </div>
   );
