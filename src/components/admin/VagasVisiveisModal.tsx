@@ -162,8 +162,8 @@ function LinhaTurma({
         </div>
         <div className="truncate text-[13px] text-seice-muted">
           {unidadeCurta(turma.unidade_id)} · {turnoLabel(turma.turno)}
-          {turma.curso ? ` · ${turma.curso}` : ""} · {turma.vagas_restantes} vaga
-          {turma.vagas_restantes === 1 ? "" : "s"} real{turma.vagas_restantes === 1 ? "" : "is"}
+          {turma.curso ? ` · ${turma.curso}` : ""} · {turma.vagas_restantes}{" "}
+          {turma.vagas_restantes === 1 ? "vaga real" : "vagas reais"}
         </div>
       </div>
 
