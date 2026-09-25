@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { Eye, EyeOff, LayoutGrid, Search } from "lucide-react";
 import { NIVEIS, UNIDADES } from "../../config";
 import { turnoLabel } from "../../lib/format";
@@ -14,6 +14,11 @@ import Modal from "./Modal";
  * clique salva na hora (sem botão de "salvar tudo" no final), então o
  * efeito é imediato no site. Dá pra filtrar por unidade e marcar/desmarcar
  * todas as turmas visíveis de uma vez.
+ *
+ * Otimizações: as linhas são memoizadas (só a turma que mudou re-renderiza,
+ * não a lista inteira) e o "marcar todas" faz uma única atualização de
+ * estado em lote, em vez de uma por turma — mesmo com muitas turmas e
+ * muitos cliques seguidos, a tela continua leve.
  */
 export default function VagasVisiveisModal({
   open,
@@ -21,6 +26,7 @@ export default function VagasVisiveisModal({
   token,
   turmas,
   onAtualizarTurma,
+  onAtualizarVarias,
 }: {
   open: boolean;
   onClose: () => void;
@@ -29,6 +35,8 @@ export default function VagasVisiveisModal({
   /** Atualiza a lista de turmas no componente pai assim que uma muda, sem
    *  precisar recarregar tudo do zero. */
   onAtualizarTurma: (turma: TurmaAdminRow) => void;
+  /** Atualiza várias turmas de uma vez (um só re-render). */
+  onAtualizarVarias: (ids: Set<string>, mostrar_vagas: boolean) => void;
 }) {
   const [busca, setBusca] = useState("");
   const [unidadeAtiva, setUnidadeAtiva] = useState<string>("todas");
@@ -62,45 +70,62 @@ export default function VagasVisiveisModal({
     return grupos;
   }, [turmasVisiveis]);
 
-  const totalVisiveisGeral = turmas.filter((t) => t.mostrar_vagas).length;
+  const totalVisiveisGeral = useMemo(() => turmas.filter((t) => t.mostrar_vagas).length, [turmas]);
   const todasVisiveisNoRecorte = turmasVisiveis.length > 0 && turmasVisiveis.every((t) => t.mostrar_vagas);
 
-  async function salvarUma(turma: TurmaAdminRow, novoValor: boolean) {
-    setSalvando((atual) => new Set(atual).add(turma.id));
-    // otimista: muda na hora, e desfaz se a chamada falhar
-    onAtualizarTurma({ ...turma, mostrar_vagas: novoValor });
-    try {
-      await atualizarTurma(token, turma.id, { mostrar_vagas: novoValor });
-    } catch (e) {
-      onAtualizarTurma(turma);
-      throw e;
-    } finally {
-      setSalvando((atual) => {
-        const novo = new Set(atual);
-        novo.delete(turma.id);
-        return novo;
-      });
-    }
-  }
-
-  async function alternar(turma: TurmaAdminRow) {
-    setErro(null);
-    try {
-      await salvarUma(turma, !turma.mostrar_vagas);
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : "Não foi possível salvar essa alteração.");
-    }
-  }
+  // referência estável: LinhaTurma memoizado só re-renderiza de verdade
+  // quando a própria turma dele muda, não a cada clique em qualquer outra
+  const alternar = useCallback(
+    async (turma: TurmaAdminRow) => {
+      const novoValor = !turma.mostrar_vagas;
+      setErro(null);
+      setSalvando((atual) => new Set(atual).add(turma.id));
+      onAtualizarTurma({ ...turma, mostrar_vagas: novoValor }); // otimista
+      try {
+        await atualizarTurma(token, turma.id, { mostrar_vagas: novoValor });
+      } catch (e) {
+        onAtualizarTurma(turma); // desfaz só essa
+        setErro(e instanceof Error ? e.message : "Não foi possível salvar essa alteração.");
+      } finally {
+        setSalvando((atual) => {
+          const novo = new Set(atual);
+          novo.delete(turma.id);
+          return novo;
+        });
+      }
+    },
+    [token, onAtualizarTurma]
+  );
 
   async function marcarTodas(valor: boolean) {
     setErro(null);
     setSalvandoEmMassa(true);
     const alvo = turmasVisiveis.filter((t) => t.mostrar_vagas !== valor);
+    const idsAlvo = new Set(alvo.map((t) => t.id));
+    // uma atualização otimista só, pra todas de uma vez — em vez de uma
+    // chamada de estado por turma (o que travaria a tela com muitas turmas)
+    onAtualizarVarias(idsAlvo, valor);
+    setSalvando((atual) => new Set([...atual, ...idsAlvo]));
     try {
-      await Promise.all(alvo.map((t) => salvarUma(t, valor)));
-    } catch {
-      setErro("Algumas turmas não foram salvas. Confira a lista e tente de novo nas que ficaram com Lista de espera.");
+      const resultados = await Promise.allSettled(
+        alvo.map((t) => atualizarTurma(token, t.id, { mostrar_vagas: valor }))
+      );
+      const falharam = alvo.filter((_, i) => resultados[i].status === "rejected");
+      if (falharam.length > 0) {
+        // desfaz só quem falhou, também em lote
+        onAtualizarVarias(new Set(falharam.map((t) => t.id)), !valor);
+        setErro(
+          falharam.length === alvo.length
+            ? "Não foi possível salvar. Tente de novo."
+            : `${falharam.length} turma(s) não foram salvas. Tente de novo nelas.`
+        );
+      }
     } finally {
+      setSalvando((atual) => {
+        const novo = new Set(atual);
+        for (const id of idsAlvo) novo.delete(id);
+        return novo;
+      });
       setSalvandoEmMassa(false);
     }
   }
@@ -187,7 +212,7 @@ export default function VagasVisiveisModal({
                 {n.label}
               </div>
               {gruposPorNivel.get(n.key)!.map((t) => (
-                <LinhaTurma key={t.id} turma={t} salvando={salvando.has(t.id)} onToggle={() => alternar(t)} />
+                <LinhaTurma key={t.id} turma={t} salvando={salvando.has(t.id)} onToggle={alternar} />
               ))}
             </div>
           ))}
@@ -222,14 +247,14 @@ function AbaUnidade({
   );
 }
 
-function LinhaTurma({
+const LinhaTurma = memo(function LinhaTurma({
   turma,
   salvando,
   onToggle,
 }: {
   turma: TurmaAdminRow;
   salvando: boolean;
-  onToggle: () => void;
+  onToggle: (turma: TurmaAdminRow) => void;
 }) {
   const ligado = turma.mostrar_vagas;
   return (
@@ -266,7 +291,7 @@ function LinhaTurma({
           role="switch"
           aria-checked={ligado}
           disabled={salvando}
-          onClick={onToggle}
+          onClick={() => onToggle(turma)}
           className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:cursor-wait disabled:opacity-60 ${
             ligado ? "bg-seice-gold" : "bg-seice-chip"
           }`}
@@ -280,4 +305,4 @@ function LinhaTurma({
       </div>
     </div>
   );
-}
+});
