@@ -169,6 +169,7 @@ Deno.serve(async (req: Request) => {
         "matriculados",
         "vagas_planilha",
         "ano_letivo",
+        "mostrar_vagas",
       ];
       const updates: Record<string, unknown> = {};
       for (const campo of campos) {
