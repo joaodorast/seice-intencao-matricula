@@ -105,16 +105,13 @@ export default function PreMatriculaTable({
           <thead>
             <tr>
               {[
-                ["Senha", "w-[6%]"],
-                ["Recebido em", "w-[8%]"],
+                ["Senha / recebido em", "w-[10%]"],
                 ["Unidade", "w-[8%]"],
-                ["Aluno", "w-[11%]"],
-                ["Turma", "w-[10%]"],
+                ["Aluno", "w-[13%]"],
+                ["Turma", "w-[12%]"],
                 ["Posição na fila (por turma)", "w-[9%]"],
-                ["Responsável", "w-[8%]"],
-                ["Telefone(s)", "w-[8%]"],
-                ["E-mail", "w-[8%]"],
-                ["Status", "w-[24%]"],
+                ["Responsável / contato", "w-[18%]"],
+                ["Status", "w-[30%]"],
               ].map(([h, w]) => (
                 <th
                   key={h}
@@ -132,9 +129,9 @@ export default function PreMatriculaTable({
                   <span className="inline-flex items-center rounded-full bg-seice-gold px-2.5 py-1 font-mono text-[14px] font-extrabold text-seice-gold-ink">
                     {formatarSenha(r.numero_senha)}
                   </span>
-                </td>
-                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-muted">
-                  {formatDateTime(r.criado_em)}
+                  <p className="mt-1.5 break-words text-[12.5px] leading-snug text-seice-muted">
+                    {formatDateTime(r.criado_em)}
+                  </p>
                 </td>
                 <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
                   {unidadeNome(r.unidade_id)}
@@ -148,20 +145,14 @@ export default function PreMatriculaTable({
                 <td className="break-words border-b border-seice-border px-2.5 py-3 align-top">
                   <SeloPosicao registro={r} posicoes={posicoes} />
                 </td>
+                {/* responsável, telefone e e-mail juntos numa coluna só — libera
+                    largura pro seletor de status caber inteiro numa linha */}
                 <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
-                  {r.responsavel_nome}
-                </td>
-                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
-                  {maskPhone(r.telefone1)}
-                  {r.telefone2 && (
-                    <>
-                      <br />
-                      {maskPhone(r.telefone2)}
-                    </>
-                  )}
-                </td>
-                <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
-                  {r.email || "—"}
+                  <p className="font-semibold text-seice-ink">{r.responsavel_nome}</p>
+                  <p className="mt-0.5">
+                    {[r.telefone1, r.telefone2].filter(Boolean).map((t) => maskPhone(t!)).join(" · ")}
+                  </p>
+                  <p className="mt-0.5 text-[13px] text-seice-muted">{r.email || "—"}</p>
                 </td>
                 <td className="border-b border-seice-border px-2.5 py-3 align-top">
                   <StatusControl status={r.status} onChange={(status) => onStatusChange(r.id, status)} />
