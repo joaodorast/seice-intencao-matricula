@@ -68,7 +68,7 @@ export default function StatusControl({
           <strong className="text-[16.5px] font-extrabold text-seice-gold">{STATUS_INFO[status].label}</strong>
         </p>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex max-w-full flex-wrap items-center gap-1 rounded-xl bg-seice-deep-soft p-1">
+          <div className="inline-flex items-center gap-1 whitespace-nowrap rounded-xl bg-seice-deep-soft p-1">
             {OPCOES.map((opcao) => {
               const ativo = opcao === status;
               return (
@@ -76,7 +76,7 @@ export default function StatusControl({
                   key={opcao}
                   type="button"
                   onClick={() => !ativo && onChange(opcao)}
-                  className={`rounded-lg px-2 py-1.5 text-[12.5px] font-bold transition ${
+                  className={`rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold transition ${
                     ativo ? ESTILO_ATIVO : "text-seice-muted hover:text-seice-ink"
                   }`}
                 >
