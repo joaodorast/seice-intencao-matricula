@@ -31,7 +31,7 @@ function linhasIntencoes(registros: PreMatriculaAdminRow[]) {
     "Telefone 1": maskPhone(r.telefone1),
     "Telefone 2": r.telefone2 ? maskPhone(r.telefone2) : "",
     "E-mail": r.email ?? "",
-    Status: r.status,
+    Status: STATUS_INFO[r.status]?.label ?? r.status,
     "Lista de espera": r.lista_espera ? "Sim" : "Não",
     "Posição na lista de espera": posicoesEspera.has(r.id) ? `${posicoesEspera.get(r.id)}ª` : "",
   }));
