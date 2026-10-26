@@ -6,9 +6,12 @@ import ConfirmModal from "./ConfirmModal";
 
 const OPCOES: StatusPreMatricula[] = ["pendente", "contatado", "matriculado"];
 
-/** Etapa ativa sempre em dourado — o mesmo destaque usado nos outros
- *  seletores do painel (unidade, aba), pra manter a mesma linguagem visual. */
-const ESTILO_ATIVO = "bg-seice-gold text-seice-gold-ink";
+/** Etapa ativa em dourado — o mesmo destaque usado nos outros seletores do
+ *  painel (unidade, aba) — exceto Matriculado, que fica verde pra deixar
+ *  claro de longe quem já fechou a matrícula. */
+function estiloAtivo(status: StatusPreMatricula) {
+  return status === "matriculado" ? "bg-seice-success text-seice-deep" : "bg-seice-gold text-seice-gold-ink";
+}
 
 /**
  * Controle explícito de status: as três opções (Pendente/Contatado/
@@ -65,7 +68,11 @@ export default function StatusControl({
       <div className="flex flex-col gap-1.5">
         <p className="text-[15.5px] text-seice-soft">
           Responsável está em:{" "}
-          <strong className="text-[16.5px] font-extrabold text-seice-gold">{STATUS_INFO[status].label}</strong>
+          <strong
+            className={`text-[16.5px] font-extrabold ${
+              status === "matriculado" ? "text-seice-success" : "text-seice-gold"
+            }`}
+          >{STATUS_INFO[status].label}</strong>
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center gap-1 whitespace-nowrap rounded-xl bg-seice-deep-soft p-1">
@@ -77,7 +84,7 @@ export default function StatusControl({
                   type="button"
                   onClick={() => !ativo && onChange(opcao)}
                   className={`rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold transition ${
-                    ativo ? ESTILO_ATIVO : "text-seice-muted hover:text-seice-ink"
+                    ativo ? estiloAtivo(opcao) : "text-seice-muted hover:text-seice-ink"
                   }`}
                 >
                   {STATUS_INFO[opcao].label}
