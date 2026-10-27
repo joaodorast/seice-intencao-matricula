@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft, Baby, Backpack, BookOpen, ChevronRight, GraduationCap } from "lucide-react";
 import { motion } from "framer-motion";
 import { NIVEIS } from "../../config";
-import { turmaEsgotada } from "../../lib/vagasVisiveis";
+import { VAGAS_ESGOTADAS, turmaEsgotada } from "../../lib/vagasVisiveis";
 import type { Nivel, TurmaDisponivel, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, EmptyState, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -80,12 +80,12 @@ export default function NivelStep({
             const doNivel = turmas.filter((t) => t.nivel === n.key);
             const abertas = doNivel.filter((t) => !turmaEsgotada(t));
             const totalVagas = abertas.reduce((acc, t) => acc + t.vagas_restantes, 0);
+            // sem vaga nenhuma no nível: VAGAS ESGOTADAS — também quando ainda
+            // aceita lista de espera (Jardim Primavera, só o texto mudou)
             const selo =
-              abertas.length === 0
-                ? "VAGAS ESGOTADAS"
-                : totalVagas === 0 && abertas.some((t) => t.aceita_lista_espera)
-                  ? "Lista de espera"
-                  : null;
+              abertas.length === 0 || (totalVagas === 0 && abertas.some((t) => t.aceita_lista_espera))
+                ? VAGAS_ESGOTADAS
+                : null;
             return (
               <motion.button
                 key={n.key}
@@ -105,7 +105,7 @@ export default function NivelStep({
                   <div className="text-[15px] text-seice-muted">{descricaoNivel(n, unidade.slug)}</div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {selo && <Badge tone={abertas.length === 0 ? "danger" : "gold"}>{selo}</Badge>}
+                  {selo && <Badge tone="danger">{selo}</Badge>}
                   <ChevronRight
                     size={18}
                     className="text-seice-muted transition-transform group-hover:translate-x-0.5 group-hover:text-seice-ink"
