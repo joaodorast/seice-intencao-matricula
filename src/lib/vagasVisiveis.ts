@@ -10,16 +10,41 @@ export function vagaVisivelParaResponsavel(turma: { mostrar_vagas: boolean }): b
   return turma.mostrar_vagas;
 }
 
-/** Verdadeiro quando pelo menos uma turma da série tem mostrar_vagas ligado
- *  — usado pra decidir se mostra algum número já na etapa de série (antes
- *  de chegar no turno). */
-export function serieComVagaVisivel(turmas: TurmaDisponivel[]): boolean {
-  return turmas.some(vagaVisivelParaResponsavel);
+type TurmaPublica = Pick<TurmaDisponivel, "mostrar_vagas" | "esgotada" | "aceita_lista_espera" | "vagas_restantes">;
+
+/** Esgotada pro responsável: marcada pela secretaria, ou sem lista de espera
+ *  (Campos Elíseos) e já sem vaga livre. Não dá pra escolher essa turma. */
+export function turmaEsgotada(turma: TurmaPublica): boolean {
+  return turma.esgotada || (!turma.aceita_lista_espera && turma.vagas_restantes <= 0);
 }
 
-/** Soma só das turmas visíveis daquela série — não mistura com o total real
- *  (que inclui turno escondido), pra não mostrar um número que não bate com
- *  o que aparece depois na etapa de turma. */
-export function vagasVisiveisDaSerie(turmas: TurmaDisponivel[]): number {
-  return turmas.filter(vagaVisivelParaResponsavel).reduce((acc, t) => acc + t.vagas_restantes, 0);
+/** A intenção vai pra lista de espera: só em turma que aceita lista de
+ *  espera e não mostra vaga livre pro responsável. */
+export function vaiParaListaEspera(turma: TurmaPublica): boolean {
+  return (
+    !turmaEsgotada(turma) &&
+    turma.aceita_lista_espera &&
+    !(vagaVisivelParaResponsavel(turma) && turma.vagas_restantes > 0)
+  );
+}
+
+function textoVagas(n: number): string {
+  return `${n} vaga${n === 1 ? "" : "s"}`;
+}
+
+/** Texto do selo de vagas de uma turma no site público. */
+export function rotuloVagasTurma(turma: TurmaPublica): string {
+  if (turmaEsgotada(turma)) return "VAGAS ESGOTADAS";
+  if (vagaVisivelParaResponsavel(turma) && turma.vagas_restantes > 0) return textoVagas(turma.vagas_restantes);
+  return turma.aceita_lista_espera ? "Lista de espera" : "Vagas disponíveis";
+}
+
+/** Texto do selo de vagas de uma série (soma das turmas que ainda aceitam
+ *  intenção e mostram o número). */
+export function rotuloVagasSerie(turmas: TurmaPublica[]): string {
+  const abertas = turmas.filter((t) => !turmaEsgotada(t));
+  if (abertas.length === 0) return "VAGAS ESGOTADAS";
+  const visiveis = abertas.filter((t) => vagaVisivelParaResponsavel(t) && t.vagas_restantes > 0);
+  if (visiveis.length > 0) return textoVagas(visiveis.reduce((acc, t) => acc + t.vagas_restantes, 0));
+  return abertas.some((t) => t.aceita_lista_espera) ? "Lista de espera" : "Vagas disponíveis";
 }
