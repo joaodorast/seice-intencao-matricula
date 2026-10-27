@@ -58,9 +58,10 @@ Deno.serve(async (req) => {
       });
     }
 
+    // sem o código da turma (1001, 2003...) — pro responsável é só série + turno
     const turma = registro.turmas as { codigo: string; serie: string; turno: string; curso: string | null } | null;
     const resumoTurma = turma
-      ? `${turma.serie} — Turma ${turma.codigo} (${turnoLabel(turma.turno)})${turma.curso ? " — " + turma.curso : ""}`
+      ? `${turma.serie} — ${turnoLabel(turma.turno)}${turma.curso ? " — " + turma.curso : ""}`
       : "";
 
     const listaEspera = registro.lista_espera === true;
