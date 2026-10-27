@@ -33,6 +33,15 @@ export interface TurmaDisponivel {
    *  (true) ou se essa turma sempre mostra "Lista de espera" (false) —
    *  configurável pelo admin na tela de Configurações. */
   mostrar_vagas: boolean;
+  /** Marcada como esgotada pela secretaria: aparece com o selo "VAGAS
+   *  ESGOTADAS" e não aceita intenção, nem em lista de espera. */
+  esgotada: boolean;
+  /** false = turma sem lista de espera pelo site (Campos Elíseos): ao chegar
+   *  a 0 vagas ela também vira "VAGAS ESGOTADAS". */
+  aceita_lista_espera: boolean;
+  /** Série + turno (+ curso) — no site público cada combinação vira um
+   *  cartão só, sem o código da turma (ver agruparPorTurno). */
+  chave?: string;
 }
 
 export interface SerieGroup {
