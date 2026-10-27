@@ -3,7 +3,7 @@ import { ArrowLeft, Ban, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { NIVEL_LABELS } from "../../config";
 import TurmaEsgotadaModal from "../TurmaEsgotadaModal";
-import { rotuloVagasSerie, turmaEsgotada } from "../../lib/vagasVisiveis";
+import { VAGAS_ESGOTADAS, rotuloVagasSerie, turmaEsgotada } from "../../lib/vagasVisiveis";
 import type { SerieGroup, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -78,9 +78,17 @@ export default function SerieStep({
                       {abertas > 1 ? "is" : "l"}
                     </span>
                   )}
-                  <Badge tone={esgotada ? "danger" : "gold"} icon={esgotada ? <Ban size={13} /> : undefined}>
-                    {rotuloVagasSerie(s.turmas)}
-                  </Badge>
+                  {(() => {
+                    // vermelho sempre que o texto é VAGAS ESGOTADAS — inclusive
+                    // em série de lista de espera, que continua clicável
+                    const rotulo = rotuloVagasSerie(s.turmas);
+                    const semVaga = rotulo === VAGAS_ESGOTADAS;
+                    return (
+                      <Badge tone={semVaga ? "danger" : "gold"} icon={semVaga ? <Ban size={13} /> : undefined}>
+                        {rotulo}
+                      </Badge>
+                    );
+                  })()}
                 </div>
               </motion.button>
             );
