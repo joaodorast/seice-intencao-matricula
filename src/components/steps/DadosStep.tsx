@@ -176,7 +176,7 @@ export default function DadosStep({
         <dl className={`grid grid-cols-2 gap-x-4 gap-y-3 ${turma.curso ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
           <SummaryItem label="Unidade" value={unidade.nome} />
           <SummaryItem label="Série" value={serieGroup.serie} />
-          <SummaryItem label="Turno" value={turnoLabel(turma.turno)} />
+          <SummaryItem label="Turma" value={`${turma.serie} · ${turnoLabel(turma.turno)}`} />
           {turma.curso && <SummaryItem label="Curso" value={turma.curso} />}
         </dl>
       </div>
