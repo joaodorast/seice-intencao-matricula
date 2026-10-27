@@ -16,7 +16,7 @@ import { turnoLabel } from "../lib/format";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { supabase } from "../lib/supabaseClient";
 import { agruparPorTurno } from "../lib/turnos";
-import { turmaEsgotada, vaiParaListaEspera } from "../lib/vagasVisiveis";
+import { semVagaParaResponsavel, vaiParaListaEspera } from "../lib/vagasVisiveis";
 import { UNIDADES } from "../config";
 import type {
   Passo,
@@ -166,7 +166,7 @@ export default function PreMatriculaPage() {
 
   function handlePickTurma(id: string) {
     const t = serieGroup!.turmas.find((x) => x.id === id)!;
-    if (turmaEsgotada(t)) return;
+    if (semVagaParaResponsavel(t)) return;
     setTurma(t);
     go("dados");
   }
