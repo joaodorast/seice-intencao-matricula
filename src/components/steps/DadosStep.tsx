@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { maskPhone, onlyDigits, turnoLabel, validEmail } from "../../lib/format";
 import { RESERVA_MINUTOS, liberarReserva, renovarReserva, reservarVaga } from "../../lib/reservas";
-import { vagaVisivelParaResponsavel } from "../../lib/vagasVisiveis";
+import { vagaVisivelParaResponsavel, vaiParaListaEspera } from "../../lib/vagasVisiveis";
 import type { SerieGroup, TurmaDisponivel, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -140,8 +140,10 @@ export default function DadosStep({
   const vagas = turma.vagas_restantes;
   // mesma regra do badge "Sua escolha": turma fora da lista liberada pela
   // direção, ou já zerada, sempre mostra/avisa lista de espera pro
-  // responsável — mesmo quando ainda sobra vaga de verdade no banco
-  const mostraListaEspera = !(vagaVisivelParaResponsavel(turma) && vagas > 0);
+  // responsável — mesmo quando ainda sobra vaga de verdade no banco. Turma
+  // sem lista de espera (Campos Elíseos) nunca mostra esse aviso.
+  const mostraListaEspera = vaiParaListaEspera(turma);
+  const mostraNumero = vagaVisivelParaResponsavel(turma) && vagas > 0;
 
   return (
     <>
@@ -167,14 +169,14 @@ export default function DadosStep({
             </Badge>
           ) : (
             <Badge tone="success" icon={<CheckCircle2 size={13} />}>
-              {vagas} vaga{vagas === 1 ? "" : "s"}
+              {mostraNumero ? `${vagas} vaga${vagas === 1 ? "" : "s"}` : "Vagas disponíveis"}
             </Badge>
           )}
         </div>
         <dl className={`grid grid-cols-2 gap-x-4 gap-y-3 ${turma.curso ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
           <SummaryItem label="Unidade" value={unidade.nome} />
           <SummaryItem label="Série" value={serieGroup.serie} />
-          <SummaryItem label="Turma" value={`${turma.codigo} · ${turnoLabel(turma.turno)}`} />
+          <SummaryItem label="Turno" value={turnoLabel(turma.turno)} />
           {turma.curso && <SummaryItem label="Curso" value={turma.curso} />}
         </dl>
       </div>
