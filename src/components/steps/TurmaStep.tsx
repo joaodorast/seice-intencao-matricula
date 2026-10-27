@@ -75,7 +75,10 @@ export default function TurmaStep({
                     >
                       {t.turno === "M" ? <Sunrise size={18} /> : <Sunset size={18} />}
                     </span>
-                    <div className="text-[18px] font-bold text-seice-ink">{turnoLabel(t.turno)}</div>
+                    <div>
+                      <div className="text-[18px] font-bold text-seice-ink">{turnoLabel(t.turno)}</div>
+                      <div className="text-[14.5px] text-seice-muted">Turma {t.serie}</div>
+                    </div>
                   </div>
                   <div className="flex flex-wrap items-center justify-end gap-1.5">
                     {t.curso && (
