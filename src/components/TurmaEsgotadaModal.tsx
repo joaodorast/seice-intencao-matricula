@@ -7,7 +7,9 @@ import { Button } from "./ui";
 /**
  * Aviso que abre quando o responsável clica numa turma (ou série) com o selo
  * "VAGAS ESGOTADAS" — em vez do clique não fazer nada e a pessoa achar que o
- * site travou. Fecha no botão, no X, clicando fora ou com Esc.
+ * site travou. No celular sobe de baixo, ocupando a largura toda (fica perto
+ * do polegar); da tela média pra cima é um cartão centralizado. Fecha no
+ * botão, no X, clicando fora ou com Esc.
  */
 export default function TurmaEsgotadaModal({
   open,
@@ -35,41 +37,48 @@ export default function TurmaEsgotadaModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4"
           onClick={onClose}
         >
           <motion.div
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="turma-esgotada-titulo"
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.16 }}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-sm rounded-3xl border border-seice-border bg-seice-surface px-6 pb-6 pt-8 text-center shadow-[0_32px_80px_-24px_rgba(0,0,0,0.85)]"
+            className="relative w-full rounded-t-[28px] border border-b-0 border-seice-border bg-seice-surface px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-3 text-center shadow-[0_-20px_60px_-24px_rgba(0,0,0,0.85)] sm:max-w-md sm:rounded-3xl sm:border-b sm:px-8 sm:pb-8 sm:pt-9 sm:shadow-[0_32px_80px_-24px_rgba(0,0,0,0.85)]"
           >
+            {/* alça de "puxar" — só no celular, onde o aviso sobe de baixo */}
+            <span className="mx-auto mb-5 block h-1.5 w-11 rounded-full bg-seice-chip sm:hidden" />
+
             <button
               type="button"
               onClick={onClose}
               aria-label="Fechar"
-              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-seice-muted transition hover:bg-white/10 hover:text-seice-ink"
+              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-seice-muted transition hover:bg-white/10 hover:text-seice-ink"
             >
-              <X size={18} />
+              <X size={19} />
             </button>
 
-            <span className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-seice-danger-soft text-seice-danger ring-1 ring-seice-danger/25">
-              <Ban size={30} strokeWidth={2.2} />
+            <span className="mx-auto mb-4 flex h-[72px] w-[72px] items-center justify-center rounded-full bg-seice-danger-soft text-seice-danger ring-8 ring-seice-danger/10">
+              <Ban size={34} strokeWidth={2.2} />
             </span>
-            <h3 id="turma-esgotada-titulo" className="font-display text-[22px] font-semibold text-seice-ink">
+            <h3 id="turma-esgotada-titulo" className="font-display text-[24px] font-semibold text-seice-ink">
               Vagas esgotadas
             </h3>
-            {descricao && <p className="mt-1 text-[15px] font-semibold text-seice-gold">{descricao}</p>}
-            <p className="mt-3 text-[15.5px] leading-relaxed text-seice-soft">
+            {descricao && (
+              <p className="mx-auto mt-2 inline-flex rounded-full bg-seice-gold-soft px-3.5 py-1 text-[14.5px] font-bold text-seice-gold">
+                {descricao}
+              </p>
+            )}
+            <p className="mx-auto mt-4 max-w-[30ch] text-[16px] sm:max-w-none leading-relaxed text-seice-soft">
               Essa turma não tem mais vagas disponíveis.
             </p>
 
-            <Button className="mt-6 w-full" onClick={onClose}>
+            <Button className="mt-7 w-full py-3.5" onClick={onClose}>
               Escolher outra turma
             </Button>
           </motion.div>
