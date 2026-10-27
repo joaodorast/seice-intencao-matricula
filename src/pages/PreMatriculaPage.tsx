@@ -15,7 +15,8 @@ import { enviarComprovantePorEmail } from "../lib/emailComprovante";
 import { turnoLabel } from "../lib/format";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { supabase } from "../lib/supabaseClient";
-import { vagaVisivelParaResponsavel } from "../lib/vagasVisiveis";
+import { agruparPorTurno } from "../lib/turnos";
+import { turmaEsgotada, vaiParaListaEspera } from "../lib/vagasVisiveis";
 import { UNIDADES } from "../config";
 import type {
   Passo,
@@ -44,10 +45,19 @@ function agruparPorSerie(turmas: TurmaDisponivel[], nivel: string): SerieGroup[]
 // vaga também entram na lista: mesmo cheias, a família consegue escolhê-las
 // e entrar na lista de espera — só não aparece aqui o que a secretaria nunca
 // chegou a cadastrar como turma.
+// Exceção: turma esgotada (marcada pela secretaria, ou de unidade sem lista
+// de espera que chegou a 0) continua aparecendo, mas com "VAGAS ESGOTADAS" e
+// sem poder ser escolhida.
 async function buscarTurmas(): Promise<TurmaDisponivel[] | null> {
   const { data, error } = await supabase.rpc("get_turmas_disponiveis");
   if (error) return null;
-  return (data || []) as TurmaDisponivel[];
+  // ?? cobre o banco ainda sem as colunas novas: tudo segue como antes
+  const turmas = ((data || []) as TurmaDisponivel[]).map((t) => ({
+    ...t,
+    esgotada: t.esgotada ?? false,
+    aceita_lista_espera: t.aceita_lista_espera ?? true,
+  }));
+  return agruparPorTurno(turmas);
 }
 
 const slideVariants = {
@@ -82,16 +92,22 @@ export default function PreMatriculaPage() {
   }
 
   // aplica uma lista nova de turmas sem perder o que a pessoa já escolheu:
-  // atualiza os números de vaga da turma/série selecionadas em vez de trocá-las
+  // atualiza os números de vaga da turma/série selecionadas em vez de trocá-las.
+  // Casa pela chave série+turno (o cartão), não pelo id: a turma escolhida
+  // por dentro do turno pode mudar quando as vagas mudam. A turma que a
+  // pessoa já selecionou mantém o id — é nela que a vaga foi reservada.
   function sincronizarTurmas(lista: TurmaDisponivel[]) {
     const slug = unidade?.slug;
     if (!slug) return;
     const daUnidade = lista.filter((t) => t.unidade_id === slug);
     setTurmasDisponiveis(daUnidade);
-    setTurma((atual) => (atual ? daUnidade.find((t) => t.id === atual.id) ?? atual : atual));
+    setTurma((atual) => {
+      const nova = atual && daUnidade.find((t) => t.chave === atual.chave);
+      return nova ? { ...nova, id: atual.id } : atual;
+    });
     setSerieGroup((atual) =>
       atual
-        ? { ...atual, turmas: atual.turmas.map((t) => daUnidade.find((n) => n.id === t.id) ?? t) }
+        ? { ...atual, turmas: atual.turmas.map((t) => daUnidade.find((n) => n.chave === t.chave) ?? t) }
         : atual
     );
   }
@@ -150,6 +166,7 @@ export default function PreMatriculaPage() {
 
   function handlePickTurma(id: string) {
     const t = serieGroup!.turmas.find((x) => x.id === id)!;
+    if (turmaEsgotada(t)) return;
     setTurma(t);
     go("dados");
   }
@@ -179,7 +196,8 @@ export default function PreMatriculaPage() {
     // vagasVisiveis.ts) sempre mostra "Lista de espera" pro responsável, então
     // o registro tem que cair em lista_espera = true de verdade no banco —
     // não só na tela — mesmo que ainda exista vaga real (que fica livre pra
-    // a secretaria matricular manualmente).
+    // a secretaria matricular manualmente). Turma sem lista de espera nunca
+    // é forçada: se encher, o banco recusa com "Turma esgotada".
     const { data, error } = await supabase.rpc("enviar_intencao", {
       p_unidade_id: payload.unidade_id,
       p_turma_id: payload.turma_id,
@@ -189,9 +207,19 @@ export default function PreMatriculaPage() {
       p_telefone2: payload.telefone2,
       p_email: payload.email,
       p_aluno_nome: payload.aluno_nome,
-      p_forcar_lista_espera: !vagaVisivelParaResponsavel(turma!),
+      p_forcar_lista_espera: vaiParaListaEspera(turma!),
     });
     setSubmitting(false);
+
+    // a turma esgotou enquanto a pessoa preenchia (ou a secretaria marcou
+    // como esgotada): atualiza as vagas na tela e avisa com clareza
+    if (error?.message?.includes("Turma esgotada")) {
+      setSubmitErro("As vagas desta turma acabaram de esgotar. Volte e escolha outra turma.");
+      recarregarTurmas().then((lista) => {
+        if (lista) sincronizarTurmas(lista);
+      });
+      return;
+    }
 
     const linha = data?.[0];
     if (error || !linha) {
@@ -204,7 +232,7 @@ export default function PreMatriculaPage() {
       numeroSenha: linha.numero_senha,
       listaEspera: linha.lista_espera,
       posicaoEspera: linha.posicao_espera ?? null,
-      resumoTurma: `${serieGroup!.serie} — Turma ${turma!.codigo} (${turnoLabel(turma!.turno)})${
+      resumoTurma: `${serieGroup!.serie} — ${turnoLabel(turma!.turno)}${
         turma!.curso ? " — " + turma!.curso : ""
       }`,
     });
