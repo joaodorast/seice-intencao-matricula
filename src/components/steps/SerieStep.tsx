@@ -1,6 +1,8 @@
+import { useCallback, useState } from "react";
 import { ArrowLeft, Ban, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { NIVEL_LABELS } from "../../config";
+import TurmaEsgotadaModal from "../TurmaEsgotadaModal";
 import { rotuloVagasSerie, turmaEsgotada } from "../../lib/vagasVisiveis";
 import type { SerieGroup, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
@@ -18,8 +20,13 @@ export default function SerieStep({
   onBack: () => void;
   onPick: (ordem: number) => void;
 }) {
+  // série esgotada clicada: o que mostrar no aviso (null = fechado)
+  const [aviso, setAviso] = useState<string | null>(null);
+  const fecharAviso = useCallback(() => setAviso(null), []);
+
   return (
     <>
+      <TurmaEsgotadaModal open={aviso !== null} descricao={aviso} onClose={fecharAviso} />
       <BackBar
         label={
           <>
@@ -34,23 +41,24 @@ export default function SerieStep({
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {series.map((s, i) => {
-            // série com todos os turnos esgotados: aparece, mas não abre
+            // série com todos os turnos esgotados: aparece apagada e, no
+            // clique, abre o aviso de vagas esgotadas em vez de seguir
             const abertas = s.turmas.filter((t) => !turmaEsgotada(t)).length;
             const esgotada = abertas === 0;
             return (
               <motion.button
                 key={s.ordem}
                 type="button"
-                disabled={esgotada}
-                aria-disabled={esgotada}
-                onClick={() => !esgotada && onPick(s.ordem)}
+                onClick={() => (esgotada ? setAviso(s.serie) : onPick(s.ordem))}
                 initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
+                // opacidade aqui e não numa classe: o motion escreve opacity
+                // inline e passaria por cima de um opacity-60
+                animate={{ opacity: esgotada ? 0.6 : 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
-                whileTap={esgotada ? undefined : { scale: 0.985 }}
+                whileTap={{ scale: 0.985 }}
                 className={`raised-surface group flex flex-col gap-3 rounded-xl border border-seice-border p-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-seice-gold/15 sm:p-5 ${
                   esgotada
-                    ? "cursor-not-allowed opacity-60"
+                    ? "hover:border-seice-danger/40"
                     : "hover:-translate-y-0.5 hover:border-seice-border-strong hover:shadow-[0_14px_30px_-18px_rgba(20,22,27,0.55)]"
                 }`}
               >
