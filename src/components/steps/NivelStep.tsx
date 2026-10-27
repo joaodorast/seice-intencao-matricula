@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft, Baby, Backpack, BookOpen, ChevronRight, GraduationCap } from "lucide-react";
 import { motion } from "framer-motion";
 import { NIVEIS } from "../../config";
+import { turmaEsgotada } from "../../lib/vagasVisiveis";
 import type { Nivel, TurmaDisponivel, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, EmptyState, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -76,9 +77,15 @@ export default function NivelStep({
 
         <div className="flex flex-col gap-3">
           {niveis.map((n, i) => {
-            const totalVagas = turmas
-              .filter((t) => t.nivel === n.key)
-              .reduce((acc, t) => acc + t.vagas_restantes, 0);
+            const doNivel = turmas.filter((t) => t.nivel === n.key);
+            const abertas = doNivel.filter((t) => !turmaEsgotada(t));
+            const totalVagas = abertas.reduce((acc, t) => acc + t.vagas_restantes, 0);
+            const selo =
+              abertas.length === 0
+                ? "VAGAS ESGOTADAS"
+                : totalVagas === 0 && abertas.some((t) => t.aceita_lista_espera)
+                  ? "Lista de espera"
+                  : null;
             return (
               <motion.button
                 key={n.key}
@@ -98,7 +105,7 @@ export default function NivelStep({
                   <div className="text-[15px] text-seice-muted">{descricaoNivel(n, unidade.slug)}</div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {totalVagas === 0 && <Badge tone="gold">Lista de espera</Badge>}
+                  {selo && <Badge tone={abertas.length === 0 ? "danger" : "gold"}>{selo}</Badge>}
                   <ChevronRight
                     size={18}
                     className="text-seice-muted transition-transform group-hover:translate-x-0.5 group-hover:text-seice-ink"
