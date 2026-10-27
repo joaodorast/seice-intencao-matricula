@@ -45,6 +45,13 @@ export function rotuloVagasTurma(turma: TurmaPublica): string {
   return turma.aceita_lista_espera ? VAGAS_ESGOTADAS : "Vagas disponíveis";
 }
 
+/** O responsável vê VAGAS ESGOTADAS nesse cartão — clicar abre o aviso em
+ *  vez de seguir. Inclui turma de lista de espera (Jardim Primavera): lá só o
+ *  site deixa de oferecer a lista, o banco não mudou. */
+export function semVagaParaResponsavel(turma: TurmaPublica): boolean {
+  return rotuloVagasTurma(turma) === VAGAS_ESGOTADAS;
+}
+
 /** Texto do selo de vagas de uma série (soma das turmas que ainda aceitam
  *  intenção e mostram o número). */
 export function rotuloVagasSerie(turmas: TurmaPublica[]): string {
