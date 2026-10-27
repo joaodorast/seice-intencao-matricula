@@ -64,7 +64,9 @@ export default function TurmaStep({
                     : "hover:-translate-y-0.5 hover:border-seice-border-strong hover:shadow-[0_14px_30px_-18px_rgba(20,22,27,0.55)]"
                 }`}
               >
-                <div className="flex items-center justify-between gap-2">
+                {/* flex-wrap: em cartão estreito o selo ("VAGAS ESGOTADAS" é
+                    comprido) desce pra linha de baixo em vez de vazar do cartão */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
                     <span
                       className={`flex h-10 w-10 items-center justify-center rounded-lg icon-tile-soft transition ${
