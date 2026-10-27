@@ -3,7 +3,7 @@ import { ArrowLeft, Ban, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { NIVEL_LABELS } from "../../config";
 import TurmaEsgotadaModal from "../TurmaEsgotadaModal";
-import { VAGAS_ESGOTADAS, rotuloVagasSerie, turmaEsgotada } from "../../lib/vagasVisiveis";
+import { VAGAS_ESGOTADAS, rotuloVagasSerie, semVagaParaResponsavel } from "../../lib/vagasVisiveis";
 import type { SerieGroup, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -41,9 +41,9 @@ export default function SerieStep({
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {series.map((s, i) => {
-            // série com todos os turnos esgotados: aparece apagada e, no
-            // clique, abre o aviso de vagas esgotadas em vez de seguir
-            const abertas = s.turmas.filter((t) => !turmaEsgotada(t)).length;
+            // série com todos os turnos em VAGAS ESGOTADAS: aparece apagada, sem
+            // "turmas disponíveis", e no clique abre o aviso em vez de seguir
+            const abertas = s.turmas.filter((t) => !semVagaParaResponsavel(t)).length;
             const esgotada = abertas === 0;
             return (
               <motion.button
@@ -78,17 +78,9 @@ export default function SerieStep({
                       {abertas > 1 ? "is" : "l"}
                     </span>
                   )}
-                  {(() => {
-                    // vermelho sempre que o texto é VAGAS ESGOTADAS — inclusive
-                    // em série de lista de espera, que continua clicável
-                    const rotulo = rotuloVagasSerie(s.turmas);
-                    const semVaga = rotulo === VAGAS_ESGOTADAS;
-                    return (
-                      <Badge tone={semVaga ? "danger" : "gold"} icon={semVaga ? <Ban size={13} /> : undefined}>
-                        {rotulo}
-                      </Badge>
-                    );
-                  })()}
+                  <Badge tone={esgotada ? "danger" : "gold"} icon={esgotada ? <Ban size={13} /> : undefined}>
+                    {esgotada ? VAGAS_ESGOTADAS : rotuloVagasSerie(s.turmas.filter((t) => !semVagaParaResponsavel(t)))}
+                  </Badge>
                 </div>
               </motion.button>
             );
