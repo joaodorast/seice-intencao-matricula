@@ -28,23 +28,29 @@ export function vaiParaListaEspera(turma: TurmaPublica): boolean {
   );
 }
 
+/** Texto do selo de turma sem vaga pro responsável. Vale também pra turma
+ *  que ainda aceita lista de espera (Jardim Primavera): lá só o texto mudou
+ *  a pedido da direção — a pessoa continua podendo escolher e cai na lista
+ *  de espera como antes. */
+export const VAGAS_ESGOTADAS = "VAGAS ESGOTADAS";
+
 function textoVagas(n: number): string {
   return `${n} vaga${n === 1 ? "" : "s"}`;
 }
 
 /** Texto do selo de vagas de uma turma no site público. */
 export function rotuloVagasTurma(turma: TurmaPublica): string {
-  if (turmaEsgotada(turma)) return "VAGAS ESGOTADAS";
+  if (turmaEsgotada(turma)) return VAGAS_ESGOTADAS;
   if (vagaVisivelParaResponsavel(turma) && turma.vagas_restantes > 0) return textoVagas(turma.vagas_restantes);
-  return turma.aceita_lista_espera ? "Lista de espera" : "Vagas disponíveis";
+  return turma.aceita_lista_espera ? VAGAS_ESGOTADAS : "Vagas disponíveis";
 }
 
 /** Texto do selo de vagas de uma série (soma das turmas que ainda aceitam
  *  intenção e mostram o número). */
 export function rotuloVagasSerie(turmas: TurmaPublica[]): string {
   const abertas = turmas.filter((t) => !turmaEsgotada(t));
-  if (abertas.length === 0) return "VAGAS ESGOTADAS";
+  if (abertas.length === 0) return VAGAS_ESGOTADAS;
   const visiveis = abertas.filter((t) => vagaVisivelParaResponsavel(t) && t.vagas_restantes > 0);
   if (visiveis.length > 0) return textoVagas(visiveis.reduce((acc, t) => acc + t.vagas_restantes, 0));
-  return abertas.some((t) => t.aceita_lista_espera) ? "Lista de espera" : "Vagas disponíveis";
+  return abertas.some((t) => t.aceita_lista_espera) ? VAGAS_ESGOTADAS : "Vagas disponíveis";
 }
