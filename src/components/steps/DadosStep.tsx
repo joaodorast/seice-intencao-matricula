@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   ArrowLeft,
+  Ban,
   CheckCircle2,
   CircleAlert,
   LoaderCircle,
@@ -14,7 +15,7 @@ import {
 } from "lucide-react";
 import { maskPhone, onlyDigits, turnoLabel, validEmail } from "../../lib/format";
 import { RESERVA_MINUTOS, liberarReserva, renovarReserva, reservarVaga } from "../../lib/reservas";
-import { vagaVisivelParaResponsavel, vaiParaListaEspera } from "../../lib/vagasVisiveis";
+import { VAGAS_ESGOTADAS, vagaVisivelParaResponsavel, vaiParaListaEspera } from "../../lib/vagasVisiveis";
 import type { SerieGroup, TurmaDisponivel, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -164,8 +165,8 @@ export default function DadosStep({
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
           <span className="text-[13.5px] font-bold uppercase tracking-[0.1em] text-seice-muted">Sua escolha</span>
           {mostraListaEspera ? (
-            <Badge tone="gold" icon={<Timer size={13} />}>
-              Lista de espera
+            <Badge tone="danger" icon={<Ban size={13} />}>
+              {VAGAS_ESGOTADAS}
             </Badge>
           ) : (
             <Badge tone="success" icon={<CheckCircle2 size={13} />}>
