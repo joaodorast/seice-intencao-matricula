@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { ArrowLeft, Briefcase, HeartPulse, Laptop, Sunrise, Sunset } from "lucide-react";
+import { ArrowLeft, Ban, Briefcase, HeartPulse, Laptop, Sunrise, Sunset } from "lucide-react";
 import { motion } from "framer-motion";
 import { turnoLabel } from "../../lib/format";
 import type { SerieGroup, Unidade } from "../../types";
-import { vagaVisivelParaResponsavel } from "../../lib/vagasVisiveis";
+import { rotuloVagasTurma, turmaEsgotada } from "../../lib/vagasVisiveis";
 import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
 const CURSO_ICON: Record<string, ReactNode> = {
@@ -41,43 +41,54 @@ export default function TurmaStep({
         <SectionEyebrow>Passo 4 de 6</SectionEyebrow>
         <SectionTitle>Escolha a turma</SectionTitle>
 
+        {/* sem o código da turma (1001, 2003...): o responsável escolhe só o
+            turno — várias turmas no mesmo turno já chegam aqui como um cartão
+            só (agruparPorTurno). Turma esgotada aparece, mas não dá pra clicar. */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {turmas.map((t, i) => (
-            <motion.button
-              key={t.id}
-              type="button"
-              onClick={() => onPick(t.id)}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
-              whileTap={{ scale: 0.985 }}
-              className="raised-surface group flex flex-col gap-3.5 rounded-xl border border-seice-border p-4 text-left transition hover:-translate-y-0.5 hover:border-seice-border-strong hover:shadow-[0_14px_30px_-18px_rgba(20,22,27,0.55)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-seice-gold/15 sm:p-5"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-lg icon-tile-soft transition group-hover:bg-seice-gold group-hover:text-seice-gold-ink">
-                    {t.turno === "M" ? <Sunrise size={18} /> : <Sunset size={18} />}
-                  </span>
-                  <div>
+          {turmas.map((t, i) => {
+            const esgotada = turmaEsgotada(t);
+            return (
+              <motion.button
+                key={t.chave ?? t.id}
+                type="button"
+                disabled={esgotada}
+                aria-disabled={esgotada}
+                onClick={() => !esgotada && onPick(t.id)}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                whileTap={esgotada ? undefined : { scale: 0.985 }}
+                className={`raised-surface group flex flex-col gap-3.5 rounded-xl border border-seice-border p-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-seice-gold/15 sm:p-5 ${
+                  esgotada
+                    ? "cursor-not-allowed opacity-60"
+                    : "hover:-translate-y-0.5 hover:border-seice-border-strong hover:shadow-[0_14px_30px_-18px_rgba(20,22,27,0.55)]"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg icon-tile-soft transition ${
+                        esgotada ? "" : "group-hover:bg-seice-gold group-hover:text-seice-gold-ink"
+                      }`}
+                    >
+                      {t.turno === "M" ? <Sunrise size={18} /> : <Sunset size={18} />}
+                    </span>
                     <div className="text-[18px] font-bold text-seice-ink">{turnoLabel(t.turno)}</div>
-                    <div className="text-[14.5px] text-seice-muted">Turma {t.codigo}</div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-1.5">
+                    {t.curso && (
+                      <Badge tone="neutral" icon={CURSO_ICON[t.curso]}>
+                        {t.curso}
+                      </Badge>
+                    )}
+                    <Badge tone={esgotada ? "danger" : "gold"} icon={esgotada ? <Ban size={13} /> : undefined}>
+                      {rotuloVagasTurma(t)}
+                    </Badge>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center justify-end gap-1.5">
-                  {t.curso && (
-                    <Badge tone="neutral" icon={CURSO_ICON[t.curso]}>
-                      {t.curso}
-                    </Badge>
-                  )}
-                  <Badge tone="gold">
-                    {vagaVisivelParaResponsavel(t) && t.vagas_restantes > 0
-                      ? `${t.vagas_restantes} vaga${t.vagas_restantes === 1 ? "" : "s"}`
-                      : "Lista de espera"}
-                  </Badge>
-                </div>
-              </div>
-            </motion.button>
-          ))}
+              </motion.button>
+            );
+          })}
         </div>
 
         {/* lista pode ficar comprida (muitas turmas) — um Voltar aqui embaixo
