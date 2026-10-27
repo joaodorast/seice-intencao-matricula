@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { ArrowLeft, Ban, Briefcase, HeartPulse, Laptop, Sunrise, Sunset } from "lucide-react";
 import { motion } from "framer-motion";
 import { turnoLabel } from "../../lib/format";
+import TurmaEsgotadaModal from "../TurmaEsgotadaModal";
 import type { SerieGroup, Unidade } from "../../types";
 import { rotuloVagasTurma, turmaEsgotada } from "../../lib/vagasVisiveis";
 import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
@@ -26,9 +27,13 @@ export default function TurmaStep({
   const turmas = [...serieGroup.turmas].sort((a, b) =>
     a.turno === b.turno ? a.codigo.localeCompare(b.codigo) : a.turno.localeCompare(b.turno)
   );
+  // turma esgotada clicada: o que mostrar no aviso (null = fechado)
+  const [aviso, setAviso] = useState<string | null>(null);
+  const fecharAviso = useCallback(() => setAviso(null), []);
 
   return (
     <>
+      <TurmaEsgotadaModal open={aviso !== null} descricao={aviso} onClose={fecharAviso} />
       <BackBar
         label={
           <>
@@ -43,7 +48,8 @@ export default function TurmaStep({
 
         {/* sem o código da turma (1001, 2003...): o responsável escolhe só o
             turno — várias turmas no mesmo turno já chegam aqui como um cartão
-            só (agruparPorTurno). Turma esgotada aparece, mas não dá pra clicar. */}
+            só (agruparPorTurno). Turma esgotada aparece apagada e, no clique,
+            abre o aviso de vagas esgotadas em vez de seguir. */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {turmas.map((t, i) => {
             const esgotada = turmaEsgotada(t);
@@ -51,16 +57,20 @@ export default function TurmaStep({
               <motion.button
                 key={t.chave ?? t.id}
                 type="button"
-                disabled={esgotada}
-                aria-disabled={esgotada}
-                onClick={() => !esgotada && onPick(t.id)}
+                onClick={() =>
+                  esgotada
+                    ? setAviso(`${t.serie} · ${turnoLabel(t.turno)}${t.curso ? ` · ${t.curso}` : ""}`)
+                    : onPick(t.id)
+                }
                 initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
+                // a opacidade fica aqui (não numa classe): o motion escreve
+                // opacity inline e passaria por cima de um opacity-60
+                animate={{ opacity: esgotada ? 0.6 : 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
-                whileTap={esgotada ? undefined : { scale: 0.985 }}
+                whileTap={{ scale: 0.985 }}
                 className={`raised-surface group flex flex-col gap-3.5 rounded-xl border border-seice-border p-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-seice-gold/15 sm:p-5 ${
                   esgotada
-                    ? "cursor-not-allowed opacity-60"
+                    ? "hover:border-seice-danger/40"
                     : "hover:-translate-y-0.5 hover:border-seice-border-strong hover:shadow-[0_14px_30px_-18px_rgba(20,22,27,0.55)]"
                 }`}
               >
