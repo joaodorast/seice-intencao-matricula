@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { turnoLabel } from "../../lib/format";
 import TurmaEsgotadaModal from "../TurmaEsgotadaModal";
 import type { SerieGroup, Unidade } from "../../types";
-import { VAGAS_ESGOTADAS, rotuloVagasTurma, turmaEsgotada } from "../../lib/vagasVisiveis";
+import { rotuloVagasTurma, semVagaParaResponsavel } from "../../lib/vagasVisiveis";
 import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
 const CURSO_ICON: Record<string, ReactNode> = {
@@ -52,7 +52,9 @@ export default function TurmaStep({
             abre o aviso de vagas esgotadas em vez de seguir. */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {turmas.map((t, i) => {
-            const esgotada = turmaEsgotada(t);
+            // VAGAS ESGOTADAS no selo = cartão apagado e aviso no clique
+            // (também em turma de lista de espera do Jardim Primavera)
+            const esgotada = semVagaParaResponsavel(t);
             return (
               <motion.button
                 key={t.chave ?? t.id}
@@ -96,17 +98,9 @@ export default function TurmaStep({
                         {t.curso}
                       </Badge>
                     )}
-                    {(() => {
-                      // vermelho sempre que o texto é VAGAS ESGOTADAS — inclusive
-                      // em turma de lista de espera, que continua clicável
-                      const rotulo = rotuloVagasTurma(t);
-                      const semVaga = rotulo === VAGAS_ESGOTADAS;
-                      return (
-                        <Badge tone={semVaga ? "danger" : "gold"} icon={semVaga ? <Ban size={13} /> : undefined}>
-                          {rotulo}
-                        </Badge>
-                      );
-                    })()}
+                    <Badge tone={esgotada ? "danger" : "gold"} icon={esgotada ? <Ban size={13} /> : undefined}>
+                      {rotuloVagasTurma(t)}
+                    </Badge>
                   </div>
                 </div>
               </motion.button>
