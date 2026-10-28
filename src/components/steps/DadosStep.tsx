@@ -48,7 +48,9 @@ export default function DadosStep({
   submitting: boolean;
   errorMsg: string | null;
   onBack: () => void;
-  onSubmit: (values: DadosFormValues) => void;
+  /** temReserva: a pessoa está segurando uma vaga dessa turma (a reserva já
+   *  desconta das vagas livres mostradas). */
+  onSubmit: (values: DadosFormValues, temReserva: boolean) => void;
 }) {
   const [values, setValues] = useState<DadosFormValues>(emptyForm);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
@@ -131,7 +133,8 @@ export default function DadosStep({
     });
 
     if (!(nomeOk && tel1Ok && emailOk && alunoOk)) return;
-    onSubmit(values);
+    const reserva = reservaRef.current;
+    onSubmit(values, !!reserva && reserva !== "pendente");
   }
 
   // só chega aqui turma com vaga: mostra sempre o número de vagas livres
