@@ -16,7 +16,7 @@ import { turnoLabel } from "../lib/format";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { supabase } from "../lib/supabaseClient";
 import { agruparPorTurno } from "../lib/turnos";
-import { semVagaParaResponsavel, vaiParaListaEspera } from "../lib/vagasVisiveis";
+import { semVagaParaResponsavel } from "../lib/vagasVisiveis";
 import { UNIDADES } from "../config";
 import type {
   Passo,
@@ -192,12 +192,9 @@ export default function PreMatriculaPage() {
     // Turma cheia não é mais erro: o banco aceita a intenção normalmente e
     // devolve lista_espera = true, então essa chamada praticamente não falha
     // mais por falta de vaga.
-    // p_forcar_lista_espera: turma escondida da contagem pública (ver
-    // vagasVisiveis.ts) sempre mostra "Lista de espera" pro responsável, então
-    // o registro tem que cair em lista_espera = true de verdade no banco —
-    // não só na tela — mesmo que ainda exista vaga real (que fica livre pra
-    // a secretaria matricular manualmente). Turma sem lista de espera nunca
-    // é forçada: se encher, o banco recusa com "Turma esgotada".
+    // p_forcar_lista_espera: false — pelo site ninguém mais entra em lista de
+    // espera: turma sem vaga aparece como VAGAS ESGOTADAS e nem chega aqui,
+    // e turma com vaga (mesmo com o número escondido) é vaga de verdade.
     const { data, error } = await supabase.rpc("enviar_intencao", {
       p_unidade_id: payload.unidade_id,
       p_turma_id: payload.turma_id,
@@ -207,7 +204,7 @@ export default function PreMatriculaPage() {
       p_telefone2: payload.telefone2,
       p_email: payload.email,
       p_aluno_nome: payload.aluno_nome,
-      p_forcar_lista_espera: vaiParaListaEspera(turma!),
+      p_forcar_lista_espera: false,
     });
     setSubmitting(false);
 
