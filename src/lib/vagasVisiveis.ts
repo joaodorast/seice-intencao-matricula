@@ -31,19 +31,16 @@ function textoVagas(n: number): string {
   return `${n} vaga${n === 1 ? "" : "s"}`;
 }
 
-/** Texto do selo de vagas de uma turma no site público: o número, quando a
- *  direção deixa mostrar, ou só "Vagas disponíveis". */
+/** Texto do selo de vagas de uma turma no site público: sempre o número de
+ *  vagas livres quando tem vaga (pedido da direção — nada de "Vagas
+ *  disponíveis" sem número). */
 export function rotuloVagasTurma(turma: TurmaPublica): string {
-  if (semVagaParaResponsavel(turma)) return VAGAS_ESGOTADAS;
-  return vagaVisivelParaResponsavel(turma) ? textoVagas(turma.vagas_restantes) : "Vagas disponíveis";
+  return semVagaParaResponsavel(turma) ? VAGAS_ESGOTADAS : textoVagas(turma.vagas_restantes);
 }
 
-/** Texto do selo de vagas de uma série: soma das turmas com vaga que mostram
- *  o número; se nenhuma mostra, só "Vagas disponíveis". */
+/** Texto do selo de vagas de uma série: soma das vagas livres das turmas. */
 export function rotuloVagasSerie(turmas: TurmaPublica[]): string {
   const abertas = turmas.filter((t) => !semVagaParaResponsavel(t));
   if (abertas.length === 0) return VAGAS_ESGOTADAS;
-  const visiveis = abertas.filter(vagaVisivelParaResponsavel);
-  if (visiveis.length > 0) return textoVagas(visiveis.reduce((acc, t) => acc + t.vagas_restantes, 0));
-  return "Vagas disponíveis";
+  return textoVagas(abertas.reduce((acc, t) => acc + t.vagas_restantes, 0));
 }
