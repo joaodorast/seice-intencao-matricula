@@ -171,12 +171,12 @@ export default function PreMatriculaPage() {
     go("dados");
   }
 
-  async function handleSubmit(values: DadosFormValues, temReserva: boolean) {
+  async function handleSubmit(values: DadosFormValues, reservaId: string | null) {
     // a turma pode ter sido zerada no painel (ou esgotado) enquanto a pessoa
     // preenchia — as vagas na tela se atualizam sozinhas (realtime). A reserva
     // da própria pessoa já sai da contagem, por isso volta aqui com +1; e
     // vagas ofertadas zeradas no painel bloqueiam mesmo com reserva.
-    const livres = turma!.vagas_restantes + (temReserva ? 1 : 0);
+    const livres = turma!.vagas_restantes + (reservaId ? 1 : 0);
     if (turma!.esgotada || turma!.vagas_planilha <= 0 || livres <= 0) {
       setSubmitErro("As vagas desta turma acabaram de esgotar. Volte e escolha outra turma.");
       return;
@@ -205,6 +205,9 @@ export default function PreMatriculaPage() {
     // p_forcar_lista_espera: false — pelo site ninguém mais entra em lista de
     // espera: turma sem vaga aparece como VAGAS ESGOTADAS e nem chega aqui,
     // e turma com vaga (mesmo com o número escondido) é vaga de verdade.
+    // p_reserva: a vaga que a pessoa reservou ao clicar na turma — o banco
+    // usa essa vaga e não deixa outra família tomá-la (quem clicou primeiro
+    // tem prioridade).
     const { data, error } = await supabase.rpc("enviar_intencao", {
       p_unidade_id: payload.unidade_id,
       p_turma_id: payload.turma_id,
@@ -215,6 +218,7 @@ export default function PreMatriculaPage() {
       p_email: payload.email,
       p_aluno_nome: payload.aluno_nome,
       p_forcar_lista_espera: false,
+      p_reserva: reservaId,
     });
     setSubmitting(false);
 
