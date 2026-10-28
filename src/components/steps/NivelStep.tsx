@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft, Baby, Backpack, BookOpen, ChevronRight, GraduationCap } from "lucide-react";
 import { motion } from "framer-motion";
 import { NIVEIS } from "../../config";
-import { VAGAS_ESGOTADAS, turmaEsgotada } from "../../lib/vagasVisiveis";
+import { VAGAS_ESGOTADAS, semVagaParaResponsavel } from "../../lib/vagasVisiveis";
 import type { Nivel, TurmaDisponivel, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, EmptyState, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -78,14 +78,8 @@ export default function NivelStep({
         <div className="flex flex-col gap-3">
           {niveis.map((n, i) => {
             const doNivel = turmas.filter((t) => t.nivel === n.key);
-            const abertas = doNivel.filter((t) => !turmaEsgotada(t));
-            const totalVagas = abertas.reduce((acc, t) => acc + t.vagas_restantes, 0);
-            // sem vaga nenhuma no nível: VAGAS ESGOTADAS — também quando ainda
-            // aceita lista de espera (Jardim Primavera, só o texto mudou)
-            const selo =
-              abertas.length === 0 || (totalVagas === 0 && abertas.some((t) => t.aceita_lista_espera))
-                ? VAGAS_ESGOTADAS
-                : null;
+            // nenhuma turma com vaga no nível: VAGAS ESGOTADAS
+            const selo = doNivel.every(semVagaParaResponsavel) ? VAGAS_ESGOTADAS : null;
             return (
               <motion.button
                 key={n.key}
