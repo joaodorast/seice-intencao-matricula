@@ -41,10 +41,9 @@ export default function SerieStep({
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {series.map((s, i) => {
-            // série com todos os turnos em VAGAS ESGOTADAS: aparece apagada, sem
-            // "turmas disponíveis", e no clique abre o aviso em vez de seguir
-            const abertas = s.turmas.filter((t) => !semVagaParaResponsavel(t)).length;
-            const esgotada = abertas === 0;
+            // série com todos os turnos em VAGAS ESGOTADAS: aparece apagada e,
+            // no clique, abre o aviso em vez de seguir
+            const esgotada = s.turmas.every(semVagaParaResponsavel);
             return (
               <motion.button
                 key={s.ordem}
@@ -62,6 +61,8 @@ export default function SerieStep({
                     : "hover:-translate-y-0.5 hover:border-seice-border-strong hover:shadow-[0_14px_30px_-18px_rgba(20,22,27,0.55)]"
                 }`}
               >
+                {/* mesmo desenho em todo cartão: nome em cima, um selo só
+                    embaixo — amarelo com as vagas ou vermelho se esgotou */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="text-[19px] font-bold text-seice-ink">{s.serie}</div>
                   {!esgotada && (
@@ -71,15 +72,9 @@ export default function SerieStep({
                     />
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-[15px] text-seice-muted">
-                  {!esgotada && (
-                    <span>
-                      {abertas} turma{abertas > 1 ? "s" : ""} disponíve
-                      {abertas > 1 ? "is" : "l"}
-                    </span>
-                  )}
+                <div>
                   <Badge tone={esgotada ? "danger" : "gold"} icon={esgotada ? <Ban size={13} /> : undefined}>
-                    {esgotada ? VAGAS_ESGOTADAS : rotuloVagasSerie(s.turmas.filter((t) => !semVagaParaResponsavel(t)))}
+                    {esgotada ? VAGAS_ESGOTADAS : rotuloVagasSerie(s.turmas)}
                   </Badge>
                 </div>
               </motion.button>
