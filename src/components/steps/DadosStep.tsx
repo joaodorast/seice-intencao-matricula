@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   ArrowLeft,
-  Ban,
   CheckCircle2,
   CircleAlert,
   LoaderCircle,
@@ -15,7 +14,7 @@ import {
 } from "lucide-react";
 import { maskPhone, onlyDigits, turnoLabel, validEmail } from "../../lib/format";
 import { RESERVA_MINUTOS, liberarReserva, renovarReserva, reservarVaga } from "../../lib/reservas";
-import { VAGAS_ESGOTADAS, vagaVisivelParaResponsavel, vaiParaListaEspera } from "../../lib/vagasVisiveis";
+import { vagaVisivelParaResponsavel } from "../../lib/vagasVisiveis";
 import type { SerieGroup, TurmaDisponivel, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -65,10 +64,8 @@ export default function DadosStep({
 
   async function garantirReserva() {
     if (reservaRef.current) return;
-    // turma sem vaga visível pro responsável (real ou fora da lista liberada
-    // pela direção): não faz sentido reservar — a pessoa já está sendo
-    // avisada que vai pra lista de espera, sem contador de reserva na tela
-    if (!(vagaVisivelParaResponsavel(turma) && turma.vagas_restantes > 0)) return;
+    // sem vaga livre não há o que reservar (turma esgotada nem chega aqui)
+    if (turma.vagas_restantes <= 0) return;
     reservaRef.current = "pendente"; // evita disparar duas vezes seguidas
     const id = await reservarVaga(turma.id);
     if (!id) {
@@ -139,11 +136,8 @@ export default function DadosStep({
   }
 
   const vagas = turma.vagas_restantes;
-  // mesma regra do badge "Sua escolha": turma fora da lista liberada pela
-  // direção, ou já zerada, sempre mostra/avisa lista de espera pro
-  // responsável — mesmo quando ainda sobra vaga de verdade no banco. Turma
-  // sem lista de espera (Campos Elíseos) nunca mostra esse aviso.
-  const mostraListaEspera = vaiParaListaEspera(turma);
+  // só chega aqui turma com vaga: mostra o número quando a direção deixa,
+  // senão só "Vagas disponíveis"
   const mostraNumero = vagaVisivelParaResponsavel(turma) && vagas > 0;
 
   return (
@@ -164,15 +158,9 @@ export default function DadosStep({
       <div className="inset-surface rounded-xl border border-seice-border p-4 sm:p-5">
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
           <span className="text-[13.5px] font-bold uppercase tracking-[0.1em] text-seice-muted">Sua escolha</span>
-          {mostraListaEspera ? (
-            <Badge tone="danger" icon={<Ban size={13} />}>
-              {VAGAS_ESGOTADAS}
-            </Badge>
-          ) : (
-            <Badge tone="success" icon={<CheckCircle2 size={13} />}>
-              {mostraNumero ? `${vagas} vaga${vagas === 1 ? "" : "s"}` : "Vagas disponíveis"}
-            </Badge>
-          )}
+          <Badge tone="success" icon={<CheckCircle2 size={13} />}>
+            {mostraNumero ? `${vagas} vaga${vagas === 1 ? "" : "s"}` : "Vagas disponíveis"}
+          </Badge>
         </div>
         <dl className={`grid grid-cols-2 gap-x-4 gap-y-3 ${turma.curso ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
           <SummaryItem label="Unidade" value={unidade.nome} />
@@ -181,19 +169,6 @@ export default function DadosStep({
           {turma.curso && <SummaryItem label="Curso" value={turma.curso} />}
         </dl>
       </div>
-
-      {/* turma sem vaga visível pro responsável (real ou só escondida da
-          contagem pública): não tenta reservar, só avisa que vai entrar na
-          lista de espera — nada de alarme aqui */}
-      {mostraListaEspera && (
-        <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-seice-gold/40 bg-seice-gold-soft px-4 py-3">
-          <Timer size={17} className="shrink-0 text-seice-gold" />
-          <p className="text-[14.5px] leading-snug text-seice-ink">
-            <strong className="font-semibold">Esta turma está sem vagas no momento</strong>, cadastre-se na Lista
-            de Espera 2027.
-          </p>
-        </div>
-      )}
 
       {/* aviso da reserva: aparece assim que a pessoa começa a digitar */}
       {reservaAte && restanteMs > 0 && (
