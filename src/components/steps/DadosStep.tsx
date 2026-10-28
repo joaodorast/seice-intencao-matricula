@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { maskPhone, onlyDigits, turnoLabel, validEmail } from "../../lib/format";
 import { RESERVA_MINUTOS, liberarReserva, renovarReserva, reservarVaga } from "../../lib/reservas";
-import { vagaVisivelParaResponsavel } from "../../lib/vagasVisiveis";
 import type { SerieGroup, TurmaDisponivel, Unidade } from "../../types";
 import { BackBar, Badge, Button, Card, SectionEyebrow, SectionTitle } from "../ui";
 
@@ -135,10 +134,8 @@ export default function DadosStep({
     onSubmit(values);
   }
 
+  // só chega aqui turma com vaga: mostra sempre o número de vagas livres
   const vagas = turma.vagas_restantes;
-  // só chega aqui turma com vaga: mostra o número quando a direção deixa,
-  // senão só "Vagas disponíveis"
-  const mostraNumero = vagaVisivelParaResponsavel(turma) && vagas > 0;
 
   return (
     <>
@@ -159,7 +156,7 @@ export default function DadosStep({
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
           <span className="text-[13.5px] font-bold uppercase tracking-[0.1em] text-seice-muted">Sua escolha</span>
           <Badge tone="success" icon={<CheckCircle2 size={13} />}>
-            {mostraNumero ? `${vagas} vaga${vagas === 1 ? "" : "s"}` : "Vagas disponíveis"}
+            {vagas} vaga{vagas === 1 ? "" : "s"}
           </Badge>
         </div>
         <dl className={`grid grid-cols-2 gap-x-4 gap-y-3 ${turma.curso ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
