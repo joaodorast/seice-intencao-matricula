@@ -171,7 +171,17 @@ export default function PreMatriculaPage() {
     go("dados");
   }
 
-  async function handleSubmit(values: DadosFormValues) {
+  async function handleSubmit(values: DadosFormValues, temReserva: boolean) {
+    // a turma pode ter sido zerada no painel (ou esgotado) enquanto a pessoa
+    // preenchia — as vagas na tela se atualizam sozinhas (realtime). A reserva
+    // da própria pessoa já sai da contagem, por isso volta aqui com +1; e
+    // vagas ofertadas zeradas no painel bloqueiam mesmo com reserva.
+    const livres = turma!.vagas_restantes + (temReserva ? 1 : 0);
+    if (turma!.esgotada || turma!.vagas_planilha <= 0 || livres <= 0) {
+      setSubmitErro("As vagas desta turma acabaram de esgotar. Volte e escolha outra turma.");
+      return;
+    }
+
     setSubmitting(true);
     setSubmitErro(null);
 
