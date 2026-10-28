@@ -76,32 +76,30 @@ export default function TurmaStep({
                     : "hover:-translate-y-0.5 hover:border-seice-border-strong hover:shadow-[0_14px_30px_-18px_rgba(20,22,27,0.55)]"
                 }`}
               >
-                {/* flex-wrap: em cartão estreito o selo ("VAGAS ESGOTADAS" é
-                    comprido) desce pra linha de baixo em vez de vazar do cartão */}
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg icon-tile-soft transition ${
-                        esgotada ? "" : "group-hover:bg-seice-gold group-hover:text-seice-gold-ink"
-                      }`}
-                    >
-                      {t.turno === "M" ? <Sunrise size={18} /> : <Sunset size={18} />}
-                    </span>
-                    <div>
-                      <div className="text-[18px] font-bold text-seice-ink">{turnoLabel(t.turno)}</div>
-                      <div className="text-[14.5px] text-seice-muted">Turma {t.serie}</div>
-                    </div>
+                {/* mesmo desenho em todo cartão: turno em cima, selos sempre
+                    na linha de baixo — nada muda de lugar conforme o texto */}
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg icon-tile-soft transition ${
+                      esgotada ? "" : "group-hover:bg-seice-gold group-hover:text-seice-gold-ink"
+                    }`}
+                  >
+                    {t.turno === "M" ? <Sunrise size={18} /> : <Sunset size={18} />}
+                  </span>
+                  <div>
+                    <div className="text-[18px] font-bold text-seice-ink">{turnoLabel(t.turno)}</div>
+                    <div className="text-[14.5px] text-seice-muted">Turma {t.serie}</div>
                   </div>
-                  <div className="flex flex-wrap items-center justify-end gap-1.5">
-                    {t.curso && (
-                      <Badge tone="neutral" icon={CURSO_ICON[t.curso]}>
-                        {t.curso}
-                      </Badge>
-                    )}
-                    <Badge tone={esgotada ? "danger" : "gold"} icon={esgotada ? <Ban size={13} /> : undefined}>
-                      {rotuloVagasTurma(t)}
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge tone={esgotada ? "danger" : "gold"} icon={esgotada ? <Ban size={13} /> : undefined}>
+                    {rotuloVagasTurma(t)}
+                  </Badge>
+                  {t.curso && (
+                    <Badge tone="neutral" icon={CURSO_ICON[t.curso]}>
+                      {t.curso}
                     </Badge>
-                  </div>
+                  )}
                 </div>
               </motion.button>
             );
