@@ -48,16 +48,17 @@ export default function DadosStep({
   submitting: boolean;
   errorMsg: string | null;
   onBack: () => void;
-  /** temReserva: a pessoa está segurando uma vaga dessa turma (a reserva já
-   *  desconta das vagas livres mostradas). */
-  onSubmit: (values: DadosFormValues, temReserva: boolean) => void;
+  /** reservaId: a reserva da vaga que a pessoa está segurando (null se não
+   *  conseguiu reservar) — vai junto no envio pro banco usar essa vaga. */
+  onSubmit: (values: DadosFormValues, reservaId: string | null) => void;
 }) {
   const [values, setValues] = useState<DadosFormValues>(emptyForm);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
 
-  // Reserva de vaga: ao primeiro caractere digitado, a vaga sai da contagem
-  // pública por alguns minutos, para que ninguém a ocupe no meio do
-  // preenchimento. Some sozinha se a pessoa desistir ou fechar a página.
+  // Reserva de vaga: assim que a pessoa clica na turma e chega aqui, a vaga
+  // sai da contagem pública e fica só dela — quem clicou primeiro tem
+  // prioridade, e o banco não deixa outra família usar a vaga reservada.
+  // Some sozinha se a pessoa desistir ou fechar a página.
   const reservaRef = useRef<string | null>(null);
   const [reservaAte, setReservaAte] = useState<number | null>(null);
   const [reservaFalhou, setReservaFalhou] = useState(false);
@@ -75,15 +76,22 @@ export default function DadosStep({
       return;
     }
     reservaRef.current = id;
+    setReservaFalhou(false);
     setReservaAte(Date.now() + RESERVA_MINUTOS * 60_000);
   }
 
-  // libera a reserva ao sair da tela (voltar, recomeçar ou após o envio)
+  // reserva já no clique da turma (ao abrir esta tela) e libera ao sair
+  // (voltar, recomeçar ou após o envio)
   useEffect(() => {
+    // só na montagem: reservar no banco é sincronizar com sistema externo, e
+    // o estado só muda depois da resposta (não é setState síncrono)
+    // eslint-disable-next-line react/set-state-in-effect
+    void garantirReserva();
     return () => {
       const id = reservaRef.current;
       if (id && id !== "pendente") void liberarReserva(id);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // renova enquanto a pessoa continua na tela e atualiza o contador
@@ -134,11 +142,12 @@ export default function DadosStep({
 
     if (!(nomeOk && tel1Ok && emailOk && alunoOk)) return;
     const reserva = reservaRef.current;
-    onSubmit(values, !!reserva && reserva !== "pendente");
+    onSubmit(values, reserva && reserva !== "pendente" ? reserva : null);
   }
 
-  // só chega aqui turma com vaga: mostra sempre o número de vagas livres
-  const vagas = turma.vagas_restantes;
+  // só chega aqui turma com vaga: mostra sempre o número de vagas livres —
+  // a vaga reservada pra esta pessoa já saiu da contagem, então volta aqui
+  const vagas = turma.vagas_restantes + (reservaAte ? 1 : 0);
 
   return (
     <>
@@ -185,8 +194,8 @@ export default function DadosStep({
         <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-seice-danger/40 bg-seice-danger-soft px-4 py-3">
           <CircleAlert size={17} className="shrink-0 text-seice-danger" />
           <p className="text-[14.5px] leading-snug text-seice-ink">
-            Não foi possível reservar esta vaga — ela pode ter acabado de ser ocupada. Você ainda pode enviar,
-            mas recomendamos voltar e conferir as turmas disponíveis.
+            <strong className="font-semibold">Esta vaga acabou de ser reservada por outra família</strong>, que
+            escolheu a turma antes. Volte e escolha outra turma.
           </p>
         </div>
       )}
