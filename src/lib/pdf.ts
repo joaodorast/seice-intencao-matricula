@@ -163,6 +163,8 @@ function rodape(doc: jsPDF, escopo: string) {
 const COR_STATUS: Record<StatusPreMatricula, { fundo: RGB; texto: RGB }> = {
   pendente: { fundo: [229, 231, 235], texto: [55, 65, 81] },
   contatado: { fundo: [219, 234, 254], texto: [29, 78, 216] },
+  // verde como Matriculado (pedido da direção) — o nome na célula diferencia
+  agendado: { fundo: [220, 252, 231], texto: [21, 128, 61] },
   matriculado: { fundo: [220, 252, 231], texto: [21, 128, 61] },
   cancelado: { fundo: [254, 226, 226], texto: [185, 28, 28] },
 };
@@ -177,6 +179,7 @@ function legendaCores(doc: jsPDF, y: number): number {
   const itens: { rotulo: string; cor: RGB }[] = [
     { rotulo: "Pendente", cor: COR_STATUS.pendente.texto },
     { rotulo: "Contatado", cor: COR_STATUS.contatado.texto },
+    { rotulo: "Agendado", cor: COR_STATUS.agendado.texto },
     { rotulo: "Matriculado", cor: COR_STATUS.matriculado.texto },
     { rotulo: "Cancelado", cor: COR_STATUS.cancelado.texto },
   ];
@@ -269,6 +272,7 @@ export async function exportarIntencoesPDF(
     { rotulo: "Total", valor: String(registros.length) },
     { rotulo: "Pendentes", valor: String(porStatus("pendente")) },
     { rotulo: "Contatados", valor: String(porStatus("contatado")) },
+    { rotulo: "Agendados", valor: String(porStatus("agendado")) },
     { rotulo: "Matriculados", valor: String(porStatus("matriculado")) },
     { rotulo: "Cancelados", valor: String(porStatus("cancelado")) },
   ]);
@@ -276,7 +280,8 @@ export async function exportarIntencoesPDF(
     doc,
     y + 6,
     "Cada linha é um pedido de matrícula que chegou. \"Status\" mostra se a secretaria já ligou (Contatado), " +
-      "se a matrícula foi confirmada (Matriculado) ou se ainda falta ligar (Pendente). A última coluna mostra " +
+      "se a família já tem dia marcado pra vir à escola (Agendado), se a matrícula foi confirmada (Matriculado) " +
+      "ou se ainda falta ligar (Pendente). A última coluna mostra " +
       "a posição na fila de espera de quem não tem vaga garantida (\"—\" para quem já tem vaga)."
   );
   const y2b = legendaCores(doc, y2);
@@ -309,7 +314,7 @@ export async function exportarRelatorioDetalhadoPDF(
   const doc = new jsPDF({ orientation: "landscape" });
   const logo = await carregarLogo();
 
-  // o filtro de status (pendente/contatado/matriculado/cancelado) é escolhido
+  // o filtro de status (pendente/contatado/agendado/matriculado/cancelado) é escolhido
   // na tela de exportação e já vem aplicado aqui — a página 1, de ocupação
   // por turma, não usa esse array, então não é afetada por ele
 
@@ -584,7 +589,7 @@ export async function exportarPorSenhaIntencoesPDF(
     38,
     "Todo mundo aqui JÁ TEM vaga garantida (ninguém está na lista de espera). A ordem é de quem chegou " +
       "primeiro pra quem chegou por último — comece a ligar de cima pra baixo. A coluna \"Status\" mostra se a " +
-      "secretaria já ligou (Contatado) ou ainda precisa ligar (Pendente)."
+      "secretaria já ligou (Contatado), se a família já tem dia marcado (Agendado) ou ainda precisa ligar (Pendente)."
   );
   const yTabelaIntB = legendaCores(doc, yTabelaInt);
 
@@ -636,8 +641,8 @@ export async function exportarPorSenhaListaEsperaPDF(
     38,
     "Todo mundo aqui está ESPERANDO uma vaga surgir (ninguém tem vaga garantida ainda). \"Posição na turma\" " +
       "mostra a prioridade dentro da turma de cada um: \"1ª\" é a próxima pessoa a ser chamada se alguém " +
-      "desistir daquela turma específica. A coluna \"Status\" mostra se a secretaria já ligou (Contatado) ou " +
-      "ainda precisa ligar (Pendente)."
+      "desistir daquela turma específica. A coluna \"Status\" mostra se a secretaria já ligou (Contatado), se a " +
+      "família já tem dia marcado (Agendado) ou ainda precisa ligar (Pendente)."
   );
   const yTabelaEspB = legendaCores(doc, yTabelaEsp);
 
