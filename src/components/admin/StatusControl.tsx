@@ -4,18 +4,23 @@ import { STATUS_INFO } from "../../lib/labels";
 import type { StatusPreMatricula } from "../../types";
 import ConfirmModal from "./ConfirmModal";
 
-const OPCOES: StatusPreMatricula[] = ["pendente", "contatado", "matriculado"];
+const OPCOES: StatusPreMatricula[] = ["pendente", "contatado", "agendado", "matriculado"];
+
+/** Agendado e Matriculado ficam verdes — já está tudo encaminhado com a
+ *  família, dá pra ver de longe. */
+function statusVerde(status: StatusPreMatricula) {
+  return status === "agendado" || status === "matriculado";
+}
 
 /** Etapa ativa em dourado — o mesmo destaque usado nos outros seletores do
- *  painel (unidade, aba) — exceto Matriculado, que fica verde pra deixar
- *  claro de longe quem já fechou a matrícula. */
+ *  painel (unidade, aba) — exceto Agendado e Matriculado, em verde. */
 function estiloAtivo(status: StatusPreMatricula) {
-  return status === "matriculado" ? "bg-seice-success text-seice-deep" : "bg-seice-gold text-seice-gold-ink";
+  return statusVerde(status) ? "bg-seice-success text-seice-deep" : "bg-seice-gold text-seice-gold-ink";
 }
 
 /**
- * Controle explícito de status: as três opções (Pendente/Contatado/
- * Matriculado) sempre visíveis lado a lado, e a pessoa clica em qualquer uma
+ * Controle explícito de status: as quatro opções (Pendente/Contatado/
+ * Agendado/Matriculado) sempre visíveis lado a lado, e a pessoa clica em qualquer uma
  * pra jogar a intenção direto pra lá — não precisa avançar um passo de cada
  * vez. Cancelar e reabrir passam por um modal de confirmação próprio, não
  * pelo confirm() nativo do navegador (que aparece com a cara do "localhost
@@ -65,17 +70,20 @@ export default function StatusControl({
 
   return (
     <>
-      <div className="flex flex-col gap-1.5">
+      {/* @container: com 4 opções o seletor tem ~350px — numa linha só quando
+          o espaço deixa (visão geral, cartão do celular); na coluna Status da
+          tabela, mais estreita, vira 2×2 alinhado em vez de vazar do card */}
+      <div className="@container flex flex-col gap-1.5">
         <p className="text-[15.5px] text-seice-soft">
           Responsável está em:{" "}
           <strong
             className={`text-[16.5px] font-extrabold ${
-              status === "matriculado" ? "text-seice-success" : "text-seice-gold"
+              statusVerde(status) ? "text-seice-success" : "text-seice-gold"
             }`}
           >{STATUS_INFO[status].label}</strong>
         </p>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center gap-1 whitespace-nowrap rounded-xl bg-seice-deep-soft p-1">
+          <div className="grid grid-cols-2 gap-1 whitespace-nowrap rounded-xl bg-seice-deep-soft p-1 @[23rem]:inline-flex @[23rem]:items-center">
             {OPCOES.map((opcao) => {
               const ativo = opcao === status;
               return (
