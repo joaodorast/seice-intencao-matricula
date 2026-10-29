@@ -113,7 +113,7 @@ export default function OverviewTab({
           Distribuição de todas as solicitações recebidas — o número de baixo separa quantas têm vaga garantida
           (intenção) e quantas estão na lista de espera.
         </SectionDesc>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {STATUS_ORDER.map((s) => {
             const intencao = porStatusIntencao[s];
             const espera = porStatusEspera[s];
