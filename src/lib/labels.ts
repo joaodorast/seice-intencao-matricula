@@ -13,11 +13,11 @@ export const STATUS_INFO: Record<StatusPreMatricula, { label: string; badge: str
     label: "Contatado",
     badge: "bg-seice-info-soft text-seice-info",
   },
-  // família já contatada e com dia marcado pra vir à escola — verde como
-  // Matriculado (pedido da direção), mas é um passo antes dele
+  // família já contatada e com dia marcado pra vir à escola — laranja, pra
+  // não confundir com o verde do Matriculado (pedido da direção)
   agendado: {
     label: "Agendado",
-    badge: "bg-seice-success-soft text-seice-success",
+    badge: "bg-seice-orange-soft text-seice-orange",
   },
   matriculado: {
     label: "Matriculado",
