@@ -6,16 +6,20 @@ import ConfirmModal from "./ConfirmModal";
 
 const OPCOES: StatusPreMatricula[] = ["pendente", "contatado", "agendado", "matriculado"];
 
-/** Agendado e Matriculado ficam verdes — já está tudo encaminhado com a
- *  família, dá pra ver de longe. */
-function statusVerde(status: StatusPreMatricula) {
-  return status === "agendado" || status === "matriculado";
+/** Etapa ativa em dourado — o mesmo destaque usado nos outros seletores do
+ *  painel (unidade, aba) — exceto Matriculado, em verde, e Agendado, em
+ *  laranja, pra dar pra ver de longe em que pé está cada família. */
+function estiloAtivo(status: StatusPreMatricula) {
+  if (status === "matriculado") return "bg-seice-success text-seice-deep";
+  if (status === "agendado") return "bg-seice-orange text-seice-deep";
+  return "bg-seice-gold text-seice-gold-ink";
 }
 
-/** Etapa ativa em dourado — o mesmo destaque usado nos outros seletores do
- *  painel (unidade, aba) — exceto Agendado e Matriculado, em verde. */
-function estiloAtivo(status: StatusPreMatricula) {
-  return statusVerde(status) ? "bg-seice-success text-seice-deep" : "bg-seice-gold text-seice-gold-ink";
+/** Cor do nome do status em "Responsável está em: ...". */
+function corTextoStatus(status: StatusPreMatricula) {
+  if (status === "matriculado") return "text-seice-success";
+  if (status === "agendado") return "text-seice-orange";
+  return "text-seice-gold";
 }
 
 /**
@@ -78,7 +82,7 @@ export default function StatusControl({
           Responsável está em:{" "}
           <strong
             className={`text-[16.5px] font-extrabold ${
-              statusVerde(status) ? "text-seice-success" : "text-seice-gold"
+              corTextoStatus(status)
             }`}
           >{STATUS_INFO[status].label}</strong>
         </p>
