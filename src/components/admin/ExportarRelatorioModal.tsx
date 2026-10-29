@@ -30,8 +30,8 @@ type Formato = "xlsx" | "pdf";
 
 // por padrão o relatório não traz quem já cancelou — a pessoa pode marcar de
 // volta se quiser ver mesmo assim
-const TODOS_OS_STATUS: StatusPreMatricula[] = ["pendente", "contatado", "matriculado", "cancelado"];
-const STATUS_PADRAO: StatusPreMatricula[] = ["pendente", "contatado", "matriculado"];
+const TODOS_OS_STATUS: StatusPreMatricula[] = ["pendente", "contatado", "agendado", "matriculado", "cancelado"];
+const STATUS_PADRAO: StatusPreMatricula[] = ["pendente", "contatado", "agendado", "matriculado"];
 
 function slugificar(txt: string): string {
   return txt
