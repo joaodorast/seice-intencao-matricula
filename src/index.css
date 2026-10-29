@@ -43,6 +43,9 @@
   /* estados */
   --color-seice-success: #4ade80;
   --color-seice-success-soft: #173323;
+  /* laranja do status Agendado — já tem dia marcado, mas ainda não matriculou */
+  --color-seice-orange: #fb923c;
+  --color-seice-orange-soft: #3b2412;
   --color-seice-danger: #f87171;
   --color-seice-danger-soft: #3b2020;
   --color-seice-info: #f5f5f5;
