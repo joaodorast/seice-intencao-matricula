@@ -84,7 +84,7 @@ Deno.serve(async (req: Request) => {
       const body = await req.json().catch(() => null);
       const id = body?.id;
       const status = body?.status;
-      const allowed = ["pendente", "contatado", "matriculado", "cancelado"];
+      const allowed = ["pendente", "contatado", "agendado", "matriculado", "cancelado"];
       if (!id || !allowed.includes(status)) {
         return json({ error: "Parâmetros inválidos: informe id e status válido" }, 400);
       }
