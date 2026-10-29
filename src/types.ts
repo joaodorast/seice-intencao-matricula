@@ -1,6 +1,6 @@
 export type Nivel = "infantil" | "fund1" | "fund2" | "medio";
 export type Turno = "M" | "T";
-export type StatusPreMatricula = "pendente" | "contatado" | "matriculado" | "cancelado";
+export type StatusPreMatricula = "pendente" | "contatado" | "agendado" | "matriculado" | "cancelado";
 export type Passo = "unidade" | "nivel" | "serie" | "turma" | "dados" | "confirmacao";
 
 export interface Unidade {
