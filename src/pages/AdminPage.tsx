@@ -76,7 +76,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
   // padrão não traz quem já cancelou; a pessoa pode desmarcar "Contatado"
   // pra não ver de novo quem já foi chamado, por exemplo
   const [statusExport, setStatusExport] = useState<Set<StatusPreMatricula>>(
-    new Set<StatusPreMatricula>(["pendente", "contatado", "matriculado"])
+    new Set<StatusPreMatricula>(["pendente", "contatado", "agendado", "matriculado"])
   );
   // período (data de recebimento) pro mesmo filtro de exportação — opcional,
   // pode usar só "de", só "até" ou os dois
@@ -474,7 +474,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                 em sincronia com o que está marcado aqui */}
             <div className="inset-surface flex flex-wrap items-center gap-1.5 rounded-xl border border-seice-border p-2">
               <span className="mr-1 shrink-0 text-[12.5px] font-bold text-seice-ink">Exportar com status:</span>
-              {(["pendente", "contatado", "matriculado", "cancelado"] as StatusPreMatricula[]).map((s) => {
+              {(["pendente", "contatado", "agendado", "matriculado", "cancelado"] as StatusPreMatricula[]).map((s) => {
                 const ativo = statusExport.has(s);
                 const qtd = contagemStatusExport.get(s) ?? 0;
                 return (
