@@ -2,7 +2,7 @@ import { NIVEIS, UNIDADES } from "../config";
 import { turnoLabel } from "./format";
 import type { PreMatriculaAdminRow, StatusPreMatricula, TurmaAdminRow } from "../types";
 
-export const STATUS_ORDER: StatusPreMatricula[] = ["pendente", "contatado", "matriculado", "cancelado"];
+export const STATUS_ORDER: StatusPreMatricula[] = ["pendente", "contatado", "agendado", "matriculado", "cancelado"];
 
 export const STATUS_INFO: Record<StatusPreMatricula, { label: string; badge: string }> = {
   pendente: {
@@ -12,6 +12,12 @@ export const STATUS_INFO: Record<StatusPreMatricula, { label: string; badge: str
   contatado: {
     label: "Contatado",
     badge: "bg-seice-info-soft text-seice-info",
+  },
+  // família já contatada e com dia marcado pra vir à escola — verde como
+  // Matriculado (pedido da direção), mas é um passo antes dele
+  agendado: {
+    label: "Agendado",
+    badge: "bg-seice-success-soft text-seice-success",
   },
   matriculado: {
     label: "Matriculado",
@@ -27,7 +33,7 @@ export const STATUS_INFO: Record<StatusPreMatricula, { label: string; badge: str
  * Texto curto pra mostrar no cabeçalho do PDF/Excel qual status foi
  * escolhido no filtro ("Status: Contatado", "Status: Pendente, Contatado"),
  * pra quem abre o relatório já saber o que está vendo sem precisar
- * adivinhar. Quando os 4 estão marcados (ou nenhum foi passado), não filtrou
+ * adivinhar. Quando todos estão marcados (ou nenhum foi passado), não filtrou
  * nada de verdade, então não mostra nada.
  */
 export function descricaoFiltroStatus(selecionados: StatusPreMatricula[]): string {
