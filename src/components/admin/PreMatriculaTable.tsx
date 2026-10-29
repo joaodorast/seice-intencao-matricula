@@ -91,7 +91,7 @@ export default function PreMatriculaTable({
             </dl>
 
             <div className="mt-3.5 border-t border-seice-border pt-3.5">
-              <StatusControl status={r.status} onChange={(status) => onStatusChange(r.id, status)} />
+              <StatusControl compacto status={r.status} onChange={(status) => onStatusChange(r.id, status)} />
             </div>
           </article>
         ))}
@@ -155,7 +155,7 @@ export default function PreMatriculaTable({
                   <p className="mt-0.5 text-[13px] text-seice-muted">{r.email || "—"}</p>
                 </td>
                 <td className="border-b border-seice-border px-2.5 py-3 align-top">
-                  <StatusControl status={r.status} onChange={(status) => onStatusChange(r.id, status)} />
+                  <StatusControl compacto status={r.status} onChange={(status) => onStatusChange(r.id, status)} />
                 </td>
               </tr>
             ))}
