@@ -163,8 +163,8 @@ function rodape(doc: jsPDF, escopo: string) {
 const COR_STATUS: Record<StatusPreMatricula, { fundo: RGB; texto: RGB }> = {
   pendente: { fundo: [229, 231, 235], texto: [55, 65, 81] },
   contatado: { fundo: [219, 234, 254], texto: [29, 78, 216] },
-  // verde como Matriculado (pedido da direção) — o nome na célula diferencia
-  agendado: { fundo: [220, 252, 231], texto: [21, 128, 61] },
+  // laranja: dia marcado, mas ainda não matriculou (não confunde com o verde)
+  agendado: { fundo: [255, 237, 213], texto: [194, 65, 12] },
   matriculado: { fundo: [220, 252, 231], texto: [21, 128, 61] },
   cancelado: { fundo: [254, 226, 226], texto: [185, 28, 28] },
 };
