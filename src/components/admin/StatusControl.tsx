@@ -29,9 +29,12 @@ function estiloAtivo(status: StatusPreMatricula) {
 export default function StatusControl({
   status,
   onChange,
+  compacto = false,
 }: {
   status: StatusPreMatricula;
   onChange: (status: StatusPreMatricula) => void;
+  /** coluna estreita (tabela das abas Intenções/Lista de espera): opções em 2×2 */
+  compacto?: boolean;
 }) {
   const [confirmando, setConfirmando] = useState<"cancelar" | "reabrir" | null>(null);
 
@@ -70,10 +73,7 @@ export default function StatusControl({
 
   return (
     <>
-      {/* @container: com 4 opções o seletor tem ~350px — numa linha só quando
-          o espaço deixa (visão geral, cartão do celular); na coluna Status da
-          tabela, mais estreita, vira 2×2 alinhado em vez de vazar do card */}
-      <div className="@container flex flex-col gap-1.5">
+      <div className="flex flex-col gap-1.5">
         <p className="text-[15.5px] text-seice-soft">
           Responsável está em:{" "}
           <strong
@@ -83,7 +83,13 @@ export default function StatusControl({
           >{STATUS_INFO[status].label}</strong>
         </p>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="grid grid-cols-2 gap-1 whitespace-nowrap rounded-xl bg-seice-deep-soft p-1 @[23rem]:inline-flex @[23rem]:items-center">
+          {/* com 4 opções o seletor tem ~350px: em 2×2 na coluna estreita da
+              tabela (compacto) e no celular; numa linha só onde há espaço */}
+          <div
+            className={`grid grid-cols-2 gap-1 whitespace-nowrap rounded-xl bg-seice-deep-soft p-1 ${
+              compacto ? "" : "sm:inline-flex sm:items-center"
+            }`}
+          >
             {OPCOES.map((opcao) => {
               const ativo = opcao === status;
               return (
