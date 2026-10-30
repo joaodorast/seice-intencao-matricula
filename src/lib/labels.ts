@@ -11,7 +11,8 @@ export const STATUS_INFO: Record<StatusPreMatricula, { label: string; badge: str
   },
   contatado: {
     label: "Contatado",
-    badge: "bg-seice-info-soft text-seice-info",
+    // azul, como no relatório em PDF (pedido da direção)
+    badge: "bg-seice-azul-soft text-seice-azul",
   },
   // família já contatada e com dia marcado pra vir à escola — laranja, pra
   // não confundir com o verde do Matriculado (pedido da direção)
