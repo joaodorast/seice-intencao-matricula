@@ -41,6 +41,12 @@ export async function atualizarStatus(
   await call(token, "", { method: "PATCH", body: JSON.stringify({ id, status }) });
 }
 
+/** Corrige o nome do aluno (o responsável às vezes repete o próprio nome ou
+ *  deixa em branco no formulário). */
+export async function atualizarNomeAluno(token: string, id: string, alunoNome: string): Promise<void> {
+  await call(token, "", { method: "PATCH", body: JSON.stringify({ id, aluno_nome: alunoNome }) });
+}
+
 /** Apaga as intenções de matrícula atuais (dados de teste) e reinicia a senha em 01. */
 export async function resetarDadosTeste(token: string): Promise<void> {
   await call(token, "", { method: "DELETE" });
