@@ -1,9 +1,10 @@
-import type { ReactNode } from "react";
-import { CheckCircle2, Clock } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { CheckCircle2, Clock, Pencil } from "lucide-react";
 import { formatarSenha, maskPhone, formatDateTime } from "../../lib/format";
 import { STATUS_INFO, descricaoTurma, unidadeNome } from "../../lib/labels";
 import type { PreMatriculaAdminRow, StatusPreMatricula } from "../../types";
 import { Badge, EmptyState } from "../ui";
+import EditarNomeAlunoModal from "./EditarNomeAlunoModal";
 import StatusControl from "./StatusControl";
 
 /** Selo de posição na fila daquela turma — dourado com relógio pra lista de
@@ -34,10 +35,29 @@ function SeloPosicao({ registro, posicoes }: { registro: PreMatriculaAdminRow; p
   );
 }
 
+/** Nome do aluno com o lápis de editar do lado. */
+function NomeAluno({ nome, onEditar }: { nome: string; onEditar: () => void }) {
+  return (
+    <span className="inline-flex items-start gap-1.5">
+      <span>{nome}</span>
+      <button
+        type="button"
+        onClick={onEditar}
+        title="Editar nome do aluno"
+        aria-label={`Editar nome do aluno ${nome}`}
+        className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-seice-muted transition hover:bg-seice-chip hover:text-seice-gold"
+      >
+        <Pencil size={13} />
+      </button>
+    </span>
+  );
+}
+
 export default function PreMatriculaTable({
   registros,
   posicoes,
   onStatusChange,
+  onNomeAlunoChange,
   mensagemVazia,
 }: {
   registros: PreMatriculaAdminRow[];
@@ -45,8 +65,13 @@ export default function PreMatriculaTable({
    *  calcularPosicoesEspera ou calcularPosicoesIntencao, conforme a aba. */
   posicoes: Map<string, number>;
   onStatusChange: (id: string, status: StatusPreMatricula) => void;
+  /** Corrige o nome do aluno (rejeita se não conseguir salvar). */
+  onNomeAlunoChange: (id: string, nome: string) => Promise<void>;
   mensagemVazia?: string;
 }) {
+  // intenção com o nome do aluno sendo editado (null = modal fechado)
+  const [editando, setEditando] = useState<PreMatriculaAdminRow | null>(null);
+
   if (registros.length === 0) {
     return (
       <div className="card-surface rounded-2xl border border-seice-border">
@@ -66,7 +91,9 @@ export default function PreMatriculaTable({
                 <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-seice-gold px-3 py-1 font-mono text-[16px] font-extrabold text-seice-gold-ink">
                   Senha {formatarSenha(r.numero_senha)}
                 </div>
-                <h3 className="text-[17px] font-bold leading-tight text-seice-ink">{r.aluno_nome}</h3>
+                <h3 className="text-[17px] font-bold leading-tight text-seice-ink">
+                  <NomeAluno nome={r.aluno_nome} onEditar={() => setEditando(r)} />
+                </h3>
                 <p className="mt-0.5 text-[14.5px] text-seice-muted">{descricaoTurma(r.turmas)}</p>
                 <div className="mt-1.5">
                   <SeloPosicao registro={r} posicoes={posicoes} />
@@ -137,7 +164,7 @@ export default function PreMatriculaTable({
                   {unidadeNome(r.unidade_id)}
                 </td>
                 <td className="break-words border-b border-seice-border px-2.5 py-3 align-top font-bold text-seice-ink">
-                  {r.aluno_nome}
+                  <NomeAluno nome={r.aluno_nome} onEditar={() => setEditando(r)} />
                 </td>
                 <td className="break-words border-b border-seice-border px-2.5 py-3 align-top text-seice-soft">
                   {descricaoTurma(r.turmas)}
@@ -162,6 +189,14 @@ export default function PreMatriculaTable({
           </tbody>
         </table>
       </div>
+
+      <EditarNomeAlunoModal
+        open={editando !== null}
+        nomeAtual={editando?.aluno_nome ?? ""}
+        responsavel={editando?.responsavel_nome ?? ""}
+        onSalvar={(nome) => onNomeAlunoChange(editando!.id, nome)}
+        onClose={() => setEditando(null)}
+      />
     </>
   );
 }
