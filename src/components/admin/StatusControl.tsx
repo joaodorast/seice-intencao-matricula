@@ -88,7 +88,9 @@ export default function StatusControl({
             }`}
           >{STATUS_INFO[status].label}</strong>
         </p>
-        <div className="flex flex-wrap items-center gap-2">
+        {/* compacto: Cancelar fica sempre do lado do seletor (nunca desce) —
+            vertical, ícone em cima do texto, da mesma altura do 2×2 */}
+        <div className={compacto ? "flex items-stretch gap-1.5" : "flex flex-wrap items-center gap-2"}>
           {/* com 4 opções o seletor tem ~350px: em 2×2 na coluna estreita da
               tabela (compacto) e no celular; numa linha só onde há espaço */}
           <div
@@ -103,7 +105,7 @@ export default function StatusControl({
                   key={opcao}
                   type="button"
                   onClick={() => !ativo && onChange(opcao)}
-                  className={`rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold transition ${
+                  className={`rounded-lg ${compacto ? "px-2" : "px-2.5"} py-1.5 text-[12.5px] font-bold transition ${
                     ativo ? estiloAtivo(opcao) : "text-seice-muted hover:text-seice-ink"
                   }`}
                 >
@@ -115,9 +117,13 @@ export default function StatusControl({
           <button
             type="button"
             onClick={() => setConfirmando("cancelar")}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-seice-border-strong px-3 py-1.5 text-[12.5px] font-bold text-seice-muted transition hover:border-seice-danger/40 hover:bg-seice-danger-soft hover:text-seice-danger"
+            className={`items-center rounded-lg border border-seice-border-strong font-bold text-seice-muted transition hover:border-seice-danger/40 hover:bg-seice-danger-soft hover:text-seice-danger ${
+              compacto
+                ? "flex shrink-0 flex-col justify-center gap-1 rounded-xl px-2 text-[11.5px]"
+                : "inline-flex gap-1.5 px-3 py-1.5 text-[12.5px]"
+            }`}
           >
-            <Ban size={14} /> Cancelar
+            <Ban size={compacto ? 16 : 14} /> Cancelar
           </button>
         </div>
       </div>
