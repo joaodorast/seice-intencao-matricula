@@ -45,9 +45,9 @@ function NomeAluno({ nome, onEditar }: { nome: string; onEditar: () => void }) {
         onClick={onEditar}
         title="Editar nome do aluno"
         aria-label={`Editar nome do aluno ${nome}`}
-        className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-seice-muted transition hover:bg-seice-chip hover:text-seice-gold"
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-seice-border-strong bg-seice-chip/60 text-seice-soft transition hover:border-seice-gold/50 hover:bg-seice-chip hover:text-seice-gold"
       >
-        <Pencil size={13} />
+        <Pencil size={16} />
       </button>
     </span>
   );
