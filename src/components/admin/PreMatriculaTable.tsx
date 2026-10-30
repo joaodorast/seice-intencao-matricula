@@ -35,11 +35,13 @@ function SeloPosicao({ registro, posicoes }: { registro: PreMatriculaAdminRow; p
   );
 }
 
-/** Nome do aluno com o lápis de editar do lado. */
+/** Nome do aluno com o lápis de editar sempre no canto direito da coluna —
+ *  todos os lápis ficam alinhados um embaixo do outro, seja qual for o
+ *  tamanho do nome. */
 function NomeAluno({ nome, onEditar }: { nome: string; onEditar: () => void }) {
   return (
-    <span className="inline-flex items-start gap-1.5">
-      <span>{nome}</span>
+    <span className="flex w-full items-start justify-between gap-2">
+      <span className="min-w-0 break-words pt-1">{nome}</span>
       <button
         type="button"
         onClick={onEditar}
@@ -86,24 +88,24 @@ export default function PreMatriculaTable({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:hidden">
         {registros.map((r) => (
           <article key={r.id} className="card-surface rounded-2xl border border-seice-border p-4">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0">
-                <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-seice-gold px-3 py-1 font-mono text-[16px] font-extrabold text-seice-gold-ink">
-                  Senha {formatarSenha(r.numero_senha)}
-                </div>
-                <h3 className="text-[17px] font-bold leading-tight text-seice-ink">
-                  <NomeAluno nome={r.aluno_nome} onEditar={() => setEditando(r)} />
-                </h3>
-                <p className="mt-0.5 text-[14.5px] text-seice-muted">{descricaoTurma(r.turmas)}</p>
-                <div className="mt-1.5">
-                  <SeloPosicao registro={r} posicoes={posicoes} />
-                </div>
+            {/* senha e status na mesma linha; o nome embaixo ocupa a largura
+                toda, então o lápis fica sempre no canto direito do cartão */}
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-seice-gold px-3 py-1 font-mono text-[16px] font-extrabold text-seice-gold-ink">
+                Senha {formatarSenha(r.numero_senha)}
               </div>
               <span
                 className={`shrink-0 rounded-full px-2.5 py-1 text-[13px] font-semibold ${STATUS_INFO[r.status].badge}`}
               >
                 {STATUS_INFO[r.status].label}
               </span>
+            </div>
+            <h3 className="text-[17px] font-bold leading-tight text-seice-ink">
+              <NomeAluno nome={r.aluno_nome} onEditar={() => setEditando(r)} />
+            </h3>
+            <p className="mt-0.5 text-[14.5px] text-seice-muted">{descricaoTurma(r.turmas)}</p>
+            <div className="mt-1.5">
+              <SeloPosicao registro={r} posicoes={posicoes} />
             </div>
 
             <dl className="mt-3.5 grid grid-cols-1 gap-x-4 gap-y-2.5 sm:grid-cols-2">
