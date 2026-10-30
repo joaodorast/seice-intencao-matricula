@@ -143,12 +143,12 @@ export default function PreMatriculaTable({
             <tr>
               {[
                 ["Senha / recebido em", "w-[10%]"],
-                ["Unidade", "w-[8%]"],
-                ["Aluno", "w-[13%]"],
-                ["Turma", "w-[12%]"],
+                ["Unidade", "w-[9%]"],
+                ["Aluno", "w-[17%]"],
+                ["Turma", "w-[11%]"],
                 ["Posição na fila (por turma)", "w-[9%]"],
-                ["Responsável / contato", "w-[18%]"],
-                ["Status", "w-[30%]"],
+                ["Responsável / contato", "w-[17%]"],
+                ["Status", "w-[27%]"],
               ].map(([h, w]) => (
                 <th
                   key={h}
