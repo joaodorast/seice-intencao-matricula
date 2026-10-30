@@ -43,6 +43,9 @@
   /* estados */
   --color-seice-success: #4ade80;
   --color-seice-success-soft: #173323;
+  /* azul do status Contatado — o mesmo azul do relatório em PDF */
+  --color-seice-azul: #60a5fa;
+  --color-seice-azul-soft: #16253d;
   /* laranja do status Agendado — já tem dia marcado, mas ainda não matriculou */
   --color-seice-orange: #fb923c;
   --color-seice-orange-soft: #3b2412;
