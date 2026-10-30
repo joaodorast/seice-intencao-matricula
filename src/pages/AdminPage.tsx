@@ -24,7 +24,7 @@ import ConfiguracoesTab from "../components/admin/ConfiguracoesTab";
 import { Button, Spinner } from "../components/ui";
 import logoIcon from "../assets/seice-icon.png";
 import { UNIDADES } from "../config";
-import { atualizarStatus, buscarPreMatriculas, verificarToken } from "../lib/adminApi";
+import { atualizarNomeAluno, atualizarStatus, buscarPreMatriculas, verificarToken } from "../lib/adminApi";
 import { listarTurmas } from "../lib/adminTurmasApi";
 import { ouvirMudancaDeVagas } from "../lib/realtime";
 import { STATUS_INFO, unidadeCurta } from "../lib/labels";
@@ -243,6 +243,16 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
       setRegistros(anterior);
       alert("Não foi possível atualizar o status: " + (e instanceof Error ? e.message : ""));
     }
+  }
+
+  async function handleNomeAlunoChange(id: string, nome: string) {
+    if (!token) return;
+    // só atualiza a tela depois de salvar: se falhar, o modal mostra o erro
+    // e a pessoa tenta de novo sem perder o que digitou
+    await atualizarNomeAluno(token, id, nome);
+    cargaSeq.current++; // a carga que estiver em andamento ainda traz o nome antigo
+    setRegistros((rs) => rs.map((r) => (r.id === id ? { ...r, aluno_nome: nome } : r)));
+    mostrarAviso(`Nome do aluno atualizado para ${nome}.`);
   }
 
   const registrosDaUnidade = registros.filter(
@@ -571,6 +581,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                   registros={registrosIntencoes}
                   posicoes={posicoesIntencao}
                   onStatusChange={handleStatusChange}
+                  onNomeAlunoChange={handleNomeAlunoChange}
                 />
               </>
             )}
@@ -585,6 +596,7 @@ export default function AdminPage({ unidade: unidadeFixa }: { unidade?: Unidade 
                   registros={registrosListaEspera}
                   posicoes={posicoesEspera}
                   onStatusChange={handleStatusChange}
+                  onNomeAlunoChange={handleNomeAlunoChange}
                   mensagemVazia="Ninguém na lista de espera no momento."
                 />
               </>
