@@ -6,12 +6,13 @@ import ConfirmModal from "./ConfirmModal";
 
 const OPCOES: StatusPreMatricula[] = ["pendente", "contatado", "agendado", "matriculado"];
 
-/** Etapa ativa em dourado — o mesmo destaque usado nos outros seletores do
- *  painel (unidade, aba) — exceto Matriculado, em verde, e Agendado, em
- *  laranja, pra dar pra ver de longe em que pé está cada família. */
+/** Cada etapa com a sua cor, as mesmas do relatório em PDF — dá pra ver de
+ *  longe em que pé está cada família: Pendente em dourado (o destaque padrão
+ *  do painel), Contatado em azul, Agendado em laranja e Matriculado em verde. */
 function estiloAtivo(status: StatusPreMatricula) {
   if (status === "matriculado") return "bg-seice-success text-seice-deep";
   if (status === "agendado") return "bg-seice-orange text-seice-deep";
+  if (status === "contatado") return "bg-seice-azul text-seice-deep";
   return "bg-seice-gold text-seice-gold-ink";
 }
 
@@ -19,6 +20,7 @@ function estiloAtivo(status: StatusPreMatricula) {
 function corTextoStatus(status: StatusPreMatricula) {
   if (status === "matriculado") return "text-seice-success";
   if (status === "agendado") return "text-seice-orange";
+  if (status === "contatado") return "text-seice-azul";
   return "text-seice-gold";
 }
 
