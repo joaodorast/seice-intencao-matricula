@@ -35,22 +35,30 @@ function SeloPosicao({ registro, posicoes }: { registro: PreMatriculaAdminRow; p
   );
 }
 
-/** Nome do aluno com o lápis de editar sempre no canto direito da coluna —
- *  todos os lápis ficam alinhados um embaixo do outro, seja qual for o
- *  tamanho do nome. */
+/** Nome do aluno com o lápis de editar colado no fim do nome, como parte do
+ *  texto. A última palavra e o lápis não se separam (whitespace-nowrap):
+ *  quando o nome quebra de linha, o lápis desce junto com a última palavra
+ *  em vez de ficar sozinho numa linha. O -my compensa a altura do botão pra
+ *  linha não ficar mais alta que as outras. */
 function NomeAluno({ nome, onEditar }: { nome: string; onEditar: () => void }) {
+  const palavras = nome.trim().split(/\s+/);
+  const ultima = palavras.pop() ?? "";
+  const inicio = palavras.join(" ");
   return (
-    <span className="flex w-full items-start justify-between gap-2">
-      <span className="min-w-0 break-words pt-1">{nome}</span>
-      <button
-        type="button"
-        onClick={onEditar}
-        title="Editar nome do aluno"
-        aria-label={`Editar nome do aluno ${nome}`}
-        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-seice-border-strong bg-seice-chip/60 text-seice-soft transition hover:border-seice-gold/50 hover:bg-seice-chip hover:text-seice-gold"
-      >
-        <Pencil size={16} />
-      </button>
+    <span className="break-words">
+      {inicio && `${inicio} `}
+      <span className="whitespace-nowrap">
+        {ultima}
+        <button
+          type="button"
+          onClick={onEditar}
+          title="Editar nome do aluno"
+          aria-label={`Editar nome do aluno ${nome}`}
+          className="-my-1 ml-1.5 inline-flex h-7 w-7 items-center justify-center rounded-lg border border-seice-border-strong bg-seice-chip/60 align-middle text-seice-soft transition hover:border-seice-gold/50 hover:bg-seice-chip hover:text-seice-gold"
+        >
+          <Pencil size={15} />
+        </button>
+      </span>
     </span>
   );
 }
