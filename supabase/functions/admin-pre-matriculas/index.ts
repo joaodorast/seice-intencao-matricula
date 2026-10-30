@@ -85,10 +85,22 @@ Deno.serve(async (req: Request) => {
       const id = body?.id;
       const status = body?.status;
       const allowed = ["pendente", "contatado", "agendado", "matriculado", "cancelado"];
-      if (!id || !allowed.includes(status)) {
-        return json({ error: "Parâmetros inválidos: informe id e status válido" }, 400);
+      // a secretaria também pode corrigir o nome do aluno (o responsável às
+      // vezes repete o próprio nome ou deixa em branco no formulário)
+      const alunoNome = typeof body?.aluno_nome === "string" ? body.aluno_nome.trim().replace(/\s+/g, " ") : undefined;
+      if (!id || (status === undefined && alunoNome === undefined)) {
+        return json({ error: "Parâmetros inválidos: informe id e o que alterar" }, 400);
       }
-      const { error } = await supabase.from("pre_matriculas").update({ status }).eq("id", id);
+      if (status !== undefined && !allowed.includes(status)) {
+        return json({ error: "Parâmetros inválidos: status inválido" }, 400);
+      }
+      if (alunoNome !== undefined && (alunoNome.length < 3 || alunoNome.length > 120)) {
+        return json({ error: "O nome do aluno precisa ter entre 3 e 120 caracteres" }, 400);
+      }
+      const updates: Record<string, string> = {};
+      if (status !== undefined) updates.status = status;
+      if (alunoNome !== undefined) updates.aluno_nome = alunoNome;
+      const { error } = await supabase.from("pre_matriculas").update(updates).eq("id", id);
       if (error) return json({ error: error.message }, 500);
       return json({ ok: true });
     }
